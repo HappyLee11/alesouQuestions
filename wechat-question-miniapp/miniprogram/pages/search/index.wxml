@@ -1,15 +1,23 @@
 <view class="container">
   <view class="card">
     <view class="search-bar">
-      <input class="input search-input" placeholder="输入关键词，例如 HTTP / Redis / const" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
+      <input class="input search-input" placeholder="输入关键词，或粘贴图片识别出的题干片段" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
       <button class="primary-btn search-btn" loading="{{loading}}" bindtap="handleSearch">搜索</button>
     </view>
-    <view class="search-toolbar">
+    <view class="search-toolbar search-toolbar-wrap">
       <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onChangeSort">
         <view class="picker-chip">排序：{{sortOptions[sortIndex].label}}</view>
       </picker>
-      <view class="toolbar-note">结果源：{{resultMeta.from === 'cloud' ? '云端' : '本地 mock'}} · 共 {{list.length}} 条</view>
+      <picker mode="selector" range="{{groupOptions}}" range-key="label" value="{{groupIndex}}" bindchange="onChangeGroup">
+        <view class="picker-chip">{{groupOptions[groupIndex].label}}</view>
+      </picker>
+      <view class="toolbar-note">结果源：{{resultMeta.from === 'cloud' ? '云端' : '本地 mock'}} · 共 {{resultMeta.total}} 条</view>
     </view>
+    <view class="btn-row btn-row-tight">
+      <button class="secondary-btn" size="mini" bindtap="onUseImageDemo">演示图片搜题入口</button>
+      <button class="secondary-btn" size="mini" bindtap="toggleGroupView">{{useGroupView ? '切换列表视图' : '切换分组视图'}}</button>
+    </view>
+    <view class="subtitle small-gap">面向真实场景：支持关键词检索、图片识别文本回填、结果过多后的分组/筛选、以及无结果时的兜底建议。</view>
   </view>
 
   <view class="card" wx:if="{{history.length}}">
@@ -29,19 +37,64 @@
     </view>
   </view>
 
-  <view wx:if="{{list.length}}">
-    <view class="result-card" wx:for="{{list}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
-      <view class="result-title">
-        <text wx:for="{{item.titleSegments}}" wx:key="index" class="{{item.match ? 'highlight-text' : ''}}">{{item.text}}</text>
+  <view class="card" wx:if="{{displayList.length}}">
+    <view class="section-title">缩小结果范围</view>
+    <view class="filter-label">学科</view>
+    <view class="tag-row small-gap">
+      <text class="filter-chip {{currentFilters.subject === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.subject}}" wx:key="label" data-field="subject" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
+    </view>
+    <view class="filter-label">难度</view>
+    <view class="tag-row small-gap">
+      <text class="filter-chip {{currentFilters.difficulty === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.difficulty}}" wx:key="label" data-field="difficulty" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
+    </view>
+    <view class="filter-label">题型</view>
+    <view class="tag-row small-gap">
+      <text class="filter-chip {{currentFilters.type === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.type}}" wx:key="label" data-field="type" data-value="{{item.value}}" bindtap="onTapFilter">{{item.value ? (item.value === 'single' ? '单选题' : item.value === 'multiple' ? '多选题' : '问答题') : item.label}}</text>
+    </view>
+    <view class="toolbar-note small-gap" wx:if="{{resultMeta.total > 8}}">结果较多，建议先按学科/难度缩小范围，再进入详情查看完整答案与解析。</view>
+  </view>
+
+  <view wx:if="{{displayList.length && useGroupView}}">
+    <view class="card" wx:for="{{groupedList}}" wx:for-item="section" wx:key="name">
+      <view class="section-header">
+        <view class="section-title">{{section.name}}</view>
+        <text class="toolbar-note">{{section.count}} 条</text>
       </view>
-      <view class="result-desc clamp-2">
-        <text wx:for="{{item.contentSegments}}" wx:key="index" class="{{item.match ? 'highlight-text' : ''}}">{{item.text}}</text>
+      <view class="result-card compact-result" wx:for="{{section.items}}" wx:for-item="question" wx:key="_id" data-id="{{question._id}}" bindtap="goDetail">
+        <view class="result-title">
+          <text wx:for="{{question.titleSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
+        </view>
+        <view class="result-desc clamp-2">
+          <text wx:for="{{question.contentSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
+        </view>
+        <view class="meta-row wrap-row">
+          <text class="meta-pill">{{question.subject || '未分类'}}</text>
+          <text class="meta-pill meta-pill-light">{{question.category || '通用'}}</text>
+          <text class="meta-pill meta-pill-light">{{question.difficultyText}}</text>
+          <text class="meta-pill meta-pill-light">{{question.typeText}}</text>
+        </view>
       </view>
-      <view class="meta-row">
+    </view>
+  </view>
+
+  <view wx:elif="{{displayList.length}}">
+    <view class="result-card" wx:for="{{displayList}}" wx:key="_id">
+      <view data-id="{{item._id}}" bindtap="goDetail">
+        <view class="result-title">
+          <text wx:for="{{item.titleSegments}}" wx:key="index" class="{{item.match ? 'highlight-text' : ''}}">{{item.text}}</text>
+        </view>
+        <view class="result-desc clamp-2">
+          <text wx:for="{{item.contentSegments}}" wx:key="index" class="{{item.match ? 'highlight-text' : ''}}">{{item.text}}</text>
+        </view>
+      </view>
+      <view class="meta-row wrap-row">
         <text class="meta-pill">{{item.subject || '未分类'}}</text>
         <text class="meta-pill meta-pill-light">{{item.category || '通用'}}</text>
         <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
+        <text class="meta-pill meta-pill-light">{{item.typeText}}</text>
       </view>
+      <view class="answer-preview">答案摘要：{{expandMap[item._id] ? item.analysisPreview : item.answerPreview}}</view>
+      <text class="link-text small-gap inline-link" data-id="{{item._id}}" bindtap="toggleAnswer">{{expandMap[item._id] ? '收起解析' : '展开更多'}}</text>
       <view class="result-footer">
         <view class="tag-row inline-tags">
           <text class="tag" wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
@@ -53,6 +106,9 @@
 
   <view wx:else class="card empty">
     <view>暂无匹配结果</view>
-    <view class="subtitle small-gap">你可以试试点击上面的热门关键词，或者切换更宽泛的词搜索。</view>
+    <view class="subtitle small-gap">可以试试：1）换更短的词；2）使用图片搜题入口示例；3）从这些相关词继续搜。</view>
+    <view class="tag-row small-gap" wx:if="{{resultMeta.suggestions.length}}">
+      <text class="tag tag-clickable" wx:for="{{resultMeta.suggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
+    </view>
   </view>
 </view>

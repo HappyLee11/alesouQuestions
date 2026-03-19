@@ -1,8 +1,10 @@
 [
   {
     "title": "下面哪个 HTTP 状态码表示“资源不存在”？",
+    "titleVariants": ["HTTP 404 表示什么", "资源不存在状态码"],
     "content": "用户访问一个已经删除的页面时，服务端通常返回哪个 HTTP 状态码？",
     "answer": "404",
+    "answerSummary": "404 Not Found，用于表示目标资源不存在。",
     "analysis": "404 Not Found 表示服务器找不到请求对应的资源。",
     "tags": ["HTTP", "网络基础", "前端"],
     "type": "single",
@@ -13,12 +15,16 @@
     "source": "校招模拟题",
     "year": 2025,
     "score": 2,
-    "status": "published"
+    "status": "published",
+    "imageText": "图中问 HTTP 状态码 资源不存在",
+    "relatedIds": ["q5", "q9"]
   },
   {
     "title": "JavaScript 中声明常量通常使用哪个关键字？",
+    "titleVariants": ["JS 常量关键字", "const 是什么"],
     "content": "在 ES6 及以上版本中，推荐使用哪个关键字声明不可重新赋值的变量？",
     "answer": "const",
+    "answerSummary": "使用 const 声明不可重新赋值的块级变量。",
     "analysis": "const 用于声明块级作用域常量，不能被重新赋值。",
     "tags": ["JavaScript", "语法"],
     "type": "single",
@@ -29,12 +35,16 @@
     "source": "前端训练营",
     "year": 2024,
     "score": 2,
-    "status": "published"
+    "status": "published",
+    "imageText": "图片里问 ES6 不可重新赋值变量",
+    "relatedIds": ["q3"]
   },
   {
     "title": "MySQL 中用于分页的关键字组合通常是？",
+    "titleVariants": ["MySQL 分页语法", "limit offset 是什么"],
     "content": "查询第 2 页、每页 10 条数据时，常见 SQL 分页语法会使用哪组关键字？",
     "answer": "LIMIT 和 OFFSET",
+    "answerSummary": "MySQL 分页常用 LIMIT / OFFSET 或 LIMIT start,count。",
     "analysis": "MySQL 常使用 LIMIT count OFFSET start 或 LIMIT start,count 实现分页。",
     "tags": ["MySQL", "数据库"],
     "type": "single",
@@ -45,12 +55,15 @@
     "source": "笔试真题整理",
     "year": 2025,
     "score": 3,
-    "status": "published"
+    "status": "published",
+    "relatedIds": ["q7"]
   },
   {
     "title": "Redis 为什么适合做热点数据缓存？",
+    "titleVariants": ["Redis 热点缓存原因", "缓存为什么用 Redis"],
     "content": "请从存储方式和访问速度的角度，解释 Redis 常用于缓存层的原因。",
     "answer": "内存存储、读写速度快",
+    "answerSummary": "核心原因是内存存储、低延迟、高吞吐。",
     "analysis": "Redis 基于内存，QPS 高，适合存放热点数据，但仍需结合持久化和淘汰策略。",
     "tags": ["Redis", "缓存", "后端"],
     "type": "qa",
@@ -61,12 +74,16 @@
     "source": "系统设计训练",
     "year": 2025,
     "score": 5,
-    "status": "published"
+    "status": "published",
+    "imageText": "图片题干里有 Redis 热点数据缓存",
+    "relatedIds": ["q4"]
   },
   {
     "title": "HTTPS 相比 HTTP 主要增加了什么能力？",
+    "titleVariants": ["HTTPS 有什么提升", "TLS SSL 加密"],
     "content": "HTTPS 在 HTTP 的基础上通过什么机制提高了传输安全性？",
     "answer": "TLS/SSL 加密",
+    "answerSummary": "核心能力是 TLS/SSL 加密与身份校验。",
     "analysis": "HTTPS = HTTP + TLS/SSL，可以提供加密、身份校验和完整性保护。",
     "tags": ["HTTP", "安全"],
     "type": "single",
@@ -77,6 +94,7 @@
     "source": "面试高频题",
     "year": 2025,
     "score": 3,
-    "status": "draft"
+    "status": "draft",
+    "relatedIds": ["q1", "q9"]
   }
 ]

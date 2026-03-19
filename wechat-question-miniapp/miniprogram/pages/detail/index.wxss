@@ -1,1 +1,21 @@
 /* detail page */
+.wrap-row {
+  flex-wrap: wrap;
+}
+
+.inline-link {
+  display: inline-block;
+}
+
+.compact-result {
+  padding: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+  border: 0;
+}
+
+.compact-result + .compact-result {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #edf2f7;
+}

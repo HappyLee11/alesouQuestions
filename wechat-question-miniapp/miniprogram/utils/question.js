@@ -7,18 +7,25 @@ function normalizeSearchParams(input) {
       keyword: input,
       page: 1,
       pageSize: 20,
-      sortBy: 'relevance'
+      sortBy: 'relevance',
+      status: 'published'
     };
   }
 
+  const payload = input || {};
   return {
-    keyword: input.keyword || '',
-    page: input.page || 1,
-    pageSize: input.pageSize || 20,
-    sortBy: input.sortBy || 'relevance',
-    status: input.status || 'published',
-    includeDeleted: !!input.includeDeleted,
-    management: !!input.management
+    keyword: payload.keyword || '',
+    page: payload.page || 1,
+    pageSize: payload.pageSize || 20,
+    sortBy: payload.sortBy || 'relevance',
+    status: payload.status || 'published',
+    includeDeleted: !!payload.includeDeleted,
+    management: !!payload.management,
+    subject: payload.subject || '',
+    category: payload.category || '',
+    difficulty: payload.difficulty || '',
+    type: payload.type || '',
+    searchMode: payload.searchMode || 'keyword'
   };
 }
 
@@ -35,23 +42,25 @@ async function searchQuestions(params) {
       sortBy: data.sortBy || payload.sortBy,
       keyword: data.keyword || payload.keyword,
       summary: data.summary || {},
+      facets: data.facets || {},
+      suggestions: data.suggestions || [],
+      searchMode: data.searchMode || payload.searchMode,
       from: 'cloud'
     };
   }
 
-  const items = mock.search(payload);
+  const fallback = mock.search(payload);
   return {
-    items,
-    total: items.length,
+    items: fallback.items || [],
+    total: fallback.total || 0,
     page: 1,
     pageSize: payload.pageSize,
     sortBy: payload.sortBy,
     keyword: payload.keyword,
-    summary: {
-      published: items.filter((item) => item.status === 'published').length,
-      draft: items.filter((item) => item.status === 'draft').length,
-      deleted: items.filter((item) => item.status === 'deleted').length
-    },
+    summary: fallback.summary || {},
+    facets: fallback.facets || {},
+    suggestions: fallback.suggestions || [],
+    searchMode: payload.searchMode,
     from: 'mock'
   };
 }
