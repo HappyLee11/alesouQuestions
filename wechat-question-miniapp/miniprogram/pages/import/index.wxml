@@ -1,0 +1,10 @@
+<view class="container">
+  <view class="card">
+    <view class="title">批量导入题目</view>
+    <view class="subtitle">MVP 先支持粘贴 JSON 数组，后续可扩展为上传文件。</view>
+    <textarea class="textarea" value="{{text}}" bindinput="onInput"></textarea>
+    <view class="btn-row">
+      <button class="primary-btn" loading="{{loading}}" bindtap="handleImport">执行导入</button>
+    </view>
+  </view>
+</view>

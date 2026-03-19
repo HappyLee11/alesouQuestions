@@ -1,0 +1,29 @@
+[
+  {
+    "title": "下面哪个是 HTTP 状态码 404 的含义？",
+    "content": "下面哪个是 HTTP 状态码 404 的含义？",
+    "answer": "资源不存在",
+    "analysis": "404 表示服务器找不到请求的资源。",
+    "tags": ["HTTP", "网络基础"],
+    "type": "single",
+    "options": ["请求成功", "资源不存在", "服务器错误", "未授权"]
+  },
+  {
+    "title": "JavaScript 中声明常量使用哪个关键字？",
+    "content": "JavaScript 中声明常量使用哪个关键字？",
+    "answer": "const",
+    "analysis": "const 用于声明块级作用域常量。",
+    "tags": ["JavaScript", "语法"],
+    "type": "single",
+    "options": ["var", "let", "const", "static"]
+  },
+  {
+    "title": "CSS 中设置文字颜色使用哪个属性？",
+    "content": "CSS 中设置文字颜色使用哪个属性？",
+    "answer": "color",
+    "analysis": "color 属性用于设置文本颜色。",
+    "tags": ["CSS", "样式"],
+    "type": "single",
+    "options": ["font-color", "color", "text-style", "foreground"]
+  }
+]

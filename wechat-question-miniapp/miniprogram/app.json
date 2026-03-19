@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/search/index",
+    "pages/detail/index",
+    "pages/admin/index",
+    "pages/import/index",
+    "pages/list/index",
+    "pages/edit/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "题库检索",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundTextStyle": "light",
+    "backgroundColor": "#f6f7fb"
+  },
+  "style": "v2",
+  "sitemapLocation": "../sitemap.json"
+}

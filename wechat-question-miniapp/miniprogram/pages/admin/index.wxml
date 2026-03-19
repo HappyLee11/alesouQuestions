@@ -1,0 +1,15 @@
+<view class="container">
+  <view class="card">
+    <view class="title">后台管理</view>
+    <view wx:if="{{checking}}" class="subtitle">正在校验管理员权限...</view>
+    <block wx:elif="{{isAdmin}}">
+      <view class="subtitle">管理员已通过校验，可进行题库维护。</view>
+      <view class="btn-row">
+        <button class="primary-btn" bindtap="goList">题目列表</button>
+        <button bindtap="goCreate">新增题目</button>
+        <button bindtap="goImport">批量导入</button>
+      </view>
+    </block>
+    <view wx:else class="subtitle">当前账号不是管理员。请在云数据库 `admins` 集合中配置 openid。</view>
+  </view>
+</view>

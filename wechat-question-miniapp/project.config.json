@@ -1,0 +1,28 @@
+{
+  "description": "WeChat mini program MVP for question search",
+  "packOptions": {
+    "ignore": []
+  },
+  "setting": {
+    "bundle": false,
+    "userConfirmedUseCompilerModule": false,
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": false,
+    "compileHotReLoad": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.3.3",
+  "appid": "touristappid",
+  "projectname": "wechat-question-miniapp",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "miniprogramRoot": "miniprogram/",
+  "cloudbaseRoot": "",
+  "condition": {},
+  "simulatorType": "wechat",
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {},
+  "srcMiniprogramRoot": "miniprogram/"
+}

@@ -1,0 +1,20 @@
+<view class="container">
+  <view class="card">
+    <input class="input" placeholder="输入关键词，例如 HTTP / CSS / 常量" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
+    <view class="btn-row">
+      <button class="primary-btn" loading="{{loading}}" bindtap="handleSearch">搜索</button>
+    </view>
+  </view>
+
+  <view wx:if="{{list.length}}">
+    <view class="card" wx:for="{{list}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
+      <view class="title">{{item.title}}</view>
+      <view class="subtitle">答案：{{item.answer}}</view>
+      <view>
+        <text class="tag" wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="card empty">暂无结果，试试别的关键词。</view>
+</view>

@@ -1,0 +1,15 @@
+<view class="container">
+  <view class="card">
+    <view class="title">题库检索小程序</view>
+    <view class="subtitle">一个可继续扩展的微信小程序 MVP，支持搜索、详情和后台管理。</view>
+    <view class="btn-row">
+      <button class="primary-btn" bindtap="goSearch">开始搜索</button>
+      <button bindtap="goAdmin">进入后台</button>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">建议下一步</view>
+    <view class="subtitle">先验证页面流转，再部署云函数并接入真实数据。</view>
+  </view>
+</view>

@@ -1,0 +1,21 @@
+<view class="container">
+  <view class="card">
+    <input class="input" placeholder="按关键词筛选" value="{{keyword}}" bindinput="onKeywordInput" bindconfirm="loadData" />
+    <view class="btn-row">
+      <button class="primary-btn" bindtap="loadData">刷新列表</button>
+    </view>
+  </view>
+
+  <view wx:if="{{list.length}}">
+    <view class="card" wx:for="{{list}}" wx:key="_id">
+      <view class="title">{{item.title}}</view>
+      <view class="subtitle">{{item.answer}}</view>
+      <view class="btn-row">
+        <button size="mini" data-id="{{item._id}}" bindtap="goEdit">编辑</button>
+        <button size="mini" class="danger-btn" data-id="{{item._id}}" bindtap="handleDelete">删除</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="card empty">暂无题目。</view>
+</view>

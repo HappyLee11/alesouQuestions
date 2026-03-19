@@ -1,0 +1,22 @@
+<view class="container">
+  <view wx:if="{{detail}}" class="card">
+    <view class="title">{{detail.title}}</view>
+    <view class="field-label">题干</view>
+    <view>{{detail.content}}</view>
+
+    <view class="field-label" style="margin-top: 24rpx;">选项</view>
+    <view wx:for="{{detail.options}}" wx:key="index">{{index + 1}}. {{item}}</view>
+
+    <view class="field-label" style="margin-top: 24rpx;">答案</view>
+    <view>{{detail.answer}}</view>
+
+    <view class="field-label" style="margin-top: 24rpx;">解析</view>
+    <view>{{detail.analysis}}</view>
+
+    <view style="margin-top: 20rpx;">
+      <text class="tag" wx:for="{{detail.tags}}" wx:key="*this">{{item}}</text>
+    </view>
+  </view>
+
+  <view wx:elif="{{!loading}}" class="card empty">未找到题目。</view>
+</view>

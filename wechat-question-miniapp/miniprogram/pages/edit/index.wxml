@@ -1,0 +1,27 @@
+<view class="container">
+  <view class="card">
+    <view class="title">{{isEdit ? '编辑题目' : '新增题目'}}</view>
+
+    <view class="field-label">标题</view>
+    <input class="input" data-field="title" value="{{form.title}}" bindinput="onFieldInput" />
+
+    <view class="field-label" style="margin-top: 20rpx;">题干</view>
+    <textarea class="textarea" data-field="content" value="{{form.content}}" bindinput="onFieldInput"></textarea>
+
+    <view class="field-label" style="margin-top: 20rpx;">选项（每行一个）</view>
+    <textarea class="textarea" data-field="optionsText" value="{{form.optionsText}}" bindinput="onFieldInput"></textarea>
+
+    <view class="field-label" style="margin-top: 20rpx;">答案</view>
+    <input class="input" data-field="answer" value="{{form.answer}}" bindinput="onFieldInput" />
+
+    <view class="field-label" style="margin-top: 20rpx;">解析</view>
+    <textarea class="textarea" data-field="analysis" value="{{form.analysis}}" bindinput="onFieldInput"></textarea>
+
+    <view class="field-label" style="margin-top: 20rpx;">标签（逗号分隔）</view>
+    <input class="input" data-field="tagsText" value="{{form.tagsText}}" bindinput="onFieldInput" />
+
+    <view class="btn-row">
+      <button class="primary-btn" loading="{{loading}}" bindtap="handleSave">保存题目</button>
+    </view>
+  </view>
+</view>
