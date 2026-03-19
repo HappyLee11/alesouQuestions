@@ -1,20 +1,58 @@
 <view class="container">
   <view class="card">
-    <input class="input" placeholder="输入关键词，例如 HTTP / CSS / 常量" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
-    <view class="btn-row">
-      <button class="primary-btn" loading="{{loading}}" bindtap="handleSearch">搜索</button>
+    <view class="search-bar">
+      <input class="input search-input" placeholder="输入关键词，例如 HTTP / Redis / const" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
+      <button class="primary-btn search-btn" loading="{{loading}}" bindtap="handleSearch">搜索</button>
+    </view>
+    <view class="search-toolbar">
+      <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onChangeSort">
+        <view class="picker-chip">排序：{{sortOptions[sortIndex].label}}</view>
+      </picker>
+      <view class="toolbar-note">结果源：{{resultMeta.from === 'cloud' ? '云端' : '本地 mock'}} · 共 {{list.length}} 条</view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{history.length}}">
+    <view class="section-header">
+      <view class="section-title">最近搜索</view>
+      <text class="link-text" bindtap="clearHistory">清空</text>
+    </view>
+    <view class="tag-row">
+      <text class="tag tag-clickable" wx:for="{{history}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">热门关键词</view>
+    <view class="tag-row">
+      <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 
   <view wx:if="{{list.length}}">
-    <view class="card" wx:for="{{list}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
-      <view class="title">{{item.title}}</view>
-      <view class="subtitle">答案：{{item.answer}}</view>
-      <view>
-        <text class="tag" wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
+    <view class="result-card" wx:for="{{list}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
+      <view class="result-title">
+        <text wx:for="{{item.titleSegments}}" wx:key="index" class="{{item.match ? 'highlight-text' : ''}}">{{item.text}}</text>
+      </view>
+      <view class="result-desc clamp-2">
+        <text wx:for="{{item.contentSegments}}" wx:key="index" class="{{item.match ? 'highlight-text' : ''}}">{{item.text}}</text>
+      </view>
+      <view class="meta-row">
+        <text class="meta-pill">{{item.subject || '未分类'}}</text>
+        <text class="meta-pill meta-pill-light">{{item.category || '通用'}}</text>
+        <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
+      </view>
+      <view class="result-footer">
+        <view class="tag-row inline-tags">
+          <text class="tag" wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
+        </view>
+        <text class="footer-note">更新于 {{item.updatedAtText}}</text>
       </view>
     </view>
   </view>
 
-  <view wx:else class="card empty">暂无结果，试试别的关键词。</view>
+  <view wx:else class="card empty">
+    <view>暂无匹配结果</view>
+    <view class="subtitle small-gap">你可以试试点击上面的热门关键词，或者切换更宽泛的词搜索。</view>
+  </view>
 </view>

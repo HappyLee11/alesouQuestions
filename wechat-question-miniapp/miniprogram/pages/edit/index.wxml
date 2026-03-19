@@ -1,24 +1,75 @@
 <view class="container">
   <view class="card">
     <view class="title">{{isEdit ? '编辑题目' : '新增题目'}}</view>
+    <view class="subtitle">支持更完整的题目结构：题型、学科、难度、来源、年份、分值、标签与状态。</view>
 
-    <view class="field-label">标题</view>
-    <input class="input" data-field="title" value="{{form.title}}" bindinput="onFieldInput" />
+    <view class="field-label field-gap">标题</view>
+    <input class="input" data-field="title" value="{{form.title}}" bindinput="onFieldInput" placeholder="例如：HTTP 404 表示什么？" />
 
-    <view class="field-label" style="margin-top: 20rpx;">题干</view>
-    <textarea class="textarea" data-field="content" value="{{form.content}}" bindinput="onFieldInput"></textarea>
+    <view class="field-label field-gap">题干</view>
+    <textarea class="textarea" data-field="content" value="{{form.content}}" bindinput="onFieldInput" placeholder="请输入完整题干"></textarea>
 
-    <view class="field-label" style="margin-top: 20rpx;">选项（每行一个）</view>
-    <textarea class="textarea" data-field="optionsText" value="{{form.optionsText}}" bindinput="onFieldInput"></textarea>
+    <view class="field-label field-gap">题型</view>
+    <picker mode="selector" range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypeChange">
+      <view class="picker-chip picker-block">{{typeOptions[typeIndex].label}}</view>
+    </picker>
 
-    <view class="field-label" style="margin-top: 20rpx;">答案</view>
-    <input class="input" data-field="answer" value="{{form.answer}}" bindinput="onFieldInput" />
+    <view class="field-label field-gap">选项（每行一个，问答题可留空）</view>
+    <textarea class="textarea" data-field="optionsText" value="{{form.optionsText}}" bindinput="onFieldInput" placeholder="A. ...&#10;B. ..."></textarea>
 
-    <view class="field-label" style="margin-top: 20rpx;">解析</view>
-    <textarea class="textarea" data-field="analysis" value="{{form.analysis}}" bindinput="onFieldInput"></textarea>
+    <view class="field-label field-gap">答案</view>
+    <input class="input" data-field="answer" value="{{form.answer}}" bindinput="onFieldInput" placeholder="请输入标准答案" />
 
-    <view class="field-label" style="margin-top: 20rpx;">标签（逗号分隔）</view>
-    <input class="input" data-field="tagsText" value="{{form.tagsText}}" bindinput="onFieldInput" />
+    <view class="field-label field-gap">解析</view>
+    <textarea class="textarea" data-field="analysis" value="{{form.analysis}}" bindinput="onFieldInput" placeholder="补充解题思路或知识点"></textarea>
+
+    <view class="grid-2">
+      <view>
+        <view class="field-label field-gap">学科</view>
+        <input class="input" data-field="subject" value="{{form.subject}}" bindinput="onFieldInput" placeholder="前端开发" />
+      </view>
+      <view>
+        <view class="field-label field-gap">分类</view>
+        <input class="input" data-field="category" value="{{form.category}}" bindinput="onFieldInput" placeholder="JavaScript" />
+      </view>
+    </view>
+
+    <view class="grid-2">
+      <view>
+        <view class="field-label field-gap">难度</view>
+        <picker mode="selector" range="{{difficultyOptions}}" range-key="label" value="{{difficultyIndex}}" bindchange="onDifficultyChange">
+          <view class="picker-chip picker-block">{{difficultyOptions[difficultyIndex].label}}</view>
+        </picker>
+      </view>
+      <view>
+        <view class="field-label field-gap">状态</view>
+        <picker mode="selector" range="{{statusOptions}}" range-key="label" value="{{statusIndex}}" bindchange="onStatusChange">
+          <view class="picker-chip picker-block">{{statusOptions[statusIndex].label}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="grid-2">
+      <view>
+        <view class="field-label field-gap">来源</view>
+        <input class="input" data-field="source" value="{{form.source}}" bindinput="onFieldInput" placeholder="面试高频题" />
+      </view>
+      <view>
+        <view class="field-label field-gap">年份</view>
+        <input class="input" type="number" data-field="year" value="{{form.year}}" bindinput="onFieldInput" placeholder="2025" />
+      </view>
+    </view>
+
+    <view class="grid-2">
+      <view>
+        <view class="field-label field-gap">分值</view>
+        <input class="input" type="digit" data-field="score" value="{{form.score}}" bindinput="onFieldInput" placeholder="2" />
+      </view>
+      <view>
+        <view class="field-label field-gap">标签（逗号分隔）</view>
+        <input class="input" data-field="tagsText" value="{{form.tagsText}}" bindinput="onFieldInput" placeholder="HTTP, 网络基础" />
+      </view>
+    </view>
 
     <view class="btn-row">
       <button class="primary-btn" loading="{{loading}}" bindtap="handleSave">保存题目</button>

@@ -1,15 +1,45 @@
-<view class="container">
-  <view class="card">
-    <view class="title">题库检索小程序</view>
-    <view class="subtitle">一个可继续扩展的微信小程序 MVP，支持搜索、详情和后台管理。</view>
-    <view class="btn-row">
+<view class="container page-home">
+  <view class="hero-card">
+    <view class="eyebrow">Demo Ready Mini Program</view>
+    <view class="hero-title">题库检索与管理演示版</view>
+    <view class="hero-subtitle">面向明早演示做了统一视觉、搜索增强、后台流转优化和更真实的数据模型。</view>
+    <view class="btn-row btn-row-tight">
       <button class="primary-btn" bindtap="goSearch">开始搜索</button>
-      <button bindtap="goAdmin">进入后台</button>
+      <button class="secondary-btn" bindtap="goAdmin">进入后台</button>
+    </view>
+  </view>
+
+  <view class="stats-grid">
+    <view class="metric-card">
+      <view class="metric-value">{{stats.total}}</view>
+      <view class="metric-label">示例题目</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{stats.published}}</view>
+      <view class="metric-label">已发布</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{stats.draft}}</view>
+      <view class="metric-label">草稿</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{stats.tags}}</view>
+      <view class="metric-label">标签数</view>
     </view>
   </view>
 
   <view class="card">
-    <view class="title">建议下一步</view>
-    <view class="subtitle">先验证页面流转，再部署云函数并接入真实数据。</view>
+    <view class="section-title">推荐搜索</view>
+    <view class="tag-row">
+      <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapHotTerm">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">这版可直接演示什么</view>
+    <view class="feature-item" wx:for="{{featureList}}" wx:key="title">
+      <view class="feature-title">{{item.title}}</view>
+      <view class="feature-desc">{{item.desc}}</view>
+    </view>
   </view>
 </view>

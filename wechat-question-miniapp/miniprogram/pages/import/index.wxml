@@ -1,10 +1,27 @@
 <view class="container">
   <view class="card">
     <view class="title">批量导入题目</view>
-    <view class="subtitle">MVP 先支持粘贴 JSON 数组，后续可扩展为上传文件。</view>
-    <textarea class="textarea" value="{{text}}" bindinput="onInput"></textarea>
+    <view class="subtitle">当前支持粘贴 JSON 数组，适合演示运营同学一次导入多道题。</view>
+    <view class="meta-row large-gap">
+      <text class="meta-pill">预览条数：{{previewCount}}</text>
+      <text class="meta-pill meta-pill-light" wx:if="{{previewTitle}}">首条：{{previewTitle}}</text>
+    </view>
+    <view wx:if="{{parseError}}" class="error-text">{{parseError}}</view>
+    <textarea class="textarea textarea-xl" value="{{text}}" bindinput="onInput"></textarea>
     <view class="btn-row">
       <button class="primary-btn" loading="{{loading}}" bindtap="handleImport">执行导入</button>
     </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">建议字段</view>
+    <view class="feature-desc">title、content、answer、analysis、tags、type、subject、category、difficulty、source、year、score、status</view>
+  </view>
+
+  <view class="card" wx:if="{{importResult}}">
+    <view class="section-title">导入结果</view>
+    <view class="feature-desc">状态：{{importResult.success ? '成功' : '失败'}}</view>
+    <view class="feature-desc">新增：{{importResult.data && importResult.data.inserted ? importResult.data.inserted : importResult.inserted || 0}} 条</view>
+    <view class="feature-desc">失败：{{importResult.data && importResult.data.failed ? importResult.data.failed : 0}} 条</view>
   </view>
 </view>

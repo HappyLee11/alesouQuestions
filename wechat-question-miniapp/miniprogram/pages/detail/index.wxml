@@ -1,22 +1,59 @@
 <view class="container">
   <view wx:if="{{detail}}" class="card">
-    <view class="title">{{detail.title}}</view>
-    <view class="field-label">题干</view>
-    <view>{{detail.content}}</view>
+    <view class="title no-gap">{{detail.title}}</view>
+    <view class="meta-row large-gap">
+      <text class="meta-pill">{{detail.subject || '未分类'}}</text>
+      <text class="meta-pill meta-pill-light">{{detail.category || '通用'}}</text>
+      <text class="meta-pill meta-pill-light">{{detail.difficultyText}}</text>
+      <text class="meta-pill meta-pill-light">{{detail.statusText}}</text>
+    </view>
 
-    <view class="field-label" style="margin-top: 24rpx;">选项</view>
-    <view wx:for="{{detail.options}}" wx:key="index">{{index + 1}}. {{item}}</view>
+    <view class="field-block">
+      <view class="field-label">题干</view>
+      <view class="content-text">{{detail.content}}</view>
+    </view>
 
-    <view class="field-label" style="margin-top: 24rpx;">答案</view>
-    <view>{{detail.answer}}</view>
+    <view class="field-block" wx:if="{{detail.options && detail.options.length}}">
+      <view class="field-label">选项</view>
+      <view class="option-item" wx:for="{{detail.options}}" wx:key="index">{{index + 1}}. {{item}}</view>
+    </view>
 
-    <view class="field-label" style="margin-top: 24rpx;">解析</view>
-    <view>{{detail.analysis}}</view>
+    <view class="field-block">
+      <view class="field-label">答案</view>
+      <view class="answer-box">{{detail.answer}}</view>
+    </view>
 
-    <view style="margin-top: 20rpx;">
-      <text class="tag" wx:for="{{detail.tags}}" wx:key="*this">{{item}}</text>
+    <view class="field-block">
+      <view class="field-label">解析</view>
+      <view class="content-text">{{detail.analysis || '暂无解析'}}</view>
+    </view>
+
+    <view class="field-block">
+      <view class="field-label">题目标签</view>
+      <view class="tag-row">
+        <text class="tag" wx:for="{{detail.tags}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+
+    <view class="info-grid">
+      <view class="info-item">
+        <view class="info-label">来源</view>
+        <view class="info-value">{{detail.source || '--'}}</view>
+      </view>
+      <view class="info-item">
+        <view class="info-label">年份</view>
+        <view class="info-value">{{detail.year || '--'}}</view>
+      </view>
+      <view class="info-item">
+        <view class="info-label">分值</view>
+        <view class="info-value">{{detail.score || '--'}}</view>
+      </view>
+      <view class="info-item">
+        <view class="info-label">更新时间</view>
+        <view class="info-value">{{detail.updatedAtText}}</view>
+      </view>
     </view>
   </view>
 
-  <view wx:elif="{{!loading}}" class="card empty">未找到题目。</view>
+  <view wx:elif="{{!loading}}" class="card empty">未找到题目，可能已被归档或 ID 不存在。</view>
 </view>

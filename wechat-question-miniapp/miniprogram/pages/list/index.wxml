@@ -1,21 +1,39 @@
 <view class="container">
   <view class="card">
-    <input class="input" placeholder="按关键词筛选" value="{{keyword}}" bindinput="onKeywordInput" bindconfirm="loadData" />
-    <view class="btn-row">
-      <button class="primary-btn" bindtap="loadData">刷新列表</button>
+    <view class="search-bar">
+      <input class="input search-input" placeholder="按标题 / 标签 / 答案搜索" value="{{keyword}}" bindinput="onKeywordInput" bindconfirm="loadData" />
+      <button class="primary-btn search-btn" bindtap="loadData" loading="{{loading}}">刷新</button>
     </view>
+    <scroll-view scroll-x class="filter-scroll" show-scrollbar="false">
+      <view class="filter-row">
+        <view class="filter-chip {{currentFilter === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filters}}" wx:key="value" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</view>
+      </view>
+    </scroll-view>
   </view>
 
   <view wx:if="{{list.length}}">
     <view class="card" wx:for="{{list}}" wx:key="_id">
-      <view class="title">{{item.title}}</view>
-      <view class="subtitle">{{item.answer}}</view>
+      <view class="list-title-row">
+        <view class="title title-small">{{item.title}}</view>
+        <text class="meta-pill meta-pill-light">{{item.statusText}}</text>
+      </view>
+      <view class="meta-row">
+        <text class="meta-pill">{{item.subject || '未分类'}}</text>
+        <text class="meta-pill meta-pill-light">{{item.category || '通用'}}</text>
+        <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
+      </view>
+      <view class="subtitle small-gap">答案：{{item.answer || '未填写'}}</view>
+      <view class="subtitle">最近更新：{{item.updatedAtText}}</view>
+      <view class="tag-row inline-tags">
+        <text class="tag" wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
+      </view>
       <view class="btn-row">
         <button size="mini" data-id="{{item._id}}" bindtap="goEdit">编辑</button>
-        <button size="mini" class="danger-btn" data-id="{{item._id}}" bindtap="handleDelete">删除</button>
+        <button wx:if="{{item.status !== 'deleted'}}" size="mini" class="danger-btn" data-id="{{item._id}}" bindtap="handleDelete">归档</button>
+        <button wx:else size="mini" class="secondary-btn" data-id="{{item._id}}" bindtap="handleRestore">恢复</button>
       </view>
     </view>
   </view>
 
-  <view wx:else class="card empty">暂无题目。</view>
+  <view wx:else class="card empty">暂无题目，试试切换筛选条件或搜索词。</view>
 </view>
