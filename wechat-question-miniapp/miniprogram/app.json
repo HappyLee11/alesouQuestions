@@ -4,6 +4,7 @@
     "pages/search/index",
     "pages/detail/index",
     "pages/admin/index",
+    "pages/task-center/index",
     "pages/import/index",
     "pages/list/index",
     "pages/edit/index"

@@ -1,0 +1,100 @@
+<view class="container page-shell">
+  <view class="hero-card">
+    <view class="eyebrow">Task Center</view>
+    <view class="hero-title">任务中心 / 审核工作台</view>
+    <view class="hero-subtitle">把最近导入任务、审计轨迹和待处理题目集中到一个入口里，更像正式运营后台的工作台，而不只是零散页面。</view>
+    <view class="quick-nav">
+      <view class="quick-nav-item">预检任务</view>
+      <view class="quick-nav-item">审核队列</view>
+      <view class="quick-nav-item">审计轨迹</view>
+      <view class="quick-nav-item">导入回执</view>
+    </view>
+  </view>
+
+  <view class="glass-card">
+    <view class="title">工作台状态</view>
+    <view wx:if="{{checking}}" class="subtitle">正在加载任务中心...</view>
+    <block wx:elif="{{isAdmin}}">
+      <view class="subtitle">当前账号已通过管理员校验，任务中心会优先显示待处理审核项、最近导入任务和最近审计日志。</view>
+      <view class="meta-row wrap-row large-gap">
+        <text class="meta-pill">角色：{{admin && (admin.roleLabel || admin.role) ? (admin.roleLabel || admin.role) : 'admin'}}</text>
+        <text class="meta-pill meta-pill-light" wx:if="{{admin && admin.ownerTeam}}">团队：{{admin.ownerTeam}}</text>
+        <text class="meta-pill meta-pill-light">队列：{{reviewQueue.length}} 条</text>
+      </view>
+      <view class="btn-row">
+        <button class="secondary-btn" bindtap="goImport">去导入页</button>
+        <button class="primary-btn" bindtap="goList">去题目列表</button>
+      </view>
+    </block>
+    <view wx:else class="subtitle">当前账号不是管理员，无法查看任务中心。</view>
+  </view>
+
+  <view class="stats-grid admin-stats" wx:if="{{isAdmin}}">
+    <view class="metric-card"><view class="metric-value">{{queueStats.pending}}</view><view class="metric-label">待审核</view></view>
+    <view class="metric-card"><view class="metric-value">{{queueStats.rejected}}</view><view class="metric-label">已驳回</view></view>
+    <view class="metric-card"><view class="metric-value">{{queueStats.draft}}</view><view class="metric-label">草稿</view></view>
+    <view class="metric-card"><view class="metric-value">{{queueStats.published}}</view><view class="metric-label">已发布</view></view>
+  </view>
+
+  <view class="glass-card" wx:if="{{isAdmin && reviewQueue.length}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">待处理审核队列</view>
+        <view class="section-caption">优先展示待审核、已驳回和审核中的题目，方便管理员集中处理。</view>
+      </view>
+      <text class="toolbar-note">共 {{reviewQueue.length}} 条</text>
+    </view>
+    <view class="feature-item" wx:for="{{reviewQueue}}" wx:key="_id">
+      <view class="feature-title">{{item.title}} ｜ {{item.reviewStatusText}} / {{item.lifecycleText}}</view>
+      <view class="feature-desc">团队：{{item.ownerTeamText}} ｜ 负责人：{{item.ownerText}} ｜ {{item.versionText}}</view>
+      <view class="feature-desc">学科：{{item.subject || '未分类'}} ｜ 分类：{{item.category || '通用'}} ｜ 更新时间：{{item.updatedAtText}}</view>
+      <view class="btn-row">
+        <button size="mini" data-id="{{item._id}}" bindtap="goEdit">去处理</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="glass-card" wx:if="{{isAdmin && recentImportTasks.length}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">最近导入任务</view>
+        <view class="section-caption">把预检、导入、批次和分片概览集中展示，像一个轻量任务中心。</view>
+      </view>
+      <text class="toolbar-note">{{taskSourceLabel}}</text>
+    </view>
+    <view class="feature-item" wx:for="{{recentImportTasks}}" wx:key="_id">
+      <view class="feature-title">{{item.statusLabel}} ｜ {{item.taskName || item.batchId}}</view>
+      <view class="feature-desc">批次：{{item.batchId}} ｜ 状态：{{item.taskStatus || '--'}} ｜ {{item.sourceType}} / {{item.templateType}}</view>
+      <view class="feature-desc">总 {{item.total}} ｜ 有效 {{item.valid}} ｜ 无效 {{item.invalid}} ｜ 预警 {{item.warnings}} ｜ 新增 {{item.inserted}} ｜ 更新 {{item.updated}}</view>
+      <view class="feature-desc">文件：{{item.fileName || '--'}} ｜ 时间：{{item.timeText}}</view>
+    </view>
+  </view>
+
+  <view class="glass-card" wx:if="{{isAdmin && recentAuditLogs.length}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">最近审计轨迹</view>
+        <view class="section-caption">帮助说明谁做了什么、为什么做，以及导入与审核动作之间的责任链。</view>
+      </view>
+      <text class="toolbar-note">{{auditSourceLabel}}</text>
+    </view>
+    <view class="feature-item" wx:for="{{recentAuditLogs}}" wx:key="_id">
+      <view class="feature-title">{{item.action}} ｜ {{item.entityTitle || item.entityId || '--'}}</view>
+      <view class="feature-desc">{{item.summary || '--'}}</view>
+      <view class="feature-desc">对象：{{item.entityType || '--'}} ｜ 结果：{{item.result || '--'}} ｜ 原因：{{item.reason || '--'}}</view>
+      <view class="feature-desc">操作人：{{item.operatorName || item.operatorOpenid || '--'}} ｜ 角色：{{item.operatorRole || '--'}} ｜ 时间：{{item.timeText}}</view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{isAdmin}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">推荐工作流</view>
+        <view class="section-caption">把任务中心当成后台首页的第二层，用来承接真正的日常操作。</view>
+      </view>
+    </view>
+    <view class="feature-desc"><text class="status-dot"></text>先看待审核队列，处理需要通过 / 驳回 / 修改的题目。</view>
+    <view class="feature-desc"><text class="status-dot"></text>再看最近导入任务，确认预检结果、批次健康度和来源类型。</view>
+    <view class="feature-desc"><text class="status-dot"></text>最后用审计轨迹串起导入、修改、归档和发布动作，形成可追溯闭环。</view>
+  </view>
+</view>

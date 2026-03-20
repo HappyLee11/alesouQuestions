@@ -55,7 +55,16 @@
 - 支持治理默认值：默认状态 / 审核态 / 审批策略 / 负责人 / 团队 / 导入原因
 - 支持 `skip / update` 去重策略
 - 支持最近任务回执，便于把导入页讲成“轻量任务中心”
-- 导入后补齐 `importMeta` / `governance` / `statusHistory` / `versionSnapshots`
+- 预检 / 导入会最佳努力写入 `import_tasks`，让后台首页能展示真实任务概览
+- 导入后补齐 `importMeta` / `governance` / `statusHistory` / `versionSnapshots`，并记录审计日志
+
+### 4) 更像商用后台的权限与审计能力
+
+- `admins.role` 显式映射权限集合，而不只是 `isAdmin` 布尔值
+- 后台首页展示角色权限矩阵，方便售前 / 方案演示
+- 题目录入、更新、归档、恢复、导入预检、导入执行会最佳努力写入 `audit_logs`
+- 后台首页可以直接看到最近导入任务和审计轨迹，形成“谁做了什么”的闭环
+- 新增任务中心 / 审核工作台，把待审核队列、最近导入任务和审计日志集中成后台第二入口，更适合演示真实运营流
 
 ![admin-import](./assets/admin-import-preview.svg)
 
@@ -96,6 +105,8 @@ miniprogram/pages/
 
 - `questions`
 - `admins`
+- `import_tasks`（推荐，用于导入任务中心 / 预检回执）
+- `audit_logs`（推荐，用于后台审计轨迹）
 
 ### 运行模式
 
@@ -142,6 +153,8 @@ miniprogram/pages/
 
 - `questions`
 - `admins`
+- `import_tasks`（推荐，用于导入任务中心 / 预检回执）
+- `audit_logs`（推荐，用于后台审计轨迹）
 
 ### 5. 部署云函数
 

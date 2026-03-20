@@ -9,6 +9,8 @@ Page({
     isAdmin: false,
     openid: '',
     admin: null,
+    permissionGroups: [],
+    recentAuditLogs: [],
     stats: {
       total: 0,
       published: 0,
@@ -30,20 +32,41 @@ Page({
       '题目归档与恢复',
       '版本快照与变更原因',
       '导入任务批次与来源信息',
-      '列表快捷审核 / 发布动作'
+      '列表快捷审核 / 发布动作',
+      '审计日志与角色能力概览'
     ],
-    recentImportTasks: []
+    recentImportTasks: [],
+    taskSourceLabel: '本地缓存'
   },
   async onShow() {
     this.loadRecentImportTasks();
     await this.checkAccess();
+  },
+  formatPermission(permission = '') {
+    return permission
+      .split('.')
+      .map((part) => part.replace(/^[a-z]/, (letter) => letter.toUpperCase()))
+      .join(' / ');
+  },
+  groupPermissions(permissions = []) {
+    const groups = {};
+    permissions.forEach((permission) => {
+      const prefix = String(permission || '').split('.')[0] || 'general';
+      if (!groups[prefix]) groups[prefix] = [];
+      groups[prefix].push({ key: permission, label: this.formatPermission(permission) });
+    });
+    return Object.keys(groups).map((key) => ({
+      key,
+      label: key.replace(/^[a-z]/, (letter) => letter.toUpperCase()),
+      items: groups[key]
+    }));
   },
   loadRecentImportTasks() {
     const recentImportTasks = (wx.getStorageSync(IMPORT_TASKS_KEY) || []).slice(0, 3).map((item) => ({
       ...item,
       timeText: item.createdAt ? formatTime(item.createdAt) : '--'
     }));
-    this.setData({ recentImportTasks });
+    this.setData({ recentImportTasks, taskSourceLabel: recentImportTasks.length ? '本地缓存' : '暂无任务' });
   },
   async checkAccess() {
     this.setData({ checking: true });
@@ -56,12 +79,43 @@ Page({
         admin: info.admin
       });
       if (info.isAdmin) {
-        await this.loadStats();
+        await Promise.all([
+          this.loadStats(),
+          this.loadAdminOverview(info)
+        ]);
       }
     } catch (error) {
       wx.showToast({ title: '权限校验失败', icon: 'none' });
     } finally {
       this.setData({ checking: false });
+    }
+  },
+  async loadAdminOverview(baseInfo = {}) {
+    try {
+      const overview = await api.getAdminOverview();
+      const permissionGroups = this.groupPermissions((overview.admin && overview.admin.permissions) || []);
+      const recentImportTasks = (overview.recentImportTasks || []).map((item) => ({
+        ...item,
+        timeText: item.updatedAt ? formatTime(item.updatedAt) : '--',
+        statusLabel: item.mode === 'preview' ? '已预检' : '已导入'
+      }));
+      const recentAuditLogs = (overview.recentAuditLogs || []).map((item) => ({
+        ...item,
+        timeText: item.createdAt ? formatTime(item.createdAt) : '--'
+      }));
+      this.setData({
+        openid: overview.openid || baseInfo.openid || this.data.openid,
+        admin: overview.admin || baseInfo.admin || this.data.admin,
+        permissionGroups,
+        recentImportTasks: recentImportTasks.length ? recentImportTasks : this.data.recentImportTasks,
+        recentAuditLogs,
+        taskSourceLabel: recentImportTasks.length ? '云端 import_tasks' : this.data.taskSourceLabel
+      });
+    } catch (error) {
+      this.setData({
+        permissionGroups: this.groupPermissions(((baseInfo.admin || this.data.admin) && (baseInfo.admin || this.data.admin).permissions) || []),
+        taskSourceLabel: this.data.recentImportTasks.length ? '本地缓存（云端概览不可用）' : '云端概览不可用'
+      });
     }
   },
   async loadStats() {
@@ -92,6 +146,7 @@ Page({
     const { action } = e.currentTarget.dataset;
     if (action === 'list') return this.goList();
     if (action === 'import') return this.goImport();
+    if (action === 'taskCenter') return this.goTaskCenter();
     return this.goCreate();
   },
   goList() {
@@ -99,6 +154,9 @@ Page({
   },
   goImport() {
     wx.navigateTo({ url: '/pages/import/index' });
+  },
+  goTaskCenter() {
+    wx.navigateTo({ url: '/pages/task-center/index' });
   },
   goCreate() {
     wx.navigateTo({ url: '/pages/edit/index' });
