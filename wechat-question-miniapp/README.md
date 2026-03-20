@@ -5,7 +5,33 @@
 > GitHub repo: `HappyLee11/alesouQuestions`  
 > 当前仓库目录：`wechat-question-miniapp`
 
-![overview](./assets/hero-overview.svg)
+![阿乐搜题首页预览](./assets/hero-overview.png)
+
+## 产品预览
+
+### 用户首页 / 搜索入口
+
+![阿乐搜题首页效果图](./assets/hero-overview.svg)
+
+- 首页第一屏直接给搜索框
+- 提供热门搜索、最近搜索、按学科找题
+- 不再把产品定位、治理说明、演示流程塞给普通用户
+
+### 搜索结果页
+
+![搜题结果页效果图](./assets/search-page-preview.svg)
+
+- 支持关键词检索
+- 可按学科 / 难度 / 题型 / 标签继续筛选
+- 列表里先看答案摘要，再展开解析或进入详情
+
+### 后台 / 导入工作台
+
+![后台与导入预览](./assets/admin-import-preview.svg)
+
+- 管理员权限校验
+- 题目维护、审核、归档与恢复
+- 批量导入、预检、任务回执与审计能力
 
 ## 这是什么
 
@@ -23,7 +49,7 @@
 - 首页第一屏就是搜索框
 - 提供热门搜索、最近搜索、按学科找题
 - 可直接进入结果页或题目详情页
-- 文案去掉 Demo / 治理 / 技术说明，保持用户态表达
+- 文案保持用户态表达，避免首页出现技术 / 管理 / 治理说明
 
 ### 2) 结果页更像正常使用流
 
@@ -33,16 +59,12 @@
 - 答案摘要与展开解析
 - 分页浏览与详情跳转
 
-![search](./assets/search-page-preview.svg)
-
 ### 3) 管理能力保留在后台与文档
 
 - 管理员权限校验
 - 题目列表筛选、编辑、归档与恢复
 - 批量导入、预检、任务回执
 - 审核状态、生命周期与审计能力
-
-![admin-import](./assets/admin-import-preview.svg)
 
 ## 页面结构
 
@@ -57,49 +79,6 @@ miniprogram/pages/
 ├── edit        # 新增/编辑题目
 └── import      # 批量导入与预检
 ```
-
-## 技术 / 架构概览
-
-### 前端
-
-- 微信小程序原生页面
-- 页面位于 `miniprogram/pages/*`
-- 公共样式集中在 `miniprogram/app.wxss`
-- API 封装在 `miniprogram/utils/question.js`
-
-### 云函数
-
-- `searchQuestions`
-- `getQuestionDetail`
-- `checkAdmin`
-- `saveQuestion`
-- `deleteQuestion`
-- `importQuestions`
-
-### 数据层
-
-建议使用云开发数据库：
-
-- `questions`
-- `admins`
-- `import_tasks`（推荐，用于导入任务中心 / 预检回执）
-- `audit_logs`（推荐，用于后台审计轨迹）
-
-### 运行模式
-
-- **搜索 / 详情**：支持 mock fallback，方便本地调试与 UI 联调
-- **管理动作**：需要真实云函数与管理员权限
-- **导入动作**：需要真实 `importQuestions` 云函数
-
-更多说明见：
-
-- [`docs/setup.md`](./docs/setup.md)
-- [`docs/first-run-checklist.md`](./docs/first-run-checklist.md)
-- [`docs/architecture.md`](./docs/architecture.md)
-- [`docs/import-normalization.md`](./docs/import-normalization.md)
-- [`docs/governance-model.md`](./docs/governance-model.md)
-- [`docs/demo-script.md`](./docs/demo-script.md)
-- [`docs/release-prep-0.1.2.md`](./docs/release-prep-0.1.2.md)
 
 ## 快速开始
 
@@ -167,6 +146,49 @@ miniprogram/pages/
   "role": "super_admin"
 }
 ```
+
+## 技术 / 架构概览
+
+### 前端
+
+- 微信小程序原生页面
+- 页面位于 `miniprogram/pages/*`
+- 公共样式集中在 `miniprogram/app.wxss`
+- API 封装在 `miniprogram/utils/question.js`
+
+### 云函数
+
+- `searchQuestions`
+- `getQuestionDetail`
+- `checkAdmin`
+- `saveQuestion`
+- `deleteQuestion`
+- `importQuestions`
+
+### 数据层
+
+建议使用云开发数据库：
+
+- `questions`
+- `admins`
+- `import_tasks`（推荐，用于导入任务中心 / 预检回执）
+- `audit_logs`（推荐，用于后台审计轨迹）
+
+### 运行模式
+
+- **搜索 / 详情**：支持 mock fallback，方便本地调试与 UI 联调
+- **管理动作**：需要真实云函数与管理员权限
+- **导入动作**：需要真实 `importQuestions` 云函数
+
+更多说明见：
+
+- [`docs/setup.md`](./docs/setup.md)
+- [`docs/first-run-checklist.md`](./docs/first-run-checklist.md)
+- [`docs/architecture.md`](./docs/architecture.md)
+- [`docs/import-normalization.md`](./docs/import-normalization.md)
+- [`docs/governance-model.md`](./docs/governance-model.md)
+- [`docs/demo-script.md`](./docs/demo-script.md)
+- [`docs/release-prep-0.1.2.md`](./docs/release-prep-0.1.2.md)
 
 ## 建议查看顺序
 
