@@ -15,7 +15,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.3.3",
-  "appid": "touristappid",
+  "appid": "wx33b53b8c2d9d1fda",
   "projectname": "wechat-question-miniapp",
   "cloudfunctionRoot": "cloudfunctions/",
   "miniprogramRoot": "miniprogram/",
