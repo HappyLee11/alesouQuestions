@@ -15,7 +15,13 @@ Page({
     list: [],
     loading: false,
     filters: FILTERS,
-    currentFilter: 'all'
+    currentFilter: 'all',
+    summaryCards: [
+      { label: '总题目', value: '0', desc: '当前可管理记录' },
+      { label: '审核中', value: '0', desc: '待继续处理' },
+      { label: '已归档', value: '0', desc: '保留恢复能力' },
+      { label: '最近更新', value: '--', desc: '方便演示时说明变更' }
+    ]
   },
   onShow() {
     this.loadData();
@@ -26,6 +32,17 @@ Page({
   onTapFilter(e) {
     this.setData({ currentFilter: e.currentTarget.dataset.value });
     this.loadData();
+  },
+  updateSummary(list = []) {
+    const latest = list[0] && list[0].updatedAtText ? list[0].updatedAtText : '--';
+    this.setData({
+      summaryCards: [
+        { label: '总题目', value: String(list.length), desc: '当前可管理记录' },
+        { label: '审核中', value: String(list.filter((item) => item.lifecycleState === 'review' || item.reviewStatus === 'pending' || item.reviewStatusText === '待审核').length), desc: '待继续处理' },
+        { label: '已归档', value: String(list.filter((item) => item.status === 'deleted').length), desc: '保留恢复能力' },
+        { label: '最近更新', value: latest, desc: '方便演示时说明变更' }
+      ]
+    });
   },
   async loadData() {
     this.setData({ loading: true });
@@ -53,6 +70,7 @@ Page({
         importPositionText: item.importMeta ? `${item.importMeta.sheetName || '--'} / row ${item.importMeta.rowNumber || '--'}` : '--'
       }));
       this.setData({ list });
+      this.updateSummary(list);
     } catch (error) {
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {

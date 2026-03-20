@@ -9,7 +9,7 @@
     "pages/edit/index"
   ],
   "window": {
-    "navigationBarTitleText": "题库检索",
+    "navigationBarTitleText": "阿乐搜题",
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
     "backgroundTextStyle": "light",

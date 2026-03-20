@@ -70,6 +70,13 @@ Page({
       hasMore: false,
       hasPrev: false
     },
+    resultInsights: [
+      { label: '结果总数', value: '0', desc: '当前命中题目' },
+      { label: '结果来源', value: '本地 mock', desc: '支持云端切换' },
+      { label: '检索模式', value: '关键词', desc: '可切换图片示例' },
+      { label: '展示视图', value: '分组视图', desc: '支持切换列表' }
+    ],
+    activeFilterText: '未启用筛选',
     expandMap: {}
   },
   onLoad(options = {}) {
@@ -93,6 +100,7 @@ Page({
   },
   toggleGroupView() {
     this.setData({ useGroupView: !this.data.useGroupView });
+    this.updateInsights();
   },
   onTapFilter(e) {
     const { field, value } = e.currentTarget.dataset;
@@ -111,6 +119,27 @@ Page({
       typeText: TYPE_LABELS[item.type] || '未知题型'
     };
   },
+  getActiveFilterText() {
+    const { currentFilters } = this.data;
+    const parts = [];
+    if (currentFilters.subject) parts.push(`学科：${currentFilters.subject}`);
+    if (currentFilters.difficulty) parts.push(`难度：${DIFFICULTY_LABELS[currentFilters.difficulty] || currentFilters.difficulty}`);
+    if (currentFilters.type) parts.push(`题型：${TYPE_LABELS[currentFilters.type] || currentFilters.type}`);
+    return parts.length ? parts.join(' · ') : '未启用筛选';
+  },
+  updateInsights() {
+    const { resultMeta, displayList, searchMode, useGroupView, currentFilters } = this.data;
+    const activeCount = ['subject', 'difficulty', 'type'].filter((key) => !!currentFilters[key]).length;
+    this.setData({
+      resultInsights: [
+        { label: '结果总数', value: String(resultMeta.total || displayList.length || 0), desc: '当前命中题目' },
+        { label: '结果来源', value: resultMeta.from === 'cloud' ? '云端' : '本地 mock', desc: `第 ${resultMeta.page || 1} / ${resultMeta.totalPages || 1} 页` },
+        { label: '检索模式', value: searchMode === 'image' ? '图片示例' : '关键词', desc: activeCount ? `${activeCount} 个筛选生效` : '可继续缩小范围' },
+        { label: '展示视图', value: useGroupView ? '分组视图' : '列表视图', desc: useGroupView ? '更适合现场讲解' : '更适合快速浏览' }
+      ],
+      activeFilterText: this.getActiveFilterText()
+    });
+  },
   applyLocalFilters() {
     const { list, currentFilters, groupOptions, groupIndex, keyword } = this.data;
     const filtered = (list || []).filter((item) => {
@@ -124,6 +153,7 @@ Page({
       displayList: filtered,
       groupedList: groupItems(filtered, groupOptions[groupIndex].value)
     });
+    this.updateInsights();
   },
   async handleSearch(options = {}) {
     const targetPage = options.page || (options.resetPage ? 1 : this.data.resultMeta.page || 1);

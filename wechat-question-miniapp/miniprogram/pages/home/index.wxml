@@ -1,11 +1,18 @@
-<view class="container page-home">
+<view class="container page-shell page-home">
   <view class="hero-card">
-    <view class="eyebrow">Demo Ready Mini Program</view>
-    <view class="hero-title">题库检索与管理演示版</view>
-    <view class="hero-subtitle">面向明早演示做了统一视觉、搜索增强、后台流转优化和更真实的数据模型。</view>
+    <view class="eyebrow">Demo Ready · Productized UI</view>
+    <view class="hero-title">阿乐搜题 · 题库检索与治理演示版</view>
+    <view class="hero-subtitle">把搜题入口、结果体验、后台治理、批量导入和 GitHub 项目呈现整理成一套更像产品 Demo 的小程序样子。</view>
+    <view class="quick-nav">
+      <view class="quick-nav-item">统一视觉系统</view>
+      <view class="quick-nav-item">搜索摘要与分页</view>
+      <view class="quick-nav-item">后台治理流转</view>
+      <view class="quick-nav-item">导入预检链路</view>
+    </view>
     <view class="btn-row btn-row-tight">
       <button class="primary-btn" bindtap="goSearch">开始搜索</button>
-      <button class="secondary-btn" bindtap="goAdmin">进入后台</button>
+      <button class="ghost-btn" bindtap="goAdmin">进入后台</button>
+      <button class="secondary-btn" bindtap="goImport">查看导入页</button>
     </view>
   </view>
 
@@ -20,24 +27,66 @@
     </view>
     <view class="metric-card">
       <view class="metric-value">{{stats.draft}}</view>
-      <view class="metric-label">草稿</view>
+      <view class="metric-label">草稿中</view>
     </view>
     <view class="metric-card">
       <view class="metric-value">{{stats.tags}}</view>
-      <view class="metric-label">标签数</view>
+      <view class="metric-label">标签数量</view>
     </view>
   </view>
 
-  <view class="card">
-    <view class="section-title">推荐搜索</view>
-    <view class="tag-row">
+  <view class="glass-card section-block">
+    <view class="section-header">
+      <view>
+        <view class="section-title">推荐搜索</view>
+        <view class="section-caption">直接点热词就能开始演示搜索、筛选和结果高亮。</view>
+      </view>
+      <text class="toolbar-note">用户侧入口</text>
+    </view>
+    <view class="tag-row small-gap">
       <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapHotTerm">{{item}}</text>
     </view>
   </view>
 
-  <view class="card">
-    <view class="section-title">这版可直接演示什么</view>
+  <view class="card section-block">
+    <view class="section-header">
+      <view>
+        <view class="section-title">这版可以怎么讲</view>
+        <view class="section-caption">按 2~4 分钟的演示节奏排好顺序，现场切页更顺。</view>
+      </view>
+      <text class="toolbar-note">Demo Flow</text>
+    </view>
+    <view class="timeline-grid large-gap">
+      <view class="timeline-card" wx:for="{{demoJourney}}" wx:key="step">
+        <view class="timeline-step">STEP {{item.step}}</view>
+        <view class="timeline-title">{{item.title}}</view>
+        <view class="timeline-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card section-block">
+    <view class="section-header">
+      <view>
+        <view class="section-title">产品化亮点</view>
+        <view class="section-caption">不只是“能跑”，而是尽量像一套可讲、可展示、可继续迭代的产品原型。</view>
+      </view>
+    </view>
     <view class="feature-item" wx:for="{{featureList}}" wx:key="title">
+      <view class="feature-title">{{item.title}}</view>
+      <view class="feature-desc">{{item.desc}}</view>
+    </view>
+  </view>
+
+  <view class="glass-card section-block">
+    <view class="section-header">
+      <view>
+        <view class="section-title">仓库展示面也一起补齐</view>
+        <view class="section-caption">README、结构说明、上手步骤和视觉占位图都会同步整理。</view>
+      </view>
+      <text class="toolbar-note">GitHub First Impression</text>
+    </view>
+    <view class="feature-item" wx:for="{{repoHighlights}}" wx:key="title">
       <view class="feature-title">{{item.title}}</view>
       <view class="feature-desc">{{item.desc}}</view>
     </view>

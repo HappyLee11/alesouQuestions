@@ -1,12 +1,37 @@
-<view class="container">
-  <view class="card">
-    <view class="title">{{isEdit ? '编辑题目' : '新增题目'}}</view>
-    <view class="subtitle">这版把内容治理字段一起带上：题目除了基础题干/答案，还可以维护负责人、审核人、审核备注、外部来源与变更原因；编辑页也会展示最近版本快照和状态流转。</view>
-    <view class="meta-row large-gap">
+<view class="container page-shell">
+  <view class="hero-card">
+    <view class="eyebrow">Editor</view>
+    <view class="hero-title">{{isEdit ? '编辑题目' : '新增题目'}}</view>
+    <view class="hero-subtitle">把题干、答案、标签、负责人、审核备注、来源引用和变更原因一起维护，让这个页更像真实内容后台，而不是只填几个基础字段。</view>
+    <view class="meta-row wrap-row large-gap">
       <text class="meta-pill">版本：v{{version}}</text>
       <text class="meta-pill meta-pill-light">生命周期：{{lifecycleState}}</text>
+      <text class="meta-pill meta-pill-light">模式：{{isEdit ? '编辑已有题目' : '创建新题目'}}</text>
     </view>
-    <view class="meta-row large-gap" wx:if="{{importMeta}}">
+  </view>
+
+  <view class="panel-grid">
+    <view class="panel-card">
+      <view class="panel-title">当前标题</view>
+      <view class="panel-desc">{{form.title || '还未填写标题，可先录入一个可读性强的题目名称。'}}</view>
+    </view>
+    <view class="panel-card">
+      <view class="panel-title">审核状态</view>
+      <view class="panel-desc">{{reviewOptions[reviewIndex].label}} · {{statusOptions[statusIndex].label}}</view>
+    </view>
+    <view class="panel-card">
+      <view class="panel-title">归属信息</view>
+      <view class="panel-desc">{{form.ownerTeam || '未设置团队'}} / {{form.owner || '未设置负责人'}}</view>
+    </view>
+    <view class="panel-card">
+      <view class="panel-title">搜索摘要</view>
+      <view class="panel-desc">{{form.answerSummary || '建议填写一句适合展示在搜索结果中的答案摘要。'}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="subtitle">这版把内容治理字段一起带上：题目除了基础题干/答案，还可以维护负责人、审核人、审核备注、外部来源与变更原因；编辑页也会展示最近版本快照和状态流转。</view>
+    <view class="meta-row wrap-row large-gap" wx:if="{{importMeta}}">
       <text class="meta-pill meta-pill-light">导入批次：{{importMeta.batchId || '--'}}</text>
       <text class="meta-pill meta-pill-light">任务：{{importMeta.taskId || '--'}}</text>
       <text class="meta-pill meta-pill-light">位置：{{importMeta.sheetName || '--'}} / row {{importMeta.rowNumber || '--'}}</text>

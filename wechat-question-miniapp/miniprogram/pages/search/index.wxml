@@ -1,10 +1,21 @@
-<view class="container">
-  <view class="card">
+<view class="container page-shell">
+  <view class="hero-card">
+    <view class="eyebrow">Search Experience</view>
+    <view class="hero-title">搜题结果页</view>
+    <view class="hero-subtitle">支持关键词检索、图片示例入口、结果分组、高亮摘要、筛选与分页，适合直接做现场产品演示。</view>
+    <view class="btn-row btn-row-tight">
+      <button class="primary-btn search-btn" loading="{{loading}}" bindtap="handleSearch">立即搜索</button>
+      <button class="ghost-btn" size="mini" bindtap="onUseImageDemo">演示图片搜题入口</button>
+      <button class="secondary-btn" size="mini" bindtap="toggleGroupView">{{useGroupView ? '切换列表视图' : '切换分组视图'}}</button>
+    </view>
+  </view>
+
+  <view class="glass-card">
     <view class="search-bar">
       <input class="input search-input" placeholder="输入关键词，或粘贴图片识别出的题干片段" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
       <button class="primary-btn search-btn" loading="{{loading}}" bindtap="handleSearch">搜索</button>
     </view>
-    <view class="search-toolbar search-toolbar-wrap">
+    <view class="search-toolbar search-toolbar-wrap large-gap">
       <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onChangeSort">
         <view class="picker-chip">排序：{{sortOptions[sortIndex].label}}</view>
       </picker>
@@ -13,11 +24,25 @@
       </picker>
       <view class="toolbar-note">结果源：{{resultMeta.from === 'cloud' ? '云端' : '本地 mock'}} · 共 {{resultMeta.total}} 条 · 第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
     </view>
-    <view class="btn-row btn-row-tight">
-      <button class="secondary-btn" size="mini" bindtap="onUseImageDemo">演示图片搜题入口</button>
-      <button class="secondary-btn" size="mini" bindtap="toggleGroupView">{{useGroupView ? '切换列表视图' : '切换分组视图'}}</button>
+    <view class="subtitle small-gap">面向真实场景：先用热词或 OCR 文本发起检索，再通过学科 / 难度 / 题型逐步缩小范围，最后进入详情页查看完整答案与解析。</view>
+  </view>
+
+  <view class="panel-grid">
+    <view class="panel-card" wx:for="{{resultInsights}}" wx:key="label">
+      <view class="panel-title">{{item.label}}</view>
+      <view class="kpi-value">{{item.value}}</view>
+      <view class="panel-desc">{{item.desc}}</view>
     </view>
-    <view class="subtitle small-gap">面向真实场景：支持关键词检索、图片识别文本回填、结果过多后的分组/筛选、分页浏览，以及无结果时的兜底建议。</view>
+  </view>
+
+  <view class="glass-card">
+    <view class="section-header">
+      <view>
+        <view class="section-title">当前筛选状态</view>
+        <view class="section-caption">{{activeFilterText}}</view>
+      </view>
+      <text class="toolbar-note">{{displayList.length}} 条正在展示</text>
+    </view>
   </view>
 
   <view class="card" wx:if="{{history.length}}">
@@ -38,7 +63,13 @@
   </view>
 
   <view class="card" wx:if="{{displayList.length}}">
-    <view class="section-title">缩小结果范围</view>
+    <view class="section-header">
+      <view>
+        <view class="section-title">缩小结果范围</view>
+        <view class="section-caption">优先按学科或难度筛一层，再进入详情页看完整答案。</view>
+      </view>
+      <text class="toolbar-note">现场演示更清楚</text>
+    </view>
     <view class="filter-label">学科</view>
     <view class="tag-row small-gap">
       <text class="filter-chip {{currentFilters.subject === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.subject}}" wx:key="label" data-field="subject" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
@@ -107,8 +138,11 @@
 
   <view class="card" wx:if="{{displayList.length}}">
     <view class="section-header">
-      <view class="section-title">分页浏览</view>
-      <text class="toolbar-note">第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</text>
+      <view>
+        <view class="section-title">分页浏览</view>
+        <view class="section-caption">第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
+      </view>
+      <text class="toolbar-note">适合大题库场景演示</text>
     </view>
     <view class="btn-row">
       <button size="mini" bindtap="goPrevPage" disabled="{{!resultMeta.hasPrev}}">上一页</button>
@@ -117,7 +151,7 @@
   </view>
 
   <view wx:else class="card empty">
-    <view>暂无匹配结果</view>
+    <view class="title-small">暂无匹配结果</view>
     <view class="subtitle small-gap">可以试试：1）换更短的词；2）使用图片搜题入口示例；3）从这些相关词继续搜。</view>
     <view class="tag-row small-gap" wx:if="{{resultMeta.suggestions.length}}">
       <text class="tag tag-clickable" wx:for="{{resultMeta.suggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>

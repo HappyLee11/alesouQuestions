@@ -1,5 +1,5 @@
 page {
-  background: linear-gradient(180deg, #f3f7ff 0%, #f8fafc 100%);
+  background: linear-gradient(180deg, #f3f7ff 0%, #f8fafc 45%, #eef4ff 100%);
   color: #1f2937;
   font-size: 28rpx;
 }
@@ -8,25 +8,65 @@ page {
   padding: 28rpx;
 }
 
+.page-shell {
+  position: relative;
+}
+
+.page-shell::before {
+  content: '';
+  position: fixed;
+  top: -120rpx;
+  right: -80rpx;
+  width: 320rpx;
+  height: 320rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, rgba(96, 165, 250, 0) 70%);
+  pointer-events: none;
+}
+
 .card,
 .result-card,
 .hero-card,
-.metric-card {
+.metric-card,
+.glass-card {
   background: rgba(255, 255, 255, 0.96);
   border-radius: 28rpx;
   padding: 28rpx;
   margin-bottom: 24rpx;
   box-shadow: 0 16rpx 40rpx rgba(15, 23, 42, 0.08);
-  border: 1rpx solid rgba(219, 231, 245, 0.7);
+  border: 1rpx solid rgba(219, 231, 245, 0.75);
+  box-sizing: border-box;
 }
 
 .hero-card {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #60a5fa 100%);
+  background: linear-gradient(135deg, #123fa5 0%, #2563eb 58%, #60a5fa 100%);
   color: #fff;
+  overflow: hidden;
+  position: relative;
+}
+
+.hero-card::after {
+  content: '';
+  position: absolute;
+  right: -40rpx;
+  top: -20rpx;
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.glass-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(245, 249, 255, 0.95) 100%);
+}
+
+.section-block + .section-block {
+  margin-top: 4rpx;
 }
 
 .eyebrow {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-size: 22rpx;
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
@@ -39,19 +79,24 @@ page {
   font-size: 36rpx;
   font-weight: 700;
   margin-bottom: 16rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-subtitle,
 .subtitle,
 .feature-desc,
-.content-text {
+.content-text,
+.body-text {
   font-size: 26rpx;
   line-height: 1.7;
   color: #5b6473;
 }
 
 .hero-subtitle {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.92);
+  position: relative;
+  z-index: 1;
 }
 
 .no-gap,
@@ -68,6 +113,8 @@ page {
   gap: 18rpx;
   flex-wrap: wrap;
   margin-top: 24rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .btn-row-tight {
@@ -78,16 +125,27 @@ button {
   border-radius: 999rpx;
   font-size: 28rpx;
   padding: 0 28rpx;
+  border: none;
+}
+
+button::after {
+  border: none;
 }
 
 .primary-btn {
-  background: #2563eb;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #fff;
 }
 
 .secondary-btn {
   background: #eef4ff;
   color: #1d4ed8;
+}
+
+.ghost-btn {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border: 1rpx solid rgba(255, 255, 255, 0.22);
 }
 
 .danger-btn {
@@ -97,7 +155,10 @@ button {
 
 .stats-grid,
 .info-grid,
-.grid-2 {
+.grid-2,
+.panel-grid,
+.feature-grid,
+.timeline-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 18rpx;
@@ -105,7 +166,10 @@ button {
 
 .stats-grid > view,
 .info-grid > view,
-.grid-2 > view {
+.grid-2 > view,
+.panel-grid > view,
+.feature-grid > view,
+.timeline-grid > view {
   width: calc(50% - 9rpx);
   box-sizing: border-box;
 }
@@ -123,7 +187,9 @@ button {
 .metric-label,
 .info-label,
 .footer-note,
-.toolbar-note {
+.toolbar-note,
+.helper-text,
+.muted-text {
   font-size: 24rpx;
   color: #6b7280;
 }
@@ -133,7 +199,8 @@ button {
 .result-footer,
 .list-title-row,
 .meta-row,
-.search-bar {
+.search-bar,
+.inline-between {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -141,18 +208,86 @@ button {
 }
 
 .section-title,
-.feature-title {
+.feature-title,
+.panel-title {
   font-size: 30rpx;
   font-weight: 600;
   color: #111827;
+}
+
+.section-caption {
+  font-size: 24rpx;
+  color: #64748b;
+  margin-top: 8rpx;
 }
 
 .feature-item + .feature-item {
   margin-top: 18rpx;
 }
 
+.feature-grid .feature-item,
+.panel-grid .panel-card,
+.timeline-grid .timeline-card,
+.kpi-grid .kpi-card {
+  width: calc(50% - 9rpx);
+}
+
+.panel-card,
+.timeline-card,
+.kpi-card,
+.info-card {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+  border: 1rpx solid #dbe7fb;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.panel-accent {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.kpi-value {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.kpi-label {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.kpi-desc,
+.panel-desc {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #22c55e;
+  margin-right: 10rpx;
+}
+
+.status-dot-warning {
+  background: #f59e0b;
+}
+
+.status-dot-danger {
+  background: #ef4444;
+}
+
 .tag-row,
-.filter-row {
+.filter-row,
+.badge-row,
+.pill-row {
   display: flex;
   flex-wrap: wrap;
   gap: 14rpx;
@@ -165,7 +300,8 @@ button {
 .tag,
 .meta-pill,
 .filter-chip,
-.picker-chip {
+.picker-chip,
+.soft-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -176,9 +312,14 @@ button {
   font-size: 22rpx;
 }
 
+.soft-badge {
+  background: #eff6ff;
+}
+
 .meta-pill-light,
 .picker-chip,
-.filter-chip {
+.filter-chip,
+.soft-badge-neutral {
   background: #f3f4f6;
   color: #4b5563;
 }
@@ -203,7 +344,8 @@ button {
 
 .link-text,
 .error-text,
-.highlight-text {
+.highlight-text,
+.link-btn {
   color: #2563eb;
 }
 
@@ -300,8 +442,75 @@ button {
   margin-top: 10rpx;
 }
 
+.tiny-gap {
+  margin-top: 6rpx;
+}
+
 .empty {
   text-align: center;
   color: #9ca3af;
   padding: 56rpx 28rpx;
+}
+
+.page-intro {
+  margin-bottom: 24rpx;
+}
+
+.page-headline {
+  font-size: 42rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #0f172a;
+}
+
+.page-subheadline {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #64748b;
+}
+
+.quick-nav {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 22rpx;
+  flex-wrap: wrap;
+}
+
+.quick-nav-item {
+  padding: 12rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+  font-size: 22rpx;
+}
+
+.timeline-card {
+  position: relative;
+}
+
+.timeline-step {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 10rpx;
+}
+
+.timeline-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.timeline-desc {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.divider {
+  height: 1rpx;
+  background: #edf2f7;
+  margin: 22rpx 0;
 }

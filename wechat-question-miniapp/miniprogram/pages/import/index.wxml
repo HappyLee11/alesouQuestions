@@ -1,6 +1,35 @@
-<view class="container">
+<view class="container page-shell">
+  <view class="hero-card">
+    <view class="eyebrow">Import Workflow</view>
+    <view class="hero-title">批量导入题目</view>
+    <view class="hero-subtitle">把“粘 JSON 写库”升级成更像真实系统的导入链路：本地暂存、字段映射、云端预检、去重策略和任务化结果回执。</view>
+  </view>
+
+  <view class="timeline-grid">
+    <view class="timeline-card">
+      <view class="timeline-step">STEP 01</view>
+      <view class="timeline-title">选择模板</view>
+      <view class="timeline-desc">支持 JSON / JSONL / CSV 文本，以及 workbook manifest 模拟 XLSX / CSV 文件任务。</view>
+    </view>
+    <view class="timeline-card">
+      <view class="timeline-step">STEP 02</view>
+      <view class="timeline-title">本地暂存预览</view>
+      <view class="timeline-desc">先解析字段、统计列结构和样例记录，再决定是否预检或导入。</view>
+    </view>
+    <view class="timeline-card">
+      <view class="timeline-step">STEP 03</view>
+      <view class="timeline-title">云端预检 / 导入</view>
+      <view class="timeline-desc">带上批次号、映射规则、去重策略和治理默认值，返回更像正式系统的处理结果。</view>
+    </view>
+    <view class="timeline-card">
+      <view class="timeline-step">STEP 04</view>
+      <view class="timeline-title">治理信息入库</view>
+      <view class="timeline-desc">补齐 importMeta、governance、statusHistory、versionSnapshots 等扩展字段。</view>
+    </view>
+  </view>
+
   <view class="card">
-    <view class="title">批量导入题目</view>
+    <view class="title">导入配置</view>
     <view class="subtitle">这版导入不再只是“粘 JSON 写库”，而是模拟真实的文件导入暂存流：支持 JSON / JSONL / CSV 文本，也支持 workbook manifest 方式来表达 XLSX/CSV 文件、sheet、row、任务 ID、审批策略和默认治理信息。</view>
 
     <view class="field-label field-gap">导入模板 / 文件类型</view>
@@ -34,7 +63,7 @@
     </view>
   </view>
 
-  <view class="card" wx:if="{{preview}}">
+  <view class="glass-card" wx:if="{{preview}}">
     <view class="section-title">本地暂存预览</view>
     <view class="feature-desc">已解析记录：{{preview.total}}</view>
     <view class="feature-desc">检测到的列：{{preview.columns.join('、')}}</view>
@@ -58,7 +87,7 @@
     <view class="feature-desc">支持别名：title ← title / 题目 / questionTitle；content ← content / 题干 / description；answer ← answer / 答案 / result</view>
   </view>
 
-  <view class="card" wx:if="{{importResult}}">
+  <view class="glass-card" wx:if="{{importResult}}">
     <view class="section-title">云端预检 / 导入结果</view>
     <view class="feature-desc">状态：{{importResult.success ? '成功' : '失败'}}</view>
     <view class="feature-desc" wx:if="{{importResult.data}}">有效：{{importResult.data.valid !== undefined ? importResult.data.valid : '-'}} ｜ 无效：{{importResult.data.invalid !== undefined ? importResult.data.invalid : importResult.data.failed || 0}}</view>

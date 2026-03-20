@@ -1,46 +1,25 @@
-<view class="container">
-  <view class="card">
+<view class="container page-shell">
+  <view class="hero-card">
+    <view class="eyebrow">Admin Console</view>
+    <view class="hero-title">题库治理后台</view>
+    <view class="hero-subtitle">统一展示管理员校验、内容生命周期、审核态、导入治理与编辑维护，适合在 Demo 中承接用户侧搜索页面。</view>
+    <view class="quick-nav">
+      <view class="quick-nav-item">权限校验</view>
+      <view class="quick-nav-item">状态治理</view>
+      <view class="quick-nav-item">批量导入</view>
+      <view class="quick-nav-item">版本快照</view>
+    </view>
+  </view>
+
+  <view class="glass-card">
     <view class="title">后台管理</view>
     <view wx:if="{{checking}}" class="subtitle">正在校验管理员权限...</view>
     <block wx:elif="{{isAdmin}}">
       <view class="subtitle">管理员校验已通过，可进行题库维护与演示。这版把“发布 / 待审核 / 归档”生命周期也展示出来，更接近真实运营后台。</view>
-      <view class="meta-row large-gap">
+      <view class="meta-row wrap-row large-gap">
         <text class="meta-pill">OPENID：{{openid || '--'}}</text>
         <text class="meta-pill meta-pill-light">角色：{{admin && admin.role ? admin.role : 'admin'}}</text>
-      </view>
-      <view class="stats-grid admin-stats">
-        <view class="metric-card">
-          <view class="metric-value">{{stats.total}}</view>
-          <view class="metric-label">总题数</view>
-        </view>
-        <view class="metric-card">
-          <view class="metric-value">{{stats.published}}</view>
-          <view class="metric-label">已发布</view>
-        </view>
-        <view class="metric-card">
-          <view class="metric-value">{{stats.review}}</view>
-          <view class="metric-label">待审核</view>
-        </view>
-        <view class="metric-card">
-          <view class="metric-value">{{stats.draft}}</view>
-          <view class="metric-label">草稿</view>
-        </view>
-        <view class="metric-card">
-          <view class="metric-value">{{stats.approved}}</view>
-          <view class="metric-label">审核通过</view>
-        </view>
-        <view class="metric-card">
-          <view class="metric-value">{{stats.pending}}</view>
-          <view class="metric-label">待处理</view>
-        </view>
-        <view class="metric-card">
-          <view class="metric-value">{{stats.rejected}}</view>
-          <view class="metric-label">已驳回</view>
-        </view>
-        <view class="metric-card">
-          <view class="metric-value">{{stats.deleted}}</view>
-          <view class="metric-label">回收站</view>
-        </view>
+        <text class="meta-pill meta-pill-light">状态：已授权</text>
       </view>
       <view class="btn-row">
         <button class="primary-btn" bindtap="goList">题目列表</button>
@@ -51,8 +30,39 @@
     <view wx:else class="subtitle">当前账号不是管理员。请在云数据库 `admins` 集合中配置 openid，并将 enabled 设为 true。</view>
   </view>
 
+  <view class="stats-grid admin-stats" wx:if="{{isAdmin}}">
+    <view class="metric-card"><view class="metric-value">{{stats.total}}</view><view class="metric-label">总题数</view></view>
+    <view class="metric-card"><view class="metric-value">{{stats.published}}</view><view class="metric-label">已发布</view></view>
+    <view class="metric-card"><view class="metric-value">{{stats.review}}</view><view class="metric-label">审核中</view></view>
+    <view class="metric-card"><view class="metric-value">{{stats.draft}}</view><view class="metric-label">草稿</view></view>
+    <view class="metric-card"><view class="metric-value">{{stats.approved}}</view><view class="metric-label">审核通过</view></view>
+    <view class="metric-card"><view class="metric-value">{{stats.pending}}</view><view class="metric-label">待处理</view></view>
+    <view class="metric-card"><view class="metric-value">{{stats.rejected}}</view><view class="metric-label">已驳回</view></view>
+    <view class="metric-card"><view class="metric-value">{{stats.deleted}}</view><view class="metric-label">回收站</view></view>
+  </view>
+
   <view class="card" wx:if="{{isAdmin}}">
-    <view class="section-title">推荐演示顺序</view>
+    <view class="section-header">
+      <view>
+        <view class="section-title">后台模块</view>
+        <view class="section-caption">每个入口都能单独讲，也能串成完整治理链路。</view>
+      </view>
+    </view>
+    <view class="panel-grid large-gap">
+      <view class="panel-card panel-accent" wx:for="{{moduleCards}}" wx:key="title" data-action="{{item.action}}" bindtap="onTapModule">
+        <view class="panel-title">{{item.title}}</view>
+        <view class="panel-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="glass-card" wx:if="{{isAdmin}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">推荐演示顺序</view>
+        <view class="section-caption">先讲用户侧，再讲后台治理，最后落到导入和版本历史。</view>
+      </view>
+    </view>
     <view class="feature-item">
       <view class="feature-title">1. 先从首页进入搜索页</view>
       <view class="feature-desc">演示热词、搜索历史、高亮结果、分页浏览和筛选分组。</view>
@@ -64,6 +74,18 @@
     <view class="feature-item">
       <view class="feature-title">3. 最后展示导入页</view>
       <view class="feature-desc">演示多模板暂存、字段映射补充、预检、去重和导入结果反馈。</view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{isAdmin}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">这版后台强调的治理能力</view>
+        <view class="section-caption">比“单纯增删改查”更接近真实内容运营系统。</view>
+      </view>
+    </view>
+    <view class="feature-desc" wx:for="{{governanceChecklist}}" wx:key="*this">
+      <text class="status-dot"></text>{{item}}
     </view>
   </view>
 </view>

@@ -1,0 +1,36 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" fill="#F8FAFC"/>
+  <rect x="52" y="36" width="1096" height="648" rx="28" fill="#FFFFFF" stroke="#DBE7FB"/>
+  <rect x="88" y="72" width="1024" height="170" rx="28" fill="url(#g2)"/>
+  <text x="124" y="128" fill="white" font-size="36" font-family="Arial" font-weight="700">搜题结果页 · Search Experience</text>
+  <text x="124" y="168" fill="#DCEBFF" font-size="22" font-family="Arial">关键词检索、图片示例入口、结果分组、高亮摘要、筛选与分页</text>
+  <rect x="88" y="270" width="1024" height="96" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
+  <rect x="120" y="298" width="560" height="40" rx="20" fill="#FFFFFF" stroke="#DBE7FB"/>
+  <rect x="706" y="298" width="140" height="40" rx="20" fill="#2563EB"/>
+  <rect x="866" y="298" width="210" height="40" rx="20" fill="#EEF4FF"/>
+  <rect x="88" y="392" width="238" height="118" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
+  <rect x="342" y="392" width="238" height="118" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
+  <rect x="596" y="392" width="238" height="118" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
+  <rect x="850" y="392" width="262" height="118" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
+  <rect x="88" y="536" width="494" height="112" rx="24" fill="#FFFFFF" stroke="#DBE7FB"/>
+  <rect x="618" y="536" width="494" height="112" rx="24" fill="#FFFFFF" stroke="#DBE7FB"/>
+  <text x="124" y="438" fill="#0F172A" font-size="26" font-family="Arial" font-weight="700">结果总数</text>
+  <text x="124" y="474" fill="#2563EB" font-size="32" font-family="Arial" font-weight="700">12</text>
+  <text x="378" y="438" fill="#0F172A" font-size="26" font-family="Arial" font-weight="700">结果来源</text>
+  <text x="378" y="474" fill="#2563EB" font-size="32" font-family="Arial" font-weight="700">云端</text>
+  <text x="632" y="438" fill="#0F172A" font-size="26" font-family="Arial" font-weight="700">检索模式</text>
+  <text x="632" y="474" fill="#2563EB" font-size="32" font-family="Arial" font-weight="700">关键词</text>
+  <text x="886" y="438" fill="#0F172A" font-size="26" font-family="Arial" font-weight="700">展示视图</text>
+  <text x="886" y="474" fill="#2563EB" font-size="32" font-family="Arial" font-weight="700">分组视图</text>
+  <text x="120" y="582" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">JavaScript 闭包是什么？</text>
+  <text x="120" y="618" fill="#64748B" font-size="18" font-family="Arial">支持命中高亮、答案摘要与标签区块</text>
+  <text x="650" y="582" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">Redis 为什么适合做缓存？</text>
+  <text x="650" y="618" fill="#64748B" font-size="18" font-family="Arial">支持分页、筛选和继续跳转详情页</text>
+  <defs>
+    <linearGradient id="g2" x1="88" y1="72" x2="1112" y2="242" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123FA5"/>
+      <stop offset="0.58" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#60A5FA"/>
+    </linearGradient>
+  </defs>
+</svg>

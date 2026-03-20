@@ -1,5 +1,19 @@
-<view class="container">
-  <view class="card">
+<view class="container page-shell">
+  <view class="hero-card">
+    <view class="eyebrow">Question Inventory</view>
+    <view class="hero-title">题目列表与状态管理</view>
+    <view class="hero-subtitle">在这里集中展示题库记录、审核态、生命周期、导入批次和版本信息，方便讲后台内容治理。</view>
+  </view>
+
+  <view class="panel-grid">
+    <view class="panel-card" wx:for="{{summaryCards}}" wx:key="label">
+      <view class="panel-title">{{item.label}}</view>
+      <view class="kpi-value">{{item.value}}</view>
+      <view class="panel-desc">{{item.desc}}</view>
+    </view>
+  </view>
+
+  <view class="glass-card">
     <view class="search-bar">
       <input class="input search-input" placeholder="按标题 / 标签 / 答案搜索" value="{{keyword}}" bindinput="onKeywordInput" bindconfirm="loadData" />
       <button class="primary-btn search-btn" bindtap="loadData" loading="{{loading}}">刷新</button>
@@ -9,6 +23,7 @@
         <view class="filter-chip {{currentFilter === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filters}}" wx:key="value" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</view>
       </view>
     </scroll-view>
+    <view class="toolbar-note small-gap">支持在管理视角下查看已归档题目，并保留恢复入口。</view>
   </view>
 
   <view wx:if="{{list.length}}">
@@ -29,7 +44,7 @@
       <view class="subtitle small-gap">归属：{{item.ownerTeamText}} / {{item.ownerText}}</view>
       <view class="subtitle small-gap">导入：{{item.importBatchText}} ｜ {{item.importPositionText}}</view>
       <view class="subtitle">最近更新：{{item.updatedAtText}}</view>
-      <view class="tag-row inline-tags">
+      <view class="tag-row inline-tags small-gap">
         <text class="tag" wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
       </view>
       <view class="btn-row">

@@ -15,7 +15,19 @@ Page({
       approved: 0,
       pending: 0,
       rejected: 0
-    }
+    },
+    moduleCards: [
+      { title: '题目列表', desc: '筛选、搜索、归档与恢复，展示生命周期状态。', action: 'list' },
+      { title: '新增 / 编辑', desc: '维护题干、答案、负责人、审核备注和版本快照。', action: 'create' },
+      { title: '批量导入', desc: '本地暂存 → 云端预检 → 正式导入，适合讲治理链路。', action: 'import' }
+    ],
+    governanceChecklist: [
+      '管理员权限校验',
+      '生命周期 / 审核态统计',
+      '题目归档与恢复',
+      '版本快照与变更原因',
+      '导入任务批次与来源信息'
+    ]
   },
   async onShow() {
     await this.checkAccess();
@@ -62,6 +74,12 @@ Page({
         rejected: items.filter((item) => item.reviewStatus === 'rejected').length
       }
     });
+  },
+  onTapModule(e) {
+    const { action } = e.currentTarget.dataset;
+    if (action === 'list') return this.goList();
+    if (action === 'import') return this.goImport();
+    return this.goCreate();
   },
   goList() {
     wx.navigateTo({ url: '/pages/list/index' });

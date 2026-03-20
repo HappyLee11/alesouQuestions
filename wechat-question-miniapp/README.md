@@ -1,92 +1,140 @@
-# WeChat Question Search Mini Program
+# 阿乐搜题 / WeChat Question Search Mini Program
 
-一个更接近预商用 v4 的微信小程序题库 Demo：既展示用户侧搜索体验，也展示管理员侧题目录入、审核 / 生命周期治理、归档恢复和批量导入治理。
+一个更像**产品 Demo / 预商用原型**的微信小程序题库项目：既能展示用户侧搜题体验，也能展示管理员侧题库治理、批量导入、审核状态与生命周期管理。
 
-## 这次 v4 强化的亮点
+> GitHub repo: `HappyLee11/alesouQuestions`  
+> 当前仓库目录：`wechat-question-miniapp`
 
-- **导入更像真实系统**：支持 JSON / JSONL / CSV 文本暂存，也支持 workbook manifest 方式模拟 XLSX/CSV 文件导入任务，先本地解析 / 暂存，再云端预检，再正式导入
-- **数据归一化更完整**：支持内置别名 + 自定义 `fieldMappings`，补齐 `reviewStatus`、`lifecycleState`、`version`、`importMeta`、`governance`、`versionSnapshots`
-- **搜索接口更正式**：增加 `pagination` / `request` / `excerpt` / `matchedFields` / `searchScore`
-- **前端搜索体验更完整**：补齐分页浏览、结果摘要与正式接口风格返回
-- **后台治理更严谨**：编辑页支持摘要、标题变体、OCR 文本、关联题、审核状态；归档恢复保留原状态
+![overview](./assets/hero-overview.svg)
 
-## 功能概览
+## 这是什么
 
-### 用户侧
+这不是“只有一个搜索框 + 一个结果列表”的小程序样板，而是一套更完整的题库检索 Demo：
 
-- 首页卖点卡片与热词入口
-- 题目关键词搜索 / 图片搜题入口占位
-- 搜索历史与热门搜索
-- 搜索结果高亮、排序、分组与筛选
-- 正式化分页返回与翻页演示
-- 无结果兜底建议
-- 题目详情页（含元数据、标题变体、相关题）
+- **用户侧**：首页、搜题、结果分组/筛选/分页、详情页、相关推荐
+- **管理侧**：管理员校验、题目列表、编辑维护、归档恢复、审核态与生命周期
+- **导入侧**：JSON / JSONL / CSV / workbook manifest，多模板暂存、字段映射、云端预检、去重策略
+- **仓库侧**：README、架构说明、Demo 路线、视觉占位图，方便别人第一次打开仓库就看懂项目
 
-### 管理侧
+## 项目亮点
+
+### 1) 更像产品的搜题体验
+
+- Landing / Home 页面有产品定位、推荐热词、Demo 路线
+- 搜索页支持：
+  - 关键词检索
+  - 图片搜题入口占位（OCR 文本回填示例）
+  - 高亮命中摘要
+  - 学科 / 难度 / 题型筛选
+  - 分组视图 / 列表视图切换
+  - 分页浏览
+  - 空结果兜底建议
+- 详情页补齐答案摘要、完整解析、标签和相关题跳转
+
+![search](./assets/search-page-preview.svg)
+
+### 2) 更像真实后台的内容治理能力
 
 - 管理员权限校验
-- 后台数据统计卡片（发布 / 草稿 / 待审核 / 回收站 / 审核态）
-- 题目列表搜索与状态筛选
-- 新增 / 编辑题目
-- 生命周期与审核状态管理
-- 题目归档与恢复（代替直接硬删除）
-- 批量导入题目（本地暂存、多模板解析、字段别名映射、预检、去重、错误反馈）
+- 生命周期与审核状态统计
+- 题目列表筛选、搜索、归档与恢复
+- 编辑页支持：
+  - 标题变体 / OCR 文本
+  - 来源引用 / 外部 ID
+  - 负责人 / 团队 / 审核人
+  - 审核备注 / 变更原因
+  - 版本快照 / 状态流转
 
-## 目录结构
+### 3) 更像正式系统的批量导入流程
+
+- 支持 `JSON / JSONL / CSV / workbook manifest`
+- 支持别名映射与自定义 `fieldMappings`
+- 支持“本地暂存 → 云端预检 → 正式导入”三段式流程
+- 支持 `skip / update` 去重策略
+- 导入后补齐 `importMeta` / `governance` / `statusHistory` / `versionSnapshots`
+
+![admin-import](./assets/admin-import-preview.svg)
+
+## 页面结构
 
 ```text
-wechat-question-miniapp/
-├── miniprogram/
-│   ├── app.js
-│   ├── app.json
-│   ├── app.wxss
-│   ├── pages/
-│   │   ├── home/
-│   │   ├── search/
-│   │   ├── detail/
-│   │   ├── admin/
-│   │   ├── import/
-│   │   ├── list/
-│   │   └── edit/
-│   └── utils/
-├── cloudfunctions/
-│   ├── searchQuestions/
-│   ├── getQuestionDetail/
-│   ├── checkAdmin/
-│   ├── saveQuestion/
-│   ├── deleteQuestion/
-│   └── importQuestions/
-├── data/
-├── docs/
-└── project.config.json
+miniprogram/pages/
+├── home    # Landing / 产品入口
+├── search  # 搜题结果页
+├── detail  # 题目详情页
+├── admin   # 管理后台首页
+├── list    # 题目列表
+├── edit    # 新增/编辑题目
+└── import  # 批量导入与预检
 ```
+
+## 技术 / 架构概览
+
+### 前端
+
+- 微信小程序原生页面
+- 页面位于 `miniprogram/pages/*`
+- 公共样式集中在 `miniprogram/app.wxss`
+- API 封装在 `miniprogram/utils/question.js`
+
+### 云函数
+
+- `searchQuestions`
+- `getQuestionDetail`
+- `checkAdmin`
+- `saveQuestion`
+- `deleteQuestion`
+- `importQuestions`
+
+### 数据层
+
+建议使用云开发数据库：
+
+- `questions`
+- `admins`
+
+### 运行模式
+
+- **搜索 / 详情**：支持 mock fallback，方便 UI 演示
+- **管理动作**：需要真实云函数与管理员权限
+- **导入动作**：需要真实 `importQuestions` 云函数
+
+更多说明见：
+
+- [`docs/setup.md`](./docs/setup.md)
+- [`docs/architecture.md`](./docs/architecture.md)
+- [`docs/import-normalization.md`](./docs/import-normalization.md)
+- [`docs/governance-model.md`](./docs/governance-model.md)
+- [`docs/demo-script.md`](./docs/demo-script.md)
 
 ## 快速开始
 
 ### 1. 环境准备
 
-- 安装微信开发者工具
-- 开通云开发环境
-- 准备一个小程序 AppID（无 AppID 模式也可先调 UI）
+你需要：
+
+- 微信开发者工具
+- 一个小程序 AppID（没有也可先用游客模式调 UI）
+- 一个云开发环境（若要跑真实后台动作）
 
 ### 2. 导入项目
 
-推荐配置：
+在微信开发者工具中导入：
 
-- 项目根目录：`wechat-question-miniapp`
-- 小程序目录：`miniprogram`
-- 云函数目录：`cloudfunctions`
+- **项目根目录**：`wechat-question-miniapp`
+- **小程序目录**：`miniprogram`
+- **云函数目录**：`cloudfunctions`
 
 ### 3. 配置云环境 ID
 
-需要修改：
+把以下文件中的 `your-cloud-env-id` 改成真实值：
 
 - `miniprogram/app.js`
 - `project.config.json`
 
 ### 4. 创建数据库集合
 
-建议创建：
+创建：
 
 - `questions`
 - `admins`
@@ -104,86 +152,79 @@ wechat-question-miniapp/
 
 ### 6. 初始化数据
 
-- 先导入 `data/sample-questions.json`
-- 或者先参考 `data/import-workbook-manifest.json` 模拟 XLSX/CSV 导入任务
-- 登录管理员后，在导入页粘贴 JSON / JSONL / CSV 文本，或直接粘贴 workbook manifest JSON
+推荐先用这些文件：
 
-## 当前推荐的数据模型
-
-```json
-{
-  "title": "Redis 为什么适合做热点数据缓存？",
-  "titleVariants": ["Redis 热点缓存原因", "缓存为什么用 Redis"],
-  "content": "请从存储方式和访问速度的角度，解释 Redis 常用于缓存层的原因。",
-  "answer": "内存存储、读写速度快",
-  "answerSummary": "核心原因是内存存储、低延迟、高吞吐。",
-  "analysis": "Redis 基于内存，QPS 高。",
-  "tags": ["Redis", "缓存", "后端"],
-  "type": "qa",
-  "options": [],
-  "subject": "后端开发",
-  "category": "缓存",
-  "difficulty": "medium",
-  "source": "系统设计训练",
-  "year": 2025,
-  "score": 5,
-  "status": "published",
-  "reviewStatus": "approved",
-  "lifecycleState": "published",
-  "imageText": "图片题干里有 Redis 热点数据缓存",
-  "relatedIds": ["q4"],
-  "version": 4,
-  "governance": {
-    "owner": "内容运营 A",
-    "ownerTeam": "后端题库组",
-    "reviewer": "审核员 B",
-    "reviewComment": "导入后进入审核池",
-    "approvalPolicy": "manual-review",
-    "changeReason": "bulk import"
-  },
-  "isDeleted": false,
-  "createdAt": 1710000000000,
-  "updatedAt": 1710000000000,
-  "createdBy": "openid",
-  "updatedBy": "openid",
-  "deletedAt": null,
-  "deletedBy": "",
-  "deletedReason": "",
-  "importMeta": {
-    "mode": "staging",
-    "sourceType": "json-array",
-    "templateType": "legacy-json",
-    "batchId": "demo-batch-001"
-  }
-}
-```
-
-## Demo 建议流程
-
-1. **首页**：介绍这是一个题库检索 + 治理后台的小程序 Demo
-2. **搜索页**：演示热门词、历史记录、图片搜题入口、分组/筛选/分页、空结果建议
-3. **详情页**：展示更完整的题目元信息、答案展开、相关题
-4. **后台首页**：展示管理员校验与生命周期 / 审核态统计
-5. **题目列表**：演示筛选、负责人 / 团队、导入批次、版本 / 审核态、归档 / 恢复
-6. **编辑页**：演示外部来源、审核备注、变更原因、最近版本快照与状态流转
-7. **导入页**：切换 JSON / JSONL / CSV / workbook manifest 模板，先做暂存预览，再云端预检，再执行导入
-
-## 已知限制
-
-- 搜索云函数当前仍是 `limit(500)` 后过滤，超大题库需要改为索引/分页方案
-- 图片搜题目前是演示入口，占位了 OCR → 关键词召回链路，尚未接真实识图能力
-- CSV / Excel 这里实现的是文本暂存解析，尚未实现真正文件上传解析
-- 搜索与详情保留 mock fallback，但管理动作仍要求真实管理员权限和云函数部署
-- 导入映射目前支持别名与 JSON 形式 `fieldMappings`，真正商用还需要可视化映射 UI 与导入任务中心
-
-## 文档
-
-- `docs/setup.md`
-- `docs/architecture.md`
-- `docs/import-normalization.md`
-- `docs/governance-model.md`
-- `docs/scenario-solution-v3.md`
 - `data/sample-questions.json`
 - `data/import-template.csv`
 - `data/import-workbook-manifest.json`
 - `data/question-governance-schema.json`
+
+### 7. 配置管理员
+
+在 `admins` 集合中添加一条记录：
+
+```json
+{
+  "openid": "your-openid",
+  "name": "Primary Admin",
+  "enabled": true,
+  "role": "super_admin"
+}
+```
+
+## 建议 Demo 流程（3~5 分钟）
+
+### 路线 A：产品演示
+
+1. 从 **首页** 讲产品定位与入口
+2. 进入 **搜索页**，演示热词、历史、高亮、筛选、分页
+3. 打开 **详情页**，演示答案摘要、完整解析与相关推荐
+4. 切到 **后台首页**，讲管理员与状态统计
+5. 打开 **题目列表 / 编辑页**，讲生命周期与版本信息
+6. 进入 **导入页**，讲预检、去重、导入回执
+
+### 路线 B：技术实现演示
+
+1. 先讲 `miniprogram/pages/*` 页面分层
+2. 再讲 `utils/question.js` 如何封装云函数调用与 mock fallback
+3. 最后讲 `cloudfunctions/*`、导入归一化与治理模型
+
+## 数据模型摘要
+
+推荐题目字段包含：
+
+- 基础：`title` `content` `answer` `analysis` `tags` `type` `options`
+- 检索：`subject` `category` `difficulty` `source` `year` `score`
+- 搜索增强：`answerSummary` `titleVariants` `imageText` `relatedIds`
+- 生命周期：`status` `reviewStatus` `lifecycleState` `version`
+- 治理：`governance` `statusHistory` `versionSnapshots`
+- 导入：`importMeta`
+
+完整示例见：
+
+- [`docs/setup.md`](./docs/setup.md)
+- [`data/question-governance-schema.json`](./data/question-governance-schema.json)
+
+## 当前适合继续迭代的方向
+
+- 接入真实 OCR / 图片上传链路
+- 搜索改为索引 / 游标分页，而不是大范围内存过滤
+- 把 CSV / Excel 升级成真实文件上传解析
+- 增加导入任务中心与操作日志
+- 增加测试、页面校验与更细的错误提示
+- 增加截图 / 真机录屏 GIF
+
+## 仓库建议查看顺序
+
+如果你第一次打开这个仓库，建议按下面顺序看：
+
+1. `README.md`
+2. `docs/demo-script.md`
+3. `docs/setup.md`
+4. `docs/architecture.md`
+5. `miniprogram/pages/*`
+6. `cloudfunctions/*`
+
+## License
+
+当前仓库未单独声明 License；如要公开分发，建议补充许可证说明。

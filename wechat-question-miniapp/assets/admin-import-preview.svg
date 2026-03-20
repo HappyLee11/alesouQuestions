@@ -1,0 +1,27 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" fill="#F3F7FF"/>
+  <rect x="50" y="40" width="1100" height="640" rx="28" fill="#FFFFFF" stroke="#DBE7FB"/>
+  <rect x="86" y="76" width="1028" height="160" rx="28" fill="url(#g3)"/>
+  <text x="124" y="132" fill="white" font-size="36" font-family="Arial" font-weight="700">后台治理 + 批量导入</text>
+  <text x="124" y="170" fill="#DCEBFF" font-size="22" font-family="Arial">生命周期、审核态、版本快照、导入预检与批次追踪</text>
+  <rect x="86" y="272" width="320" height="156" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
+  <rect x="440" y="272" width="320" height="156" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
+  <rect x="794" y="272" width="320" height="156" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
+  <text x="120" y="330" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">状态统计</text>
+  <text x="120" y="366" fill="#64748B" font-size="18" font-family="Arial">总题数 / 已发布 / 审核中 / 回收站</text>
+  <text x="474" y="330" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">编辑维护</text>
+  <text x="474" y="366" fill="#64748B" font-size="18" font-family="Arial">负责人、审核备注、来源引用、变更原因</text>
+  <text x="828" y="330" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">导入预检</text>
+  <text x="828" y="366" fill="#64748B" font-size="18" font-family="Arial">字段映射、去重策略、任务分片结果</text>
+  <rect x="86" y="464" width="1028" height="168" rx="24" fill="#FBFDFF" stroke="#E2E8F0"/>
+  <text x="122" y="520" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">治理链路</text>
+  <text x="122" y="560" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">List → Edit → Import</text>
+  <text x="122" y="598" fill="#64748B" font-size="20" font-family="Arial">在一个 Demo 里把内容运营后台最关键的链路讲清楚：查看库存、维护记录、批量入库。</text>
+  <defs>
+    <linearGradient id="g3" x1="86" y1="76" x2="1114" y2="236" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123FA5"/>
+      <stop offset="0.58" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#60A5FA"/>
+    </linearGradient>
+  </defs>
+</svg>

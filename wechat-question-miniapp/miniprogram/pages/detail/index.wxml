@@ -1,13 +1,28 @@
-<view class="container">
-  <view wx:if="{{detail}}" class="card">
-    <view class="title no-gap">{{detail.title}}</view>
+<view class="container page-shell">
+  <view wx:if="{{detail}}" class="hero-card">
+    <view class="eyebrow">Question Detail</view>
+    <view class="hero-title">{{detail.title}}</view>
+    <view class="hero-subtitle">在详情页补齐题干、答案、解析、标签、来源信息和相关题，让搜索后的用户路径更完整。</view>
     <view class="meta-row large-gap wrap-row">
       <text class="meta-pill">{{detail.subject || '未分类'}}</text>
       <text class="meta-pill meta-pill-light">{{detail.category || '通用'}}</text>
       <text class="meta-pill meta-pill-light">{{detail.difficultyText}}</text>
       <text class="meta-pill meta-pill-light">{{detail.statusText}}</text>
     </view>
+  </view>
 
+  <view wx:if="{{detail}}" class="panel-grid">
+    <view class="panel-card">
+      <view class="panel-title">答案摘要</view>
+      <view class="panel-desc">{{detail.answerShort}}</view>
+    </view>
+    <view class="panel-card">
+      <view class="panel-title">最近更新</view>
+      <view class="panel-desc">{{detail.updatedAtText}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{detail}}" class="card">
     <view class="field-block" wx:if="{{detail.titleVariants && detail.titleVariants.length}}">
       <view class="field-label">标题变体 / 别名</view>
       <view class="tag-row">
@@ -63,7 +78,7 @@
     </view>
   </view>
 
-  <view class="card" wx:if="{{related.length}}">
+  <view class="glass-card" wx:if="{{related.length}}">
     <view class="section-title">相关题目</view>
     <view class="subtitle">当用户觉得当前答案还不够时，可继续跳转到相近题目，而不是直接终止在单题详情。</view>
     <view class="result-card compact-result" wx:for="{{related}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRelated">
