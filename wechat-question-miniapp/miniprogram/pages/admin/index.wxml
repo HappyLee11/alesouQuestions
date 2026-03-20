@@ -106,10 +106,13 @@
       </view>
       <text class="toolbar-note">{{taskSourceLabel}}</text>
     </view>
-    <view class="feature-item" wx:for="{{recentImportTasks}}" wx:key="_id">
+    <view class="feature-item" wx:for="{{recentImportTasks}}" wx:key="taskId">
       <view class="feature-title">{{item.statusLabel}} ｜ {{item.taskName || item.batchId}}</view>
       <view class="feature-desc">批次：{{item.batchId}} ｜ 状态：{{item.taskStatus || '--'}} ｜ {{item.sourceType}} / {{item.templateType}} ｜ {{item.timeText}}</view>
       <view class="feature-desc">总 {{item.total}} ｜ 有效 {{item.valid}} ｜ 无效 {{item.invalid}} ｜ 预警 {{item.warnings}} ｜ 新增 {{item.inserted}} ｜ 更新 {{item.updated}}</view>
+      <view class="btn-row">
+        <button size="mini" class="secondary-btn" bindtap="continueImportTask" data-receipt-id="{{item.localReceiptId}}">{{item.resumable ? '继续处理这批任务' : '打开导入页'}}</button>
+      </view>
     </view>
   </view>
 

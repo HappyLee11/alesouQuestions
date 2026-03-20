@@ -1,8 +1,7 @@
 const api = require('../../utils/question');
 const { formatTime } = require('../../utils');
 const { hasPermission, syncAdminContext } = require('../../utils/permissions');
-
-const IMPORT_TASKS_KEY = 'question-import-task-receipts';
+const { loadLocalReceipts, attachLocalReceiptHints } = require('../../utils/import-task');
 const QUEUE_FILTERS = [
   { label: '全部待处理', value: 'all' },
   { label: '待审核', value: 'pending' },
@@ -40,7 +39,7 @@ Page({
     await this.bootstrap();
   },
   loadCachedTasks() {
-    const recentImportTasks = (wx.getStorageSync(IMPORT_TASKS_KEY) || []).slice(0, 8).map((item) => ({
+    const recentImportTasks = loadLocalReceipts(8).map((item) => ({
       ...item,
       timeText: item.createdAt ? formatTime(item.createdAt) : '--'
     }));
@@ -80,11 +79,11 @@ Page({
   async loadOverview() {
     try {
       const overview = await api.getAdminOverview();
-      const recentImportTasks = (overview.recentImportTasks || []).map((item) => ({
+      const recentImportTasks = attachLocalReceiptHints((overview.recentImportTasks || []).map((item) => ({
         ...item,
         timeText: item.updatedAt ? formatTime(item.updatedAt) : '--',
         statusLabel: item.mode === 'preview' ? '已预检' : '已导入'
-      }));
+      })));
       const recentAuditLogs = (overview.recentAuditLogs || []).map((item) => ({
         ...item,
         timeText: item.createdAt ? formatTime(item.createdAt) : '--'
@@ -235,6 +234,11 @@ Page({
   },
   goImport() {
     wx.navigateTo({ url: '/pages/import/index' });
+  },
+  continueImportTask(e) {
+    const { receiptId } = e.currentTarget.dataset;
+    const url = receiptId ? `/pages/import/index?receiptId=${receiptId}` : '/pages/import/index';
+    wx.navigateTo({ url });
   },
   goList() {
     wx.navigateTo({ url: '/pages/list/index' });

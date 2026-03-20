@@ -2,8 +2,7 @@ const api = require('../../utils/question');
 const { safeJsonParse, formatTime } = require('../../utils');
 const { hasPermission, syncAdminContext } = require('../../utils/permissions');
 const { buildDemoJsonText, buildDemoWorkbookManifest, buildFieldMappingsText, buildAdminSeedText } = require('../../utils/bootstrap');
-
-const IMPORT_TASKS_KEY = 'question-import-task-receipts';
+const { IMPORT_TASKS_KEY, loadLocalReceipts, getReceiptById } = require('../../utils/import-task');
 
 const TEMPLATE_PRESETS = {
   json: {
@@ -372,6 +371,7 @@ Page({
     defaultReviewer: '',
     importReason: '批量导入新题',
     recentTasks: [],
+    restoredReceiptLabel: '',
     resultSummary: null,
     stageMeta: null,
     readiness: null,
@@ -384,10 +384,13 @@ Page({
       updatedAtText: '--'
     }
   },
-  onLoad() {
+  onLoad(options = {}) {
     this.loadRecentTasks();
     this.applyPresetDefaults(this.data.presetKey, false);
     this.updatePreview(this.data.text, this.data.presetKey);
+    if (options.receiptId) {
+      this.restoreRecentTask(options.receiptId, false);
+    }
     this.bootstrapAccess();
   },
   async bootstrapAccess() {
@@ -427,6 +430,7 @@ Page({
       text: preset.example,
       importResult: null,
       resultSummary: null,
+      restoredReceiptLabel: '',
       previewState: {
         statusText: '尚未预检',
         batchMatched: false,
@@ -462,6 +466,7 @@ Page({
       importReason: '上传后首日初始化演示题库',
       importResult: null,
       resultSummary: null,
+      restoredReceiptLabel: '',
       previewState: {
         statusText: '已填入演示样例，建议先预检',
         batchMatched: false,
@@ -490,7 +495,7 @@ Page({
   },
   onInput(e) {
     const text = e.detail.value;
-    this.setData({ text, importResult: null, resultSummary: null });
+    this.setData({ text, importResult: null, resultSummary: null, restoredReceiptLabel: '' });
     this.resetPreviewState();
     this.updatePreview(text, this.data.presetKey);
   },
@@ -573,11 +578,52 @@ Page({
     this.refreshReadiness();
   },
   loadRecentTasks() {
-    const recentTasks = (wx.getStorageSync(IMPORT_TASKS_KEY) || []).map((item) => ({
+    const recentTasks = loadLocalReceipts(8).map((item) => ({
       ...item,
       timeText: item.createdAt ? formatTime(item.createdAt) : '--'
     }));
     this.setData({ recentTasks });
+  },
+  restoreRecentTask(receiptId, showToast = true) {
+    const receipt = getReceiptById(receiptId);
+    if (!receipt || !receipt.snapshot || !receipt.snapshot.text) {
+      if (showToast) wx.showToast({ title: '这条回执没有可恢复的暂存内容', icon: 'none' });
+      return;
+    }
+    const snapshot = receipt.snapshot || {};
+    const presetKey = snapshot.presetKey || 'json';
+    const presetIndex = PRESET_KEYS.indexOf(presetKey);
+    const nextIndex = presetIndex >= 0 ? presetIndex : 0;
+    this.setData({
+      presetKey,
+      presetIndex: nextIndex,
+      text: snapshot.text || '',
+      fieldMappingsText: snapshot.fieldMappingsText || buildFieldMappingsText(),
+      importBatchId: snapshot.importBatchId || this.data.importBatchId,
+      taskName: snapshot.taskName || this.data.taskName,
+      fileName: snapshot.fileName || this.data.fileName,
+      fileType: snapshot.fileType || this.data.fileType,
+      sourceRef: snapshot.sourceRef || this.data.sourceRef,
+      dedupeIndex: Number.isInteger(snapshot.dedupeIndex) ? snapshot.dedupeIndex : this.data.dedupeIndex,
+      dedupeStrategy: DEDUPE_OPTIONS[Number.isInteger(snapshot.dedupeIndex) ? snapshot.dedupeIndex : this.data.dedupeIndex].value,
+      statusIndex: Number.isInteger(snapshot.statusIndex) ? snapshot.statusIndex : this.data.statusIndex,
+      reviewIndex: Number.isInteger(snapshot.reviewIndex) ? snapshot.reviewIndex : this.data.reviewIndex,
+      approvalIndex: Number.isInteger(snapshot.approvalIndex) ? snapshot.approvalIndex : this.data.approvalIndex,
+      defaultOwnerTeam: snapshot.defaultOwnerTeam !== undefined ? snapshot.defaultOwnerTeam : this.data.defaultOwnerTeam,
+      defaultOwner: snapshot.defaultOwner !== undefined ? snapshot.defaultOwner : this.data.defaultOwner,
+      defaultReviewer: snapshot.defaultReviewer !== undefined ? snapshot.defaultReviewer : this.data.defaultReviewer,
+      importReason: snapshot.importReason !== undefined ? snapshot.importReason : this.data.importReason,
+      importResult: null,
+      resultSummary: null,
+      restoredReceiptLabel: `${receipt.statusLabel || '任务回执'} · ${receipt.taskName || receipt.batchId || ''}`
+    });
+    this.resetPreviewState();
+    this.updatePreview(snapshot.text || '', presetKey);
+    if (showToast) wx.showToast({ title: '已恢复到当前暂存区', icon: 'success' });
+  },
+  handleRestoreRecentTask(e) {
+    const { id } = e.currentTarget.dataset;
+    this.restoreRecentTask(id, true);
   },
   saveRecentTask(payload = {}) {
     const current = wx.getStorageSync(IMPORT_TASKS_KEY) || [];
@@ -808,7 +854,25 @@ Page({
       updated: data.updated || 0,
       deduplicated: data.deduplicated || 0,
       ownerTeam: this.data.defaultOwnerTeam || '--',
-      statusLabel: mode === 'preview' ? '已预检' : '已导入'
+      statusLabel: mode === 'preview' ? '已预检' : '已导入',
+      snapshot: {
+        presetKey: this.data.presetKey,
+        text: this.data.text,
+        fieldMappingsText: this.data.fieldMappingsText,
+        importBatchId: this.data.importBatchId,
+        taskName: this.data.taskName,
+        fileName: this.data.fileName,
+        fileType: this.data.fileType,
+        sourceRef: this.data.sourceRef,
+        dedupeIndex: this.data.dedupeIndex,
+        statusIndex: this.data.statusIndex,
+        reviewIndex: this.data.reviewIndex,
+        approvalIndex: this.data.approvalIndex,
+        defaultOwnerTeam: this.data.defaultOwnerTeam,
+        defaultOwner: this.data.defaultOwner,
+        defaultReviewer: this.data.defaultReviewer,
+        importReason: this.data.importReason
+      }
     };
   },
   async previewOnCloud() {

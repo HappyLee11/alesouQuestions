@@ -55,6 +55,8 @@
 - 支持治理默认值：默认状态 / 审核态 / 审批策略 / 负责人 / 团队 / 导入原因
 - 支持 `skip / update` 去重策略
 - 支持最近任务回执，便于把导入页讲成“轻量任务中心”
+- 支持从最近回执恢复整批导入暂存与配置，避免预检失败后整页重填
+- 后台首页 / 任务中心可直接继续处理最近导入任务，管理链路更顺
 - 预检 / 导入会最佳努力写入 `import_tasks`，让后台首页能展示真实任务概览
 - 导入后补齐 `importMeta` / `governance` / `statusHistory` / `versionSnapshots`，并记录审计日志
 
@@ -124,6 +126,7 @@ miniprogram/pages/
 - [`docs/import-normalization.md`](./docs/import-normalization.md)
 - [`docs/governance-model.md`](./docs/governance-model.md)
 - [`docs/demo-script.md`](./docs/demo-script.md)
+- [`docs/release-prep-0.1.2.md`](./docs/release-prep-0.1.2.md)
 
 ## 快速开始
 

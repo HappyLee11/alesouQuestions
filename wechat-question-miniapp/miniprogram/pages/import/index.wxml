@@ -91,6 +91,7 @@
         </view>
         <text class="toolbar-note">staging checksum：{{stageMeta ? stageMeta.stageChecksum : '--'}}</text>
       </view>
+      <view class="feature-desc small-gap" wx:if="{{restoredReceiptLabel}}">已从本地回执恢复：{{restoredReceiptLabel}}</view>
       <view class="grid-2">
         <view>
           <view class="field-label field-gap">任务名称</view>
@@ -302,6 +303,9 @@
         <view class="feature-desc">批次：{{item.batchId}} ｜ 文件：{{item.fileName || '--'}} ｜ {{item.sourceType}} / {{item.templateType}}</view>
         <view class="feature-desc">总 {{item.total}} ｜ 有效 {{item.valid}} ｜ 无效 {{item.invalid}} ｜ 预警 {{item.warnings}} ｜ 新增 {{item.inserted}} ｜ 更新 {{item.updated}}</view>
         <view class="feature-desc">策略：{{item.dedupeStrategy}} ｜ 审批：{{item.approvalPolicy}} ｜ 团队：{{item.ownerTeam || '--'}} ｜ 时间：{{item.timeText}}</view>
+        <view class="btn-row">
+          <button size="mini" class="secondary-btn" data-id="{{item.localReceiptId}}" bindtap="handleRestoreRecentTask" disabled="{{!item.resumable}}">恢复到当前暂存</button>
+        </view>
       </view>
     </view>
   </block>
