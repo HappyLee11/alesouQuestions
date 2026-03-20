@@ -25,7 +25,7 @@
 
   <rect x="88" y="536" width="1024" height="110" rx="24" fill="#FFFFFF" stroke="#DBE7FB"/>
   <text x="122" y="582" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">Redis 为什么适合做缓存？</text>
-  <text x="122" y="618" fill="#64748B" font-size="18" font-family="Arial">列表更直接，结果页不再展示 Demo / mock / 治理说明。</text>
+  <text x="122" y="618" fill="#64748B" font-size="18" font-family="Arial">列表更直接，结果页聚焦答案、解析和继续筛选。</text>
   <rect x="122" y="634" width="82" height="30" rx="15" fill="#E8F0FF"/>
   <text x="146" y="654" fill="#1D4ED8" font-size="15" font-family="Arial">后端</text>
   <rect x="214" y="634" width="82" height="30" rx="15" fill="#F3F4F6"/>

@@ -23,7 +23,7 @@
   <rect x="612" y="328" width="504" height="286" rx="28" fill="#FBFDFF" stroke="#E2E8F0"/>
   <text x="646" y="382" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">结果页</text>
   <text x="646" y="424" fill="#0F172A" font-size="30" font-family="Arial" font-weight="700">筛选、分页、解析更直接</text>
-  <text x="646" y="462" fill="#64748B" font-size="18" font-family="Arial">保留用户真正需要的排序、筛选、答案摘要和详情入口，不再展示演示措辞。</text>
+  <text x="646" y="462" fill="#64748B" font-size="18" font-family="Arial">保留用户真正需要的排序、筛选、答案摘要和详情入口，整体表达更接近日常使用。</text>
   <rect x="646" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
   <text x="670" y="526" fill="#4B5563" font-size="16" font-family="Arial">学科</text>
   <rect x="750" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
