@@ -1,40 +1,75 @@
-<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1200" height="720" fill="#F8FAFC"/>
-  <rect x="52" y="36" width="1096" height="648" rx="28" fill="#FFFFFF" stroke="#DBE7FB"/>
-  <rect x="88" y="72" width="1024" height="170" rx="28" fill="url(#g2)"/>
-  <text x="124" y="132" fill="white" font-size="38" font-family="Arial" font-weight="700">搜索题目</text>
-  <text x="124" y="174" fill="#DCEBFF" font-size="22" font-family="Arial">输入关键词后，继续按学科、难度、题型和标签缩小范围。</text>
-  <rect x="120" y="202" width="590" height="42" rx="21" fill="rgba(255,255,255,0.94)"/>
-  <text x="144" y="228" fill="#64748B" font-size="18" font-family="Arial">输入题目关键词或题干片段</text>
-  <rect x="734" y="202" width="126" height="42" rx="21" fill="#FFFFFF" fill-opacity="0.22"/>
-  <text x="778" y="228" fill="white" font-size="18" font-family="Arial">搜索</text>
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="32" fill="#F5F9FF"/>
+  <circle cx="136" cy="116" r="110" fill="#E0EAFF"/>
+  <circle cx="1066" cy="126" r="124" fill="#D9F1FF"/>
+  <rect x="86" y="88" width="164" height="46" rx="23" fill="#FFFFFF" stroke="#D9E6FF" stroke-width="2"/>
+  <text x="168" y="118" fill="#0F172A" font-size="24" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700" text-anchor="middle">阿乐搜题</text>
+  <rect x="86" y="164" width="134" height="40" rx="20" fill="#FFFFFF" stroke="#D9E6FF"/>
+  <circle cx="108" cy="184" r="8" fill="#2563EB"/>
+  <text x="126" y="190" fill="#0F172A" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">答案解析</text>
+  <rect x="236" y="164" width="134" height="40" rx="20" fill="#FFFFFF" stroke="#D9E6FF"/>
+  <circle cx="258" cy="184" r="8" fill="#10B981"/>
+  <text x="276" y="190" fill="#0F172A" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">题目筛选</text>
+  <rect x="386" y="164" width="134" height="40" rx="20" fill="#FFFFFF" stroke="#D9E6FF"/>
+  <circle cx="408" cy="184" r="8" fill="#F59E0B"/>
+  <text x="426" y="190" fill="#0F172A" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">继续查看</text>
 
-  <rect x="88" y="278" width="1024" height="92" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
-  <text x="122" y="332" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">搜索结果</text>
-  <text x="300" y="332" fill="#64748B" font-size="18" font-family="Arial">共 12 条结果</text>
-  <rect x="888" y="300" width="156" height="40" rx="20" fill="#EEF4FF"/>
-  <text x="928" y="325" fill="#1D4ED8" font-size="18" font-family="Arial">综合排序</text>
+  <g>
+    <rect x="248" y="112" width="350" height="560" rx="36" fill="#0B1220"/>
+    <rect x="262" y="126" width="322" height="532" rx="30" fill="#F5F9FF"/>
+    <rect x="385" y="132" width="76" height="8" rx="4" fill="#0B1220"/>
+    <rect x="262" y="150" width="322" height="98" fill="url(#top1)"/>
+    <text x="294" y="190" fill="white" font-size="28" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">阿乐搜题</text>
+    <text x="294" y="224" fill="#DCEBFF" font-size="16" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">题目、答案、解析，一搜就有</text>
+    <rect x="284" y="266" width="278" height="42" rx="21" fill="white"/>
+    <text x="306" y="293" fill="#64748B" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">闭包</text>
+    <rect x="284" y="328" width="56" height="28" rx="14" fill="#DBEAFE"/>
+    <text x="302" y="347" fill="#1D4ED8" font-size="13" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">全部</text>
+    <rect x="348" y="328" width="56" height="28" rx="14" fill="#EEF4FF"/>
+    <text x="366" y="347" fill="#1D4ED8" font-size="13" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">前端</text>
+    <rect x="412" y="328" width="56" height="28" rx="14" fill="#F3F4F6"/>
+    <text x="430" y="347" fill="#475569" font-size="13" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">中等</text>
+    <rect x="476" y="328" width="56" height="28" rx="14" fill="#F3F4F6"/>
+    <text x="494" y="347" fill="#475569" font-size="13" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">单选</text>
+    <text x="284" y="392" fill="#64748B" font-size="16" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">共 12 条结果</text>
+    <rect x="284" y="412" width="278" height="106" rx="20" fill="#FFFFFF" stroke="#D9E6FF"/>
+    <text x="302" y="444" fill="#0F172A" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">JavaScript 闭包是什么？</text>
+    <text x="302" y="472" fill="#64748B" font-size="14" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">内部函数可以访问外部函数作用域中的变量。</text>
+    <rect x="302" y="486" width="52" height="24" rx="12" fill="#EEF4FF"/>
+    <text x="320" y="502" fill="#1D4ED8" font-size="12" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">前端</text>
+    <rect x="360" y="486" width="52" height="24" rx="12" fill="#EEF4FF"/>
+    <text x="378" y="502" fill="#1D4ED8" font-size="12" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">中等</text>
+    <rect x="284" y="532" width="278" height="106" rx="20" fill="#FFFFFF" stroke="#D9E6FF"/>
+    <text x="302" y="564" fill="#0F172A" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">事件循环中宏任务和微任务的执行顺序</text>
+    <text x="302" y="592" fill="#64748B" font-size="14" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">每轮宏任务结束后，会先清空微任务队列。</text>
+  </g>
 
-  <rect x="88" y="400" width="1024" height="110" rx="24" fill="#FFFFFF" stroke="#DBE7FB"/>
-  <text x="122" y="446" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">JavaScript 闭包是什么？</text>
-  <text x="122" y="482" fill="#64748B" font-size="18" font-family="Arial">支持查看答案摘要、展开解析，并继续进入详情页。</text>
-  <rect x="122" y="498" width="82" height="30" rx="15" fill="#E8F0FF"/>
-  <text x="146" y="518" fill="#1D4ED8" font-size="15" font-family="Arial">前端</text>
-  <rect x="214" y="498" width="82" height="30" rx="15" fill="#F3F4F6"/>
-  <text x="236" y="518" fill="#4B5563" font-size="15" font-family="Arial">中等</text>
+  <g>
+    <rect x="676" y="190" width="378" height="96" rx="28" fill="#FFFFFF" stroke="#D9E6FF"/>
+    <text x="708" y="228" fill="#64748B" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">推荐搜索</text>
+    <rect x="708" y="242" width="96" height="32" rx="16" fill="#EAF2FF"/>
+    <text x="732" y="263" fill="#1D4ED8" font-size="14" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">作用域</text>
+    <rect x="816" y="242" width="96" height="32" rx="16" fill="#EAF2FF"/>
+    <text x="840" y="263" fill="#1D4ED8" font-size="14" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">原型链</text>
+    <rect x="924" y="242" width="98" height="32" rx="16" fill="#EAF2FF"/>
+    <text x="948" y="263" fill="#1D4ED8" font-size="14" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">事件循环</text>
+  </g>
 
-  <rect x="88" y="536" width="1024" height="110" rx="24" fill="#FFFFFF" stroke="#DBE7FB"/>
-  <text x="122" y="582" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">Redis 为什么适合做缓存？</text>
-  <text x="122" y="618" fill="#64748B" font-size="18" font-family="Arial">列表更直接，结果页聚焦答案、解析和继续筛选。</text>
-  <rect x="122" y="634" width="82" height="30" rx="15" fill="#E8F0FF"/>
-  <text x="146" y="654" fill="#1D4ED8" font-size="15" font-family="Arial">后端</text>
-  <rect x="214" y="634" width="82" height="30" rx="15" fill="#F3F4F6"/>
-  <text x="236" y="654" fill="#4B5563" font-size="15" font-family="Arial">简单</text>
+  <g>
+    <rect x="676" y="316" width="378" height="214" rx="28" fill="#FFFFFF" stroke="#D9E6FF"/>
+    <text x="708" y="360" fill="#0F172A" font-size="24" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">Redis 为什么适合做缓存？</text>
+    <text x="708" y="400" fill="#64748B" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">因为它基于内存、读写快，并提供过期与淘汰策略。</text>
+    <rect x="708" y="426" width="72" height="28" rx="14" fill="#EEF4FF"/>
+    <text x="730" y="445" fill="#1D4ED8" font-size="13" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">后端</text>
+    <rect x="788" y="426" width="72" height="28" rx="14" fill="#EEF4FF"/>
+    <text x="810" y="445" fill="#1D4ED8" font-size="13" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">简单</text>
+    <text x="708" y="492" fill="#64748B" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">HTTP 状态码 404 表示什么？</text>
+    <text x="708" y="524" fill="#64748B" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">服务器未找到请求的资源，常见于地址错误或资源已删除。</text>
+  </g>
 
   <defs>
-    <linearGradient id="g2" x1="88" y1="72" x2="1112" y2="242" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#123FA5"/>
-      <stop offset="0.58" stop-color="#2563EB"/>
+    <linearGradient id="top1" x1="262" y1="150" x2="584" y2="248" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
       <stop offset="1" stop-color="#60A5FA"/>
     </linearGradient>
   </defs>

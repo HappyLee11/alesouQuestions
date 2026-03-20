@@ -1,42 +1,82 @@
-<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1200" height="720" rx="32" fill="#EEF4FF"/>
-  <rect x="48" y="40" width="1104" height="640" rx="28" fill="white" stroke="#DBE7FB"/>
-  <rect x="84" y="84" width="1032" height="210" rx="28" fill="url(#g1)"/>
-  <text x="122" y="152" fill="white" font-size="42" font-family="Arial" font-weight="700">阿乐搜题</text>
-  <text x="122" y="202" fill="#DCEBFF" font-size="24" font-family="Arial">打开小程序后，先搜题，再按结果继续筛选和查看解析。</text>
-  <rect x="122" y="230" width="520" height="42" rx="21" fill="rgba(255,255,255,0.94)"/>
-  <text x="148" y="257" fill="#64748B" font-size="18" font-family="Arial">例如：HTTP 状态码 404 是什么</text>
-  <rect x="666" y="230" width="128" height="42" rx="21" fill="#FFFFFF" fill-opacity="0.24"/>
-  <text x="710" y="257" fill="white" font-size="18" font-family="Arial">搜索</text>
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="32" fill="#EEF4FF"/>
+  <circle cx="154" cy="122" r="118" fill="#DCEBFF"/>
+  <circle cx="1088" cy="124" r="132" fill="#D9F1FF"/>
+  <rect x="80" y="82" width="164" height="46" rx="23" fill="#FFFFFF" stroke="#D9E6FF" stroke-width="2"/>
+  <text x="162" y="112" fill="#0F172A" font-size="24" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700" text-anchor="middle">阿乐搜题</text>
+  <rect x="80" y="156" width="134" height="40" rx="20" fill="#FFFFFF" stroke="#D9E6FF"/>
+  <circle cx="102" cy="176" r="8" fill="#10B981"/>
+  <text x="120" y="182" fill="#0F172A" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">真题检索</text>
+  <rect x="230" y="156" width="134" height="40" rx="20" fill="#FFFFFF" stroke="#D9E6FF"/>
+  <circle cx="252" cy="176" r="8" fill="#F59E0B"/>
+  <text x="270" y="182" fill="#0F172A" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">热门搜索</text>
+  <rect x="380" y="156" width="134" height="40" rx="20" fill="#FFFFFF" stroke="#D9E6FF"/>
+  <circle cx="402" cy="176" r="8" fill="#2563EB"/>
+  <text x="420" y="182" fill="#0F172A" font-size="18" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">答案解析</text>
 
-  <rect x="84" y="328" width="504" height="286" rx="28" fill="#FBFDFF" stroke="#E2E8F0"/>
-  <text x="118" y="382" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">首页</text>
-  <text x="118" y="424" fill="#0F172A" font-size="30" font-family="Arial" font-weight="700">搜索框放在第一屏</text>
-  <text x="118" y="462" fill="#64748B" font-size="18" font-family="Arial">热门搜索、最近搜索、按学科找题，用户打开就能开始使用。</text>
-  <rect x="118" y="500" width="122" height="36" rx="18" fill="#E8F0FF"/>
-  <text x="144" y="523" fill="#1D4ED8" font-size="16" font-family="Arial">热门搜索</text>
-  <rect x="254" y="500" width="122" height="36" rx="18" fill="#E8F0FF"/>
-  <text x="280" y="523" fill="#1D4ED8" font-size="16" font-family="Arial">最近搜索</text>
-  <rect x="390" y="500" width="108" height="36" rx="18" fill="#E8F0FF"/>
-  <text x="416" y="523" fill="#1D4ED8" font-size="16" font-family="Arial">按学科找题</text>
+  <g>
+    <rect x="642" y="92" width="212" height="510" rx="34" fill="#0B1220"/>
+    <rect x="656" y="106" width="184" height="482" rx="28" fill="#F5F9FF"/>
+    <rect x="728" y="112" width="40" height="8" rx="4" fill="#0B1220"/>
+    <rect x="656" y="130" width="184" height="92" fill="url(#homeTop)"/>
+    <text x="678" y="166" fill="white" font-size="20" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">阿乐搜题</text>
+    <text x="678" y="194" fill="#DCEBFF" font-size="12" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">题目、答案、解析，一搜就有</text>
+    <rect x="670" y="236" width="156" height="34" rx="17" fill="white"/>
+    <text x="686" y="258" fill="#64748B" font-size="12" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">搜索题目 / 知识点</text>
+    <text x="678" y="304" fill="#0F172A" font-size="14" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">热门搜索</text>
+    <rect x="670" y="318" width="68" height="26" rx="13" fill="#EAF2FF"/>
+    <text x="686" y="336" fill="#1D4ED8" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">高数极限</text>
+    <rect x="744" y="318" width="68" height="26" rx="13" fill="#EAF2FF"/>
+    <text x="760" y="336" fill="#1D4ED8" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">英语阅读</text>
+    <rect x="670" y="364" width="156" height="54" rx="16" fill="#FFFFFF" stroke="#D9E6FF"/>
+    <text x="682" y="386" fill="#0F172A" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">线性回归的损失函数是什么</text>
+    <text x="682" y="406" fill="#64748B" font-size="10" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">昨天 21:18</text>
+    <rect x="670" y="426" width="156" height="54" rx="16" fill="#FFFFFF" stroke="#D9E6FF"/>
+    <text x="682" y="448" fill="#0F172A" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">牛顿第二定律公式</text>
+    <text x="682" y="468" fill="#64748B" font-size="10" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">昨天 20:47</text>
+    <text x="678" y="520" fill="#0F172A" font-size="14" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">按学科找题</text>
+    <rect x="670" y="534" width="44" height="24" rx="12" fill="#EEF4FF"/>
+    <text x="684" y="550" fill="#1D4ED8" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">数学</text>
+    <rect x="720" y="534" width="44" height="24" rx="12" fill="#EEF4FF"/>
+    <text x="734" y="550" fill="#1D4ED8" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">英语</text>
+    <rect x="770" y="534" width="44" height="24" rx="12" fill="#EEF4FF"/>
+    <text x="784" y="550" fill="#1D4ED8" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">物理</text>
+  </g>
 
-  <rect x="612" y="328" width="504" height="286" rx="28" fill="#FBFDFF" stroke="#E2E8F0"/>
-  <text x="646" y="382" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">结果页</text>
-  <text x="646" y="424" fill="#0F172A" font-size="30" font-family="Arial" font-weight="700">筛选、分页、解析更直接</text>
-  <text x="646" y="462" fill="#64748B" font-size="18" font-family="Arial">保留用户真正需要的排序、筛选、答案摘要和详情入口，整体表达更接近日常使用。</text>
-  <rect x="646" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
-  <text x="670" y="526" fill="#4B5563" font-size="16" font-family="Arial">学科</text>
-  <rect x="750" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
-  <text x="774" y="526" fill="#4B5563" font-size="16" font-family="Arial">难度</text>
-  <rect x="854" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
-  <text x="878" y="526" fill="#4B5563" font-size="16" font-family="Arial">题型</text>
-  <rect x="958" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
-  <text x="982" y="526" fill="#4B5563" font-size="16" font-family="Arial">标签</text>
+  <g>
+    <rect x="898" y="132" width="212" height="510" rx="34" fill="#0B1220"/>
+    <rect x="912" y="146" width="184" height="482" rx="28" fill="#F5F9FF"/>
+    <rect x="984" y="152" width="40" height="8" rx="4" fill="#0B1220"/>
+    <rect x="912" y="170" width="184" height="92" fill="url(#searchTop)"/>
+    <text x="934" y="206" fill="white" font-size="20" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">阿乐搜题</text>
+    <text x="934" y="234" fill="#DCEBFF" font-size="12" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">题目、答案、解析，一搜就有</text>
+    <rect x="926" y="276" width="156" height="34" rx="17" fill="white"/>
+    <text x="942" y="298" fill="#64748B" font-size="12" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">闭包</text>
+    <rect x="926" y="328" width="46" height="24" rx="12" fill="#DBEAFE"/>
+    <text x="940" y="344" fill="#1D4ED8" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">全部</text>
+    <rect x="978" y="328" width="46" height="24" rx="12" fill="#EEF4FF"/>
+    <text x="992" y="344" fill="#1D4ED8" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">前端</text>
+    <rect x="1030" y="328" width="46" height="24" rx="12" fill="#F3F4F6"/>
+    <text x="1044" y="344" fill="#475569" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">中等</text>
+    <rect x="926" y="370" width="156" height="86" rx="18" fill="#FFFFFF" stroke="#D9E6FF"/>
+    <text x="938" y="396" fill="#0F172A" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">JavaScript 闭包是什么？</text>
+    <text x="938" y="416" fill="#64748B" font-size="10" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">内部函数可以访问外部函数作用域中的变量。</text>
+    <rect x="938" y="430" width="40" height="20" rx="10" fill="#EEF4FF"/>
+    <text x="948" y="444" fill="#1D4ED8" font-size="10" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">前端</text>
+    <rect x="984" y="430" width="40" height="20" rx="10" fill="#EEF4FF"/>
+    <text x="994" y="444" fill="#1D4ED8" font-size="10" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">中等</text>
+    <rect x="926" y="466" width="156" height="86" rx="18" fill="#FFFFFF" stroke="#D9E6FF"/>
+    <text x="938" y="492" fill="#0F172A" font-size="11" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">事件循环中宏任务和微任务的执行顺序</text>
+    <text x="938" y="512" fill="#64748B" font-size="10" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">每轮宏任务结束后，会先清空微任务队列。</text>
+  </g>
 
   <defs>
-    <linearGradient id="g1" x1="84" y1="84" x2="1116" y2="294" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#123FA5"/>
-      <stop offset="0.58" stop-color="#2563EB"/>
+    <linearGradient id="homeTop" x1="656" y1="130" x2="840" y2="222" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#60A5FA"/>
+    </linearGradient>
+    <linearGradient id="searchTop" x1="912" y1="170" x2="1096" y2="262" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D4ED8"/>
       <stop offset="1" stop-color="#60A5FA"/>
     </linearGradient>
   </defs>
