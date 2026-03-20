@@ -2,16 +2,94 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
-async function ensureAdmin() {
-  const wxContext = cloud.getWXContext();
+const ROLE_PERMISSIONS = {
+  super_admin: {
+    label: '超级管理员',
+    permissions: [
+      'question.read',
+      'question.write',
+      'question.publish',
+      'question.archive',
+      'question.import',
+      'review.approve',
+      'review.reject',
+      'admin.manage',
+      'audit.read',
+      'import.task.read'
+    ]
+  },
+  admin: {
+    label: '管理员',
+    permissions: [
+      'question.read',
+      'question.write',
+      'question.publish',
+      'question.archive',
+      'question.import',
+      'review.approve',
+      'review.reject',
+      'audit.read',
+      'import.task.read'
+    ]
+  },
+  reviewer: {
+    label: '审核员',
+    permissions: [
+      'question.read',
+      'review.approve',
+      'review.reject',
+      'audit.read',
+      'import.task.read'
+    ]
+  },
+  operator: {
+    label: '运营',
+    permissions: [
+      'question.read',
+      'question.write',
+      'question.import',
+      'import.task.read'
+    ]
+  }
+};
+
+async function getAdminRecord(openid = '') {
   const res = await db.collection('admins').where({
-    openid: wxContext.OPENID,
+    openid,
     enabled: true
   }).limit(1).get();
+  return Array.isArray(res.data) && res.data.length ? res.data[0] : null;
+}
+
+async function safeWriteAuditLog(payload = {}) {
+  try {
+    await db.collection('audit_logs').add({
+      data: {
+        ...payload,
+        createdAt: payload.createdAt || Date.now()
+      }
+    });
+  } catch (error) {
+    console.warn('write audit log failed', error);
+  }
+}
+
+async function ensureAdmin() {
+  const wxContext = cloud.getWXContext();
+  const adminRecord = await getAdminRecord(wxContext.OPENID);
+  const roleKey = adminRecord && adminRecord.role ? adminRecord.role : 'admin';
+  const roleMeta = ROLE_PERMISSIONS[roleKey] || ROLE_PERMISSIONS.admin;
   return {
-    isAdmin: Array.isArray(res.data) && res.data.length > 0,
-    openid: wxContext.OPENID
+    isAdmin: !!adminRecord,
+    openid: wxContext.OPENID,
+    adminRecord,
+    role: roleKey,
+    permissions: roleMeta.permissions
   };
+}
+
+function hasPermission(auth = {}, permission = '') {
+  return Array.isArray(auth.permissions) && auth.permissions.includes(permission);
 }
 
 function normalizeTitle(title = '') {
@@ -134,6 +212,20 @@ function normalizePayload(event = {}, openid = '', existing = {}) {
   return payload;
 }
 
+function collectRequiredPermissions(payload = {}, existing = {}) {
+  const needed = ['question.write'];
+  const prevReviewStatus = String(existing.reviewStatus || '').trim().toLowerCase();
+  const nextReviewStatus = String(payload.reviewStatus || '').trim().toLowerCase();
+  const prevStatus = String(existing.status || '').trim().toLowerCase();
+  const nextStatus = String(payload.status || '').trim().toLowerCase();
+
+  if (nextReviewStatus === 'approved' && prevReviewStatus !== 'approved') needed.push('review.approve');
+  if (nextReviewStatus === 'rejected' && prevReviewStatus !== 'rejected') needed.push('review.reject');
+  if (nextStatus === 'published' && prevStatus !== 'published') needed.push('question.publish');
+
+  return Array.from(new Set(needed));
+}
+
 exports.main = async (event = {}) => {
   const auth = await ensureAdmin();
   if (!auth.isAdmin) return { success: false, code: 403, message: 'forbidden' };
@@ -141,6 +233,17 @@ exports.main = async (event = {}) => {
   try {
     const existing = event.id ? (await db.collection('questions').doc(event.id).get()).data || {} : {};
     const payload = normalizePayload(event, auth.openid, existing);
+    const neededPermissions = collectRequiredPermissions(payload, existing);
+    const missingPermissions = neededPermissions.filter((permission) => !hasPermission(auth, permission));
+    if (missingPermissions.length) {
+      return {
+        success: false,
+        code: 403,
+        message: `missing permissions: ${missingPermissions.join(', ')}`,
+        missingPermissions
+      };
+    }
+
     if (!payload.title || !payload.content || !payload.answer) {
       return { success: false, code: 400, message: 'title, content and answer are required' };
     }
@@ -169,6 +272,18 @@ exports.main = async (event = {}) => {
           versionSnapshots
         }
       });
+      await safeWriteAuditLog({
+        action: 'question.update',
+        entityType: 'question',
+        entityId: event.id,
+        entityTitle: payload.title,
+        result: 'success',
+        reason: event.changeReason || 'manual edit',
+        operatorOpenid: auth.openid,
+        operatorName: auth.adminRecord && auth.adminRecord.name ? auth.adminRecord.name : 'Admin',
+        operatorRole: auth.adminRecord && auth.adminRecord.role ? auth.adminRecord.role : 'admin',
+        summary: `updated question to ${payload.status}/${payload.reviewStatus} v${version}`
+      });
       return {
         success: true,
         code: 0,
@@ -189,6 +304,18 @@ exports.main = async (event = {}) => {
         statusHistory,
         versionSnapshots
       }
+    });
+    await safeWriteAuditLog({
+      action: 'question.create',
+      entityType: 'question',
+      entityId: res._id,
+      entityTitle: payload.title,
+      result: 'success',
+      reason: event.changeReason || 'manual create',
+      operatorOpenid: auth.openid,
+      operatorName: auth.adminRecord && auth.adminRecord.name ? auth.adminRecord.name : 'Admin',
+      operatorRole: auth.adminRecord && auth.adminRecord.role ? auth.adminRecord.role : 'admin',
+      summary: `created question as ${payload.status}/${payload.reviewStatus} v1`
     });
     return {
       success: true,

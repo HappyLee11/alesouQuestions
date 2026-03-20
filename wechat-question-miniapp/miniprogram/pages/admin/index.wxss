@@ -1,1 +1,8 @@
 /* admin page */
+.permission-group {
+  margin-top: 24rpx;
+}
+
+.permission-pill {
+  margin-bottom: 12rpx;
+}

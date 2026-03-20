@@ -7,174 +7,195 @@
       <text class="meta-pill">版本：v{{version}}</text>
       <text class="meta-pill meta-pill-light">生命周期：{{lifecycleState}}</text>
       <text class="meta-pill meta-pill-light">模式：{{isEdit ? '编辑已有题目' : '创建新题目'}}</text>
+      <text class="meta-pill meta-pill-light" wx:if="{{admin}}">角色：{{admin.roleLabel || admin.role}}</text>
     </view>
   </view>
 
-  <view class="panel-grid">
-    <view class="panel-card">
-      <view class="panel-title">当前标题</view>
-      <view class="panel-desc">{{form.title || '还未填写标题，可先录入一个可读性强的题目名称。'}}</view>
-    </view>
-    <view class="panel-card">
-      <view class="panel-title">审核状态</view>
-      <view class="panel-desc">{{reviewOptions[reviewIndex].label}} · {{statusOptions[statusIndex].label}}</view>
-    </view>
-    <view class="panel-card">
-      <view class="panel-title">归属信息</view>
-      <view class="panel-desc">{{form.ownerTeam || '未设置团队'}} / {{form.owner || '未设置负责人'}}</view>
-    </view>
-    <view class="panel-card">
-      <view class="panel-title">搜索摘要</view>
-      <view class="panel-desc">{{form.answerSummary || '建议填写一句适合展示在搜索结果中的答案摘要。'}}</view>
-    </view>
-  </view>
-
-  <view class="card">
-    <view class="subtitle">这版把内容治理字段一起带上：题目除了基础题干/答案，还可以维护负责人、审核人、审核备注、外部来源与变更原因；编辑页也会展示最近版本快照和状态流转。</view>
-    <view class="meta-row wrap-row large-gap" wx:if="{{importMeta}}">
-      <text class="meta-pill meta-pill-light">导入批次：{{importMeta.batchId || '--'}}</text>
-      <text class="meta-pill meta-pill-light">任务：{{importMeta.taskId || '--'}}</text>
-      <text class="meta-pill meta-pill-light">位置：{{importMeta.sheetName || '--'}} / row {{importMeta.rowNumber || '--'}}</text>
-    </view>
-
-    <view class="field-label field-gap">标题</view>
-    <input class="input" data-field="title" value="{{form.title}}" bindinput="onFieldInput" placeholder="例如：HTTP 404 表示什么？" />
-
-    <view class="field-label field-gap">标题变体（逗号分隔）</view>
-    <input class="input" data-field="titleVariantsText" value="{{form.titleVariantsText}}" bindinput="onFieldInput" placeholder="HTTP 404 表示什么, 资源不存在状态码" />
-
-    <view class="field-label field-gap">题干</view>
-    <textarea class="textarea" data-field="content" value="{{form.content}}" bindinput="onFieldInput" placeholder="请输入完整题干"></textarea>
-
-    <view class="field-label field-gap">题型</view>
-    <picker mode="selector" range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypeChange">
-      <view class="picker-chip picker-block">{{typeOptions[typeIndex].label}}</view>
-    </picker>
-
-    <view class="field-label field-gap">选项（每行一个，问答题可留空）</view>
-    <textarea class="textarea" data-field="optionsText" value="{{form.optionsText}}" bindinput="onFieldInput" placeholder="A. ...&#10;B. ..."></textarea>
-
-    <view class="field-label field-gap">答案</view>
-    <input class="input" data-field="answer" value="{{form.answer}}" bindinput="onFieldInput" placeholder="请输入标准答案" />
-
-    <view class="field-label field-gap">答案摘要（列表/搜索结果优先展示）</view>
-    <input class="input" data-field="answerSummary" value="{{form.answerSummary}}" bindinput="onFieldInput" placeholder="例如：核心原因是内存存储、低延迟、高吞吐。" />
-
-    <view class="field-label field-gap">解析</view>
-    <textarea class="textarea" data-field="analysis" value="{{form.analysis}}" bindinput="onFieldInput" placeholder="补充解题思路或知识点"></textarea>
-
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">学科</view>
-        <input class="input" data-field="subject" value="{{form.subject}}" bindinput="onFieldInput" placeholder="前端开发" />
+  <view wx:if="{{checking}}" class="card empty">正在校验权限...</view>
+  <view wx:elif="{{!isAdmin}}" class="card empty">当前账号不是管理员，无法进入编辑页。</view>
+  <block wx:else>
+    <view class="panel-grid">
+      <view class="panel-card">
+        <view class="panel-title">当前标题</view>
+        <view class="panel-desc">{{form.title || '还未填写标题，可先录入一个可读性强的题目名称。'}}</view>
       </view>
-      <view>
-        <view class="field-label field-gap">分类</view>
-        <input class="input" data-field="category" value="{{form.category}}" bindinput="onFieldInput" placeholder="JavaScript" />
+      <view class="panel-card">
+        <view class="panel-title">审核状态</view>
+        <view class="panel-desc">{{reviewOptions[reviewIndex].label}} · {{statusOptions[statusIndex].label}}</view>
+      </view>
+      <view class="panel-card">
+        <view class="panel-title">归属信息</view>
+        <view class="panel-desc">{{form.ownerTeam || '未设置团队'}} / {{form.owner || '未设置负责人'}}</view>
+      </view>
+      <view class="panel-card">
+        <view class="panel-title">搜索摘要</view>
+        <view class="panel-desc">{{form.answerSummary || '建议填写一句适合展示在搜索结果中的答案摘要。'}}</view>
       </view>
     </view>
 
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">难度</view>
-        <picker mode="selector" range="{{difficultyOptions}}" range-key="label" value="{{difficultyIndex}}" bindchange="onDifficultyChange">
-          <view class="picker-chip picker-block">{{difficultyOptions[difficultyIndex].label}}</view>
-        </picker>
+    <view class="glass-card" wx:if="{{admin}}">
+      <view class="section-header">
+        <view>
+          <view class="section-title">当前角色能力</view>
+          <view class="section-caption">编辑、审核通过、驳回、发布现在都按角色权限控制，而不是任何管理员都能做全部动作。</view>
+        </view>
       </view>
-      <view>
-        <view class="field-label field-gap">状态</view>
-        <picker mode="selector" range="{{statusOptions}}" range-key="label" value="{{statusIndex}}" bindchange="onStatusChange">
-          <view class="picker-chip picker-block">{{statusOptions[statusIndex].label}}</view>
-        </picker>
-      </view>
-    </view>
-
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">审核状态</view>
-        <picker mode="selector" range="{{reviewOptions}}" range-key="label" value="{{reviewIndex}}" bindchange="onReviewChange">
-          <view class="picker-chip picker-block">{{reviewOptions[reviewIndex].label}}</view>
-        </picker>
-      </view>
-      <view>
-        <view class="field-label field-gap">标签（逗号分隔）</view>
-        <input class="input" data-field="tagsText" value="{{form.tagsText}}" bindinput="onFieldInput" placeholder="HTTP, 网络基础" />
+      <view class="meta-row wrap-row large-gap">
+        <text class="meta-pill meta-pill-light">编辑：{{canEdit ? '允许' : '禁止'}}</text>
+        <text class="meta-pill meta-pill-light">通过：{{canApprove ? '允许' : '禁止'}}</text>
+        <text class="meta-pill meta-pill-light">驳回：{{canReject ? '允许' : '禁止'}}</text>
+        <text class="meta-pill meta-pill-light">发布：{{canPublish ? '允许' : '禁止'}}</text>
       </view>
     </view>
 
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">来源</view>
-        <input class="input" data-field="source" value="{{form.source}}" bindinput="onFieldInput" placeholder="面试高频题" />
+    <view class="card">
+      <view class="subtitle">这版把内容治理字段一起带上：题目除了基础题干/答案，还可以维护负责人、审核人、审核备注、外部来源与变更原因；编辑页也会展示最近版本快照和状态流转。</view>
+      <view class="error-text small-gap" wx:if="{{!canEdit}}">当前角色只有查看权限，不能保存题目；若要审核或发布，也需要对应的角色能力。</view>
+      <view class="meta-row wrap-row large-gap" wx:if="{{importMeta}}">
+        <text class="meta-pill meta-pill-light">导入批次：{{importMeta.batchId || '--'}}</text>
+        <text class="meta-pill meta-pill-light">任务：{{importMeta.taskId || '--'}}</text>
+        <text class="meta-pill meta-pill-light">位置：{{importMeta.sheetName || '--'}} / row {{importMeta.rowNumber || '--'}}</text>
       </view>
-      <view>
-        <view class="field-label field-gap">年份</view>
-        <input class="input" type="number" data-field="year" value="{{form.year}}" bindinput="onFieldInput" placeholder="2025" />
+
+      <view class="field-label field-gap">标题</view>
+      <input class="input" data-field="title" value="{{form.title}}" bindinput="onFieldInput" placeholder="例如：HTTP 404 表示什么？" />
+
+      <view class="field-label field-gap">标题变体（逗号分隔）</view>
+      <input class="input" data-field="titleVariantsText" value="{{form.titleVariantsText}}" bindinput="onFieldInput" placeholder="HTTP 404 表示什么, 资源不存在状态码" />
+
+      <view class="field-label field-gap">题干</view>
+      <textarea class="textarea" data-field="content" value="{{form.content}}" bindinput="onFieldInput" placeholder="请输入完整题干"></textarea>
+
+      <view class="field-label field-gap">题型</view>
+      <picker mode="selector" range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypeChange">
+        <view class="picker-chip picker-block">{{typeOptions[typeIndex].label}}</view>
+      </picker>
+
+      <view class="field-label field-gap">选项（每行一个，问答题可留空）</view>
+      <textarea class="textarea" data-field="optionsText" value="{{form.optionsText}}" bindinput="onFieldInput" placeholder="A. ...&#10;B. ..."></textarea>
+
+      <view class="field-label field-gap">答案</view>
+      <input class="input" data-field="answer" value="{{form.answer}}" bindinput="onFieldInput" placeholder="请输入标准答案" />
+
+      <view class="field-label field-gap">答案摘要（列表/搜索结果优先展示）</view>
+      <input class="input" data-field="answerSummary" value="{{form.answerSummary}}" bindinput="onFieldInput" placeholder="例如：核心原因是内存存储、低延迟、高吞吐。" />
+
+      <view class="field-label field-gap">解析</view>
+      <textarea class="textarea" data-field="analysis" value="{{form.analysis}}" bindinput="onFieldInput" placeholder="补充解题思路或知识点"></textarea>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">学科</view>
+          <input class="input" data-field="subject" value="{{form.subject}}" bindinput="onFieldInput" placeholder="前端开发" />
+        </view>
+        <view>
+          <view class="field-label field-gap">分类</view>
+          <input class="input" data-field="category" value="{{form.category}}" bindinput="onFieldInput" placeholder="JavaScript" />
+        </view>
+      </view>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">难度</view>
+          <picker mode="selector" range="{{difficultyOptions}}" range-key="label" value="{{difficultyIndex}}" bindchange="onDifficultyChange">
+            <view class="picker-chip picker-block">{{difficultyOptions[difficultyIndex].label}}</view>
+          </picker>
+        </view>
+        <view>
+          <view class="field-label field-gap">状态</view>
+          <picker mode="selector" range="{{statusOptions}}" range-key="label" value="{{statusIndex}}" bindchange="onStatusChange">
+            <view class="picker-chip picker-block">{{statusOptions[statusIndex].label}}</view>
+          </picker>
+        </view>
+      </view>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">审核状态</view>
+          <picker mode="selector" range="{{reviewOptions}}" range-key="label" value="{{reviewIndex}}" bindchange="onReviewChange">
+            <view class="picker-chip picker-block">{{reviewOptions[reviewIndex].label}}</view>
+          </picker>
+        </view>
+        <view>
+          <view class="field-label field-gap">标签（逗号分隔）</view>
+          <input class="input" data-field="tagsText" value="{{form.tagsText}}" bindinput="onFieldInput" placeholder="HTTP, 网络基础" />
+        </view>
+      </view>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">来源</view>
+          <input class="input" data-field="source" value="{{form.source}}" bindinput="onFieldInput" placeholder="面试高频题" />
+        </view>
+        <view>
+          <view class="field-label field-gap">年份</view>
+          <input class="input" type="number" data-field="year" value="{{form.year}}" bindinput="onFieldInput" placeholder="2025" />
+        </view>
+      </view>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">分值</view>
+          <input class="input" type="digit" data-field="score" value="{{form.score}}" bindinput="onFieldInput" placeholder="2" />
+        </view>
+        <view>
+          <view class="field-label field-gap">识图文本 / OCR 兜底</view>
+          <input class="input" data-field="imageText" value="{{form.imageText}}" bindinput="onFieldInput" placeholder="可填 OCR 识别出的题干片段" />
+        </view>
+      </view>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">外部题目 ID</view>
+          <input class="input" data-field="externalId" value="{{form.externalId}}" bindinput="onFieldInput" placeholder="例如：bank-a-0001" />
+        </view>
+        <view>
+          <view class="field-label field-gap">来源引用</view>
+          <input class="input" data-field="sourceRef" value="{{form.sourceRef}}" bindinput="onFieldInput" placeholder="例如：sheet://2026-q1/单选题/2" />
+        </view>
+      </view>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">负责人</view>
+          <input class="input" data-field="owner" value="{{form.owner}}" bindinput="onFieldInput" placeholder="内容运营 A" />
+        </view>
+        <view>
+          <view class="field-label field-gap">归属团队</view>
+          <input class="input" data-field="ownerTeam" value="{{form.ownerTeam}}" bindinput="onFieldInput" placeholder="教研组 / 内容运营" />
+        </view>
+      </view>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">审核人</view>
+          <input class="input" data-field="reviewer" value="{{form.reviewer}}" bindinput="onFieldInput" placeholder="审核员姓名" />
+        </view>
+        <view>
+          <view class="field-label field-gap">变更原因</view>
+          <input class="input" data-field="changeReason" value="{{form.changeReason}}" bindinput="onFieldInput" placeholder="例如：修正答案摘要 / 审核通过" />
+        </view>
+      </view>
+
+      <view class="field-label field-gap">审核备注</view>
+      <textarea class="textarea" data-field="reviewComment" value="{{form.reviewComment}}" bindinput="onFieldInput" placeholder="记录审核意见、驳回原因或上线说明"></textarea>
+
+      <view class="field-label field-gap">关联题 ID（逗号分隔）</view>
+      <input class="input" data-field="relatedIdsText" value="{{form.relatedIdsText}}" bindinput="onFieldInput" placeholder="q1, q2" />
+
+      <view class="btn-row">
+        <button class="primary-btn" loading="{{loading}}" bindtap="handleSave" disabled="{{!canEdit}}">保存题目</button>
       </view>
     </view>
 
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">分值</view>
-        <input class="input" type="digit" data-field="score" value="{{form.score}}" bindinput="onFieldInput" placeholder="2" />
-      </view>
-      <view>
-        <view class="field-label field-gap">识图文本 / OCR 兜底</view>
-        <input class="input" data-field="imageText" value="{{form.imageText}}" bindinput="onFieldInput" placeholder="可填 OCR 识别出的题干片段" />
-      </view>
+    <view class="card" wx:if="{{versionSnapshots.length}}">
+      <view class="section-title">最近版本快照</view>
+      <view class="feature-desc" wx:for="{{versionSnapshots}}" wx:key="index">v{{item.version}} ｜ {{item.action}} ｜ {{item.status}} / {{item.reviewStatus}} ｜ {{item.ownerTeam || '未分配团队'}} ｜ {{item.atText}} {{item.reason ? '｜' + item.reason : ''}}</view>
     </view>
 
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">外部题目 ID</view>
-        <input class="input" data-field="externalId" value="{{form.externalId}}" bindinput="onFieldInput" placeholder="例如：bank-a-0001" />
-      </view>
-      <view>
-        <view class="field-label field-gap">来源引用</view>
-        <input class="input" data-field="sourceRef" value="{{form.sourceRef}}" bindinput="onFieldInput" placeholder="例如：sheet://2026-q1/单选题/2" />
-      </view>
+    <view class="card" wx:if="{{statusHistory.length}}">
+      <view class="section-title">最近状态流转</view>
+      <view class="feature-desc" wx:for="{{statusHistory}}" wx:key="index">{{item.atText}} ｜ {{item.action}} → {{item.toLifecycleState}} / {{item.toReviewStatus}} {{item.reason ? '｜' + item.reason : ''}}</view>
     </view>
-
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">负责人</view>
-        <input class="input" data-field="owner" value="{{form.owner}}" bindinput="onFieldInput" placeholder="内容运营 A" />
-      </view>
-      <view>
-        <view class="field-label field-gap">归属团队</view>
-        <input class="input" data-field="ownerTeam" value="{{form.ownerTeam}}" bindinput="onFieldInput" placeholder="教研组 / 内容运营" />
-      </view>
-    </view>
-
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">审核人</view>
-        <input class="input" data-field="reviewer" value="{{form.reviewer}}" bindinput="onFieldInput" placeholder="审核员姓名" />
-      </view>
-      <view>
-        <view class="field-label field-gap">变更原因</view>
-        <input class="input" data-field="changeReason" value="{{form.changeReason}}" bindinput="onFieldInput" placeholder="例如：修正答案摘要 / 审核通过" />
-      </view>
-    </view>
-
-    <view class="field-label field-gap">审核备注</view>
-    <textarea class="textarea" data-field="reviewComment" value="{{form.reviewComment}}" bindinput="onFieldInput" placeholder="记录审核意见、驳回原因或上线说明"></textarea>
-
-    <view class="field-label field-gap">关联题 ID（逗号分隔）</view>
-    <input class="input" data-field="relatedIdsText" value="{{form.relatedIdsText}}" bindinput="onFieldInput" placeholder="q1, q2" />
-
-    <view class="btn-row">
-      <button class="primary-btn" loading="{{loading}}" bindtap="handleSave">保存题目</button>
-    </view>
-  </view>
-
-  <view class="card" wx:if="{{versionSnapshots.length}}">
-    <view class="section-title">最近版本快照</view>
-    <view class="feature-desc" wx:for="{{versionSnapshots}}" wx:key="index">v{{item.version}} ｜ {{item.action}} ｜ {{item.status}} / {{item.reviewStatus}} ｜ {{item.ownerTeam || '未分配团队'}} ｜ {{item.atText}} {{item.reason ? '｜' + item.reason : ''}}</view>
-  </view>
-
-  <view class="card" wx:if="{{statusHistory.length}}">
-    <view class="section-title">最近状态流转</view>
-    <view class="feature-desc" wx:for="{{statusHistory}}" wx:key="index">{{item.atText}} ｜ {{item.action}} → {{item.toLifecycleState}} / {{item.toReviewStatus}} {{item.reason ? '｜' + item.reason : ''}}</view>
-  </view>
+  </block>
 </view>

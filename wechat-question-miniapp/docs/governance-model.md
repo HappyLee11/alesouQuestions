@@ -162,3 +162,62 @@
 3. 增加相似题检测，不只看完全重复标题
 4. 审核列表按 `ownerTeam` / `batchId` / `taskId` 聚合
 5. 搜索服务改为索引分页，而不是 `limit(500)` 后本地过滤
+
+
+## 7. 审计日志与角色权限
+
+为了把 demo 往商用后台再推一步，这版新增了两层推荐能力：
+
+### `admins.role` → 权限矩阵
+
+建议至少区分：
+
+- `super_admin`
+- `admin`
+- `reviewer`
+- `operator`
+
+后台首页会把角色映射成权限集合，例如：
+
+- `question.read`
+- `question.write`
+- `question.publish`
+- `question.archive`
+- `question.import`
+- `review.approve`
+- `review.reject`
+- `audit.read`
+- `import.task.read`
+
+这样演示时不再只是“这个人是不是管理员”，而是能讲清楚不同岗位能做什么。
+
+### `audit_logs` 集合（推荐）
+
+建议记录：
+
+```json
+{
+  "action": "question.update",
+  "entityType": "question",
+  "entityId": "question-id",
+  "entityTitle": "HTTP 301 表示什么？",
+  "result": "success",
+  "reason": "quick approve from list",
+  "operatorOpenid": "openid",
+  "operatorName": "审核员A",
+  "operatorRole": "reviewer",
+  "summary": "updated question to review/approved v3",
+  "createdAt": 1742430000000
+}
+```
+
+当前云函数会对以下动作做最佳努力写入，不阻断主流程：
+
+- `import.preview`
+- `import.commit`
+- `question.create`
+- `question.update`
+- `question.archive`
+- `question.restore`
+
+如果集合尚未创建，主流程仍然可以继续，便于 demo 先跑起来、后续再补建表。

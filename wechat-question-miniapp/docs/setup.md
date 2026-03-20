@@ -23,6 +23,8 @@
 
 - `questions`
 - `admins`
+- `import_tasks`（推荐，若要展示导入任务中心）
+- `audit_logs`（推荐，若要展示审计日志）
 
 ## 4. questions 集合推荐字段
 
@@ -106,6 +108,7 @@
 - `saveQuestion`
 - `deleteQuestion`
 - `importQuestions`
+- `getAdminOverview`
 
 ## 8. 首次验证建议
 

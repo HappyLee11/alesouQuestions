@@ -3,6 +3,104 @@ const crypto = require('crypto');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
+const ROLE_PERMISSIONS = {
+  super_admin: {
+    label: '超级管理员',
+    permissions: [
+      'question.read',
+      'question.write',
+      'question.publish',
+      'question.archive',
+      'question.import',
+      'review.approve',
+      'review.reject',
+      'admin.manage',
+      'audit.read',
+      'import.task.read'
+    ]
+  },
+  admin: {
+    label: '管理员',
+    permissions: [
+      'question.read',
+      'question.write',
+      'question.publish',
+      'question.archive',
+      'question.import',
+      'review.approve',
+      'review.reject',
+      'audit.read',
+      'import.task.read'
+    ]
+  },
+  reviewer: {
+    label: '审核员',
+    permissions: [
+      'question.read',
+      'review.approve',
+      'review.reject',
+      'audit.read',
+      'import.task.read'
+    ]
+  },
+  operator: {
+    label: '运营',
+    permissions: [
+      'question.read',
+      'question.write',
+      'question.import',
+      'import.task.read'
+    ]
+  }
+};
+
+async function getAdminRecord(openid = '') {
+  const res = await db.collection('admins').where({
+    openid,
+    enabled: true
+  }).limit(1).get();
+  return Array.isArray(res.data) && res.data.length ? res.data[0] : null;
+}
+
+async function safeWriteAuditLog(payload = {}) {
+  try {
+    await db.collection('audit_logs').add({
+      data: {
+        ...payload,
+        createdAt: payload.createdAt || Date.now()
+      }
+    });
+  } catch (error) {
+    console.warn('write audit log failed', error);
+  }
+}
+
+async function upsertImportTask(taskPayload = {}) {
+  const taskId = String(taskPayload.taskId || '').trim();
+  const batchId = String(taskPayload.batchId || '').trim();
+  try {
+    if (taskId) {
+      const existing = await db.collection('import_tasks').where({ taskId }).limit(1).get();
+      if (Array.isArray(existing.data) && existing.data.length) {
+        await db.collection('import_tasks').doc(existing.data[0]._id).update({ data: taskPayload });
+        return existing.data[0]._id;
+      }
+    }
+    if (batchId) {
+      const existing = await db.collection('import_tasks').where({ batchId }).limit(1).get();
+      if (Array.isArray(existing.data) && existing.data.length) {
+        await db.collection('import_tasks').doc(existing.data[0]._id).update({ data: taskPayload });
+        return existing.data[0]._id;
+      }
+    }
+    const res = await db.collection('import_tasks').add({ data: taskPayload });
+    return res._id;
+  } catch (error) {
+    console.warn('upsert import task failed', error);
+    return '';
+  }
+}
+
 const BASE_FIELD_ALIASES = {
   title: ['title', '题目', '题干标题', 'questionTitle', 'name'],
   content: ['content', '题干', 'question', 'description', 'body'],
@@ -33,14 +131,20 @@ const BASE_FIELD_ALIASES = {
 
 async function ensureAdmin() {
   const wxContext = cloud.getWXContext();
-  const res = await db.collection('admins').where({
-    openid: wxContext.OPENID,
-    enabled: true
-  }).limit(1).get();
+  const adminRecord = await getAdminRecord(wxContext.OPENID);
+  const roleKey = adminRecord && adminRecord.role ? adminRecord.role : 'admin';
+  const roleMeta = ROLE_PERMISSIONS[roleKey] || ROLE_PERMISSIONS.admin;
   return {
-    isAdmin: Array.isArray(res.data) && res.data.length > 0,
-    openid: wxContext.OPENID
+    isAdmin: !!adminRecord,
+    openid: wxContext.OPENID,
+    adminRecord,
+    role: roleKey,
+    permissions: roleMeta.permissions
   };
+}
+
+function hasPermission(auth = {}, permission = '') {
+  return Array.isArray(auth.permissions) && auth.permissions.includes(permission);
 }
 
 function splitMulti(value, sep = /[|,，\n]/) {
@@ -352,12 +456,16 @@ function normalizeSource(event = {}) {
 exports.main = async (event = {}) => {
   const auth = await ensureAdmin();
   if (!auth.isAdmin) return { success: false, code: 403, message: 'forbidden' };
+  if (!hasPermission(auth, 'question.import')) {
+    return { success: false, code: 403, message: 'missing permissions: question.import', missingPermissions: ['question.import'] };
+  }
 
   const normalizedSource = normalizeSource(event);
   const items = normalizedSource.items;
   const previewOnly = !!event.previewOnly;
   const dedupeStrategy = event.dedupeStrategy || 'skip';
   const aliasMap = buildAliasMap(normalizedSource.fieldMappings || {});
+  const adminRecord = await getAdminRecord(auth.openid);
 
   if (!items.length) return { success: false, code: 400, message: 'items or importManifest is required' };
 
@@ -432,52 +540,103 @@ exports.main = async (event = {}) => {
   });
 
   if (previewOnly) {
+    const previewData = {
+      total: prepared.length,
+      valid: valid.length,
+      invalid: invalid.length,
+      deduplicated: prepared.filter((item) => item.duplicateExistingId).length,
+      sourceType: normalizedSource.sourceType,
+      templateType: normalizedSource.templateType,
+      dedupeStrategy,
+      task: normalizedSource.task ? {
+        taskId: normalizedSource.task.taskId || '',
+        taskName: normalizedSource.task.taskName || normalizedSource.task.fileName || '',
+        fileName: normalizedSource.task.fileName || '',
+        fileType: normalizedSource.task.fileType || normalizedSource.sourceType,
+        approvalPolicy: normalizedSource.task.approvalPolicy || 'manual-review'
+      } : null,
+      sheets: Object.keys(sheetSummaryMap).map((key) => sheetSummaryMap[key]),
+      fieldMappings: Object.keys(aliasMap).reduce((acc, key) => {
+        acc[key] = aliasMap[key].slice(0, 6);
+        return acc;
+      }, {}),
+      preview: prepared.slice(0, 8).map((item) => ({
+        index: item.index,
+        title: item.normalized.title,
+        subject: item.normalized.subject,
+        type: item.normalized.type,
+        difficulty: item.normalized.difficulty,
+        status: item.normalized.status,
+        reviewStatus: item.normalized.reviewStatus,
+        lifecycleState: item.normalized.lifecycleState,
+        duplicateExistingId: item.duplicateExistingId,
+        taskId: item.normalized.importMeta.taskId,
+        fileName: item.normalized.importMeta.fileName,
+        sheetName: item.normalized.importMeta.sheetName,
+        rowNumber: item.normalized.importMeta.rowNumber,
+        owner: item.normalized.governance.owner,
+        ownerTeam: item.normalized.governance.ownerTeam,
+        warnings: item.warnings,
+        errors: item.errors
+      })),
+      errors: invalid.slice(0, 30).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, errors: item.errors })),
+      warnings: prepared.filter((item) => item.warnings.length).slice(0, 30).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, warnings: item.warnings }))
+    };
+
+    const previewTask = {
+      taskId: (previewData.task && previewData.task.taskId) || event.taskId || '',
+      taskName: (previewData.task && previewData.task.taskName) || event.taskName || event.fileName || event.importBatchId || 'preview-task',
+      batchId: event.importBatchId || '',
+      taskStatus: 'previewed',
+      mode: 'preview',
+      sourceType: previewData.sourceType,
+      templateType: previewData.templateType,
+      dedupeStrategy,
+      approvalPolicy: (previewData.task && previewData.task.approvalPolicy) || event.approvalPolicy || 'manual-review',
+      fileName: (previewData.task && previewData.task.fileName) || event.fileName || '',
+      fileType: (previewData.task && previewData.task.fileType) || event.fileType || previewData.sourceType,
+      total: previewData.total,
+      valid: previewData.valid,
+      invalid: previewData.invalid,
+      warningCount: previewData.warnings.length,
+      deduplicated: previewData.deduplicated,
+      inserted: 0,
+      updated: 0,
+      actorOpenid: auth.openid,
+      actorName: adminRecord && adminRecord.name ? adminRecord.name : 'Admin',
+      actorRole: adminRecord && adminRecord.role ? adminRecord.role : 'admin',
+      updatedAt: Date.now(),
+      createdAt: Date.now()
+    };
+
+    await upsertImportTask(previewTask);
+    await safeWriteAuditLog({
+      action: 'import.preview',
+      entityType: 'import_task',
+      entityId: previewTask.taskId || previewTask.batchId,
+      entityTitle: previewTask.taskName,
+      result: 'success',
+      reason: event.importReason || 'preview import task',
+      operatorOpenid: auth.openid,
+      operatorName: adminRecord && adminRecord.name ? adminRecord.name : 'Admin',
+      operatorRole: adminRecord && adminRecord.role ? adminRecord.role : 'admin',
+      summary: `preview ${previewData.total} rows, ${previewData.invalid} invalid`,
+      payload: {
+        batchId: previewTask.batchId,
+        sourceType: previewTask.sourceType,
+        templateType: previewTask.templateType,
+        dedupeStrategy,
+        total: previewData.total,
+        valid: previewData.valid,
+        invalid: previewData.invalid
+      }
+    });
+
     return {
       success: true,
       code: 0,
       message: 'preview',
-      data: {
-        total: prepared.length,
-        valid: valid.length,
-        invalid: invalid.length,
-        deduplicated: prepared.filter((item) => item.duplicateExistingId).length,
-        sourceType: normalizedSource.sourceType,
-        templateType: normalizedSource.templateType,
-        dedupeStrategy,
-        task: normalizedSource.task ? {
-          taskId: normalizedSource.task.taskId || '',
-          taskName: normalizedSource.task.taskName || normalizedSource.task.fileName || '',
-          fileName: normalizedSource.task.fileName || '',
-          fileType: normalizedSource.task.fileType || normalizedSource.sourceType,
-          approvalPolicy: normalizedSource.task.approvalPolicy || 'manual-review'
-        } : null,
-        sheets: Object.keys(sheetSummaryMap).map((key) => sheetSummaryMap[key]),
-        fieldMappings: Object.keys(aliasMap).reduce((acc, key) => {
-          acc[key] = aliasMap[key].slice(0, 6);
-          return acc;
-        }, {}),
-        preview: prepared.slice(0, 8).map((item) => ({
-          index: item.index,
-          title: item.normalized.title,
-          subject: item.normalized.subject,
-          type: item.normalized.type,
-          difficulty: item.normalized.difficulty,
-          status: item.normalized.status,
-          reviewStatus: item.normalized.reviewStatus,
-          lifecycleState: item.normalized.lifecycleState,
-          duplicateExistingId: item.duplicateExistingId,
-          taskId: item.normalized.importMeta.taskId,
-          fileName: item.normalized.importMeta.fileName,
-          sheetName: item.normalized.importMeta.sheetName,
-          rowNumber: item.normalized.importMeta.rowNumber,
-          owner: item.normalized.governance.owner,
-          ownerTeam: item.normalized.governance.ownerTeam,
-          warnings: item.warnings,
-          errors: item.errors
-        })),
-        errors: invalid.slice(0, 30).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, errors: item.errors })),
-        warnings: prepared.filter((item) => item.warnings.length).slice(0, 30).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, warnings: item.warnings }))
-      }
+      data: previewData
     };
   }
 
@@ -507,27 +666,78 @@ exports.main = async (event = {}) => {
         insertedIds.push(res._id);
       }
     }
+    const importData = {
+      inserted: insertedIds.length,
+      updated: updatedIds.length,
+      failed: invalid.length,
+      ids: insertedIds,
+      updatedIds,
+      sourceType: normalizedSource.sourceType,
+      templateType: normalizedSource.templateType,
+      dedupeStrategy,
+      task: normalizedSource.task ? {
+        taskId: normalizedSource.task.taskId || '',
+        taskName: normalizedSource.task.taskName || normalizedSource.task.fileName || ''
+      } : null,
+      sheets: Object.keys(sheetSummaryMap).map((key) => sheetSummaryMap[key]),
+      errors: invalid.map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, errors: item.errors })),
+      warnings: prepared.filter((item) => item.warnings.length).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, warnings: item.warnings }))
+    };
+
+    const importTask = {
+      taskId: (importData.task && importData.task.taskId) || event.taskId || '',
+      taskName: (importData.task && importData.task.taskName) || event.taskName || event.fileName || event.importBatchId || 'import-task',
+      batchId: event.importBatchId || '',
+      taskStatus: invalid.length ? 'completed-with-errors' : 'completed',
+      mode: 'import',
+      sourceType: importData.sourceType,
+      templateType: importData.templateType,
+      dedupeStrategy,
+      approvalPolicy: event.approvalPolicy || (normalizedSource.task && normalizedSource.task.approvalPolicy) || 'manual-review',
+      fileName: event.fileName || (normalizedSource.task && normalizedSource.task.fileName) || '',
+      fileType: event.fileType || (normalizedSource.task && normalizedSource.task.fileType) || normalizedSource.sourceType,
+      total: prepared.length,
+      valid: valid.length,
+      invalid: invalid.length,
+      warningCount: importData.warnings.length,
+      deduplicated: prepared.filter((item) => item.duplicateExistingId).length,
+      inserted: insertedIds.length,
+      updated: updatedIds.length,
+      actorOpenid: auth.openid,
+      actorName: adminRecord && adminRecord.name ? adminRecord.name : 'Admin',
+      actorRole: adminRecord && adminRecord.role ? adminRecord.role : 'admin',
+      updatedAt: Date.now(),
+      createdAt: Date.now()
+    };
+
+    await upsertImportTask(importTask);
+    await safeWriteAuditLog({
+      action: 'import.commit',
+      entityType: 'import_task',
+      entityId: importTask.taskId || importTask.batchId,
+      entityTitle: importTask.taskName,
+      result: invalid.length ? 'partial-success' : 'success',
+      reason: event.importReason || 'bulk import',
+      operatorOpenid: auth.openid,
+      operatorName: adminRecord && adminRecord.name ? adminRecord.name : 'Admin',
+      operatorRole: adminRecord && adminRecord.role ? adminRecord.role : 'admin',
+      summary: `imported ${insertedIds.length} inserted, ${updatedIds.length} updated, ${invalid.length} failed`,
+      payload: {
+        batchId: importTask.batchId,
+        sourceType: importTask.sourceType,
+        templateType: importTask.templateType,
+        dedupeStrategy,
+        inserted: insertedIds.length,
+        updated: updatedIds.length,
+        failed: invalid.length
+      }
+    });
+
     return {
       success: true,
       code: 0,
       message: 'imported',
-      data: {
-        inserted: insertedIds.length,
-        updated: updatedIds.length,
-        failed: invalid.length,
-        ids: insertedIds,
-        updatedIds,
-        sourceType: normalizedSource.sourceType,
-        templateType: normalizedSource.templateType,
-        dedupeStrategy,
-        task: normalizedSource.task ? {
-          taskId: normalizedSource.task.taskId || '',
-          taskName: normalizedSource.task.taskName || normalizedSource.task.fileName || ''
-        } : null,
-        sheets: Object.keys(sheetSummaryMap).map((key) => sheetSummaryMap[key]),
-        errors: invalid.map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, errors: item.errors })),
-        warnings: prepared.filter((item) => item.warnings.length).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, warnings: item.warnings }))
-      }
+      data: importData
     };
   } catch (error) {
     return { success: false, code: 500, message: 'import failed', error: error.message || error };

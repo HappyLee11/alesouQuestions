@@ -1,5 +1,6 @@
 const api = require('../../utils/question');
 const { splitLines, splitCommaText, formatTime } = require('../../utils');
+const { hasPermission, syncAdminContext } = require('../../utils/permissions');
 
 const TYPE_OPTIONS = [
   { label: '单选题', value: 'single' },
@@ -56,6 +57,13 @@ Page({
   data: {
     form: { ...emptyForm },
     loading: false,
+    checking: true,
+    isAdmin: false,
+    admin: null,
+    canEdit: false,
+    canPublish: false,
+    canApprove: false,
+    canReject: false,
     isEdit: false,
     version: 1,
     lifecycleState: 'draft',
@@ -73,9 +81,31 @@ Page({
   },
   async onLoad(options) {
     const id = options.id || '';
-    if (!id) return;
-    this.setData({ 'form.id': id, isEdit: true });
-    await this.loadDetail(id);
+    this.setData({ 'form.id': id, isEdit: !!id });
+    await this.bootstrap(id);
+  },
+  async bootstrap(id = '') {
+    this.setData({ checking: true });
+    try {
+      const info = await api.checkAdmin();
+      syncAdminContext(info);
+      const admin = info.admin || null;
+      this.setData({
+        isAdmin: !!info.isAdmin,
+        admin,
+        canEdit: hasPermission(admin, 'question.write'),
+        canPublish: hasPermission(admin, 'question.publish'),
+        canApprove: hasPermission(admin, 'review.approve'),
+        canReject: hasPermission(admin, 'review.reject')
+      });
+      if (info.isAdmin && id) {
+        await this.loadDetail(id);
+      }
+    } catch (error) {
+      wx.showToast({ title: '权限校验失败', icon: 'none' });
+    } finally {
+      this.setData({ checking: false });
+    }
   },
   async loadDetail(id) {
     try {
@@ -157,6 +187,22 @@ Page({
   },
   async handleSave() {
     const { form } = this.data;
+    if (!this.data.canEdit) {
+      wx.showToast({ title: '当前角色没有编辑权限', icon: 'none' });
+      return;
+    }
+    if (!this.data.canPublish && form.status === 'published') {
+      wx.showToast({ title: '当前角色没有发布权限', icon: 'none' });
+      return;
+    }
+    if (!this.data.canApprove && form.reviewStatus === 'approved') {
+      wx.showToast({ title: '当前角色没有审核通过权限', icon: 'none' });
+      return;
+    }
+    if (!this.data.canReject && form.reviewStatus === 'rejected') {
+      wx.showToast({ title: '当前角色没有驳回权限', icon: 'none' });
+      return;
+    }
     if (!form.title || !form.content || !form.answer) {
       wx.showToast({ title: '请填写标题、题干和答案', icon: 'none' });
       return;
@@ -201,7 +247,7 @@ Page({
       wx.showToast({ title: '保存成功', icon: 'success' });
       setTimeout(() => wx.navigateBack(), 500);
     } catch (error) {
-      wx.showToast({ title: '保存失败', icon: 'none' });
+      wx.showToast({ title: error && error.message ? error.message : '保存失败', icon: 'none' });
     } finally {
       this.setData({ loading: false });
     }

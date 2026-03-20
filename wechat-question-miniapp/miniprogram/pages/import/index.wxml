@@ -2,207 +2,294 @@
   <view class="hero-card">
     <view class="eyebrow">Import Workflow</view>
     <view class="hero-title">批量导入题目</view>
-    <view class="hero-subtitle">把“粘 JSON 写库”升级成更像真实系统的导入链路：本地暂存、字段映射、云端预检、去重策略和任务化结果回执。</view>
-  </view>
-
-  <view class="timeline-grid">
-    <view class="timeline-card">
-      <view class="timeline-step">STEP 01</view>
-      <view class="timeline-title">选择模板</view>
-      <view class="timeline-desc">支持 JSON / JSONL / CSV 文本，以及 workbook manifest 模拟 XLSX / CSV 文件任务。</view>
-    </view>
-    <view class="timeline-card">
-      <view class="timeline-step">STEP 02</view>
-      <view class="timeline-title">本地暂存预览</view>
-      <view class="timeline-desc">先解析字段、统计列结构和样例记录，再决定是否预检或导入。</view>
-    </view>
-    <view class="timeline-card">
-      <view class="timeline-step">STEP 03</view>
-      <view class="timeline-title">云端预检 / 导入</view>
-      <view class="timeline-desc">带上批次号、映射规则、去重策略和治理默认值，返回更像正式系统的处理结果。</view>
-    </view>
-    <view class="timeline-card">
-      <view class="timeline-step">STEP 04</view>
-      <view class="timeline-title">治理信息入库</view>
-      <view class="timeline-desc">补齐 importMeta、governance、statusHistory、versionSnapshots 等扩展字段。</view>
+    <view class="hero-subtitle">把“粘 JSON 写库”升级成更像真实系统的导入链路：先形成暂存文件、补齐任务元数据、云端预检通过后再导入。</view>
+    <view class="meta-row wrap-row large-gap" wx:if="{{admin}}">
+      <text class="meta-pill">角色：{{admin.roleLabel || admin.role}}</text>
+      <text class="meta-pill meta-pill-light">导入权限：{{canImport ? '允许' : '禁止'}}</text>
     </view>
   </view>
 
-  <view class="card">
-    <view class="title">导入配置</view>
-    <view class="subtitle">这版导入不再只是“粘 JSON 写库”，而是模拟真实的文件导入暂存流：支持 JSON / JSONL / CSV 文本，也支持 workbook manifest 方式来表达 XLSX/CSV 文件、sheet、row、任务 ID、审批策略和默认治理信息。</view>
-
-    <view class="field-label field-gap">导入模板 / 文件类型</view>
-    <picker mode="selector" range="{{presetOptions}}" range-key="label" value="{{presetIndex}}" bindchange="onPresetChange">
-      <view class="picker-chip picker-block">{{presetOptions[presetIndex].label}}</view>
-    </picker>
-
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">去重策略</view>
-        <picker mode="selector" range="{{dedupeOptions}}" range-key="label" value="{{dedupeIndex}}" bindchange="onDedupeChange">
-          <view class="picker-chip picker-block">{{dedupeOptions[dedupeIndex].label}}</view>
-        </picker>
+  <view wx:if="{{checking}}" class="card empty">正在校验权限...</view>
+  <view wx:elif="{{!isAdmin}}" class="card empty">当前账号不是管理员，无法进入导入后台。</view>
+  <block wx:else>
+    <view class="timeline-grid">
+      <view class="timeline-card">
+        <view class="timeline-step">STEP 01</view>
+        <view class="timeline-title">选择模板</view>
+        <view class="timeline-desc">支持 JSON / JSONL / CSV 文本，以及 workbook manifest 模拟 XLSX / CSV 文件任务。</view>
       </view>
-      <view>
-        <view class="field-label field-gap">导入批次 ID</view>
-        <input class="input" value="{{importBatchId}}" bindinput="onBatchIdInput" placeholder="例如：school-a-20260320-01" />
+      <view class="timeline-card">
+        <view class="timeline-step">STEP 02</view>
+        <view class="timeline-title">形成暂存文件</view>
+        <view class="timeline-desc">为导入内容补齐 taskName、fileName、fileType、sourceRef、stagingChecksum 等任务元数据。</view>
       </view>
-    </view>
-
-    <view class="field-label field-gap">暂存区原始内容</view>
-    <view wx:if="{{parseError}}" class="error-text">{{parseError}}</view>
-    <textarea class="textarea textarea-xl" value="{{text}}" bindinput="onInput"></textarea>
-
-    <view class="field-label field-gap">字段映射补充（可选 JSON）</view>
-    <textarea class="textarea" value="{{fieldMappingsText}}" bindinput="onFieldMappingsInput"></textarea>
-  </view>
-
-  <view class="glass-card">
-    <view class="section-header">
-      <view>
-        <view class="section-title">治理默认值</view>
-        <view class="section-caption">把导入任务的默认状态、审核策略和归属团队显式配置出来，方便做预商用演示。</view>
+      <view class="timeline-card">
+        <view class="timeline-step">STEP 03</view>
+        <view class="timeline-title">云端预检</view>
+        <view class="timeline-desc">预检会校验必填字段、重复标题、治理默认值和任务分片信息。</view>
       </view>
-      <text class="toolbar-note">这些值会并入 import payload / manifest defaults</text>
-    </view>
-
-    <view class="grid-2">
-      <view>
-        <view class="field-label field-gap">默认状态</view>
-        <picker mode="selector" range="{{statusOptions}}" range-key="label" value="{{statusIndex}}" bindchange="onStatusChange">
-          <view class="picker-chip picker-block">{{statusOptions[statusIndex].label}}</view>
-        </picker>
-      </view>
-      <view>
-        <view class="field-label field-gap">默认审核态</view>
-        <picker mode="selector" range="{{reviewOptions}}" range-key="label" value="{{reviewIndex}}" bindchange="onReviewChange">
-          <view class="picker-chip picker-block">{{reviewOptions[reviewIndex].label}}</view>
-        </picker>
-      </view>
-      <view>
-        <view class="field-label field-gap">审批策略</view>
-        <picker mode="selector" range="{{approvalOptions}}" range-key="label" value="{{approvalIndex}}" bindchange="onApprovalChange">
-          <view class="picker-chip picker-block">{{approvalOptions[approvalIndex].label}}</view>
-        </picker>
-      </view>
-      <view>
-        <view class="field-label field-gap">默认团队</view>
-        <input class="input" value="{{defaultOwnerTeam}}" bindinput="onDefaultOwnerTeamInput" placeholder="例如：内容运营" />
-      </view>
-      <view>
-        <view class="field-label field-gap">默认负责人</view>
-        <input class="input" value="{{defaultOwner}}" bindinput="onDefaultOwnerInput" placeholder="例如：内容A" />
-      </view>
-      <view>
-        <view class="field-label field-gap">默认审核人</view>
-        <input class="input" value="{{defaultReviewer}}" bindinput="onDefaultReviewerInput" placeholder="例如：审核员A" />
+      <view class="timeline-card">
+        <view class="timeline-step">STEP 04</view>
+        <view class="timeline-title">执行导入</view>
+        <view class="timeline-desc">只有当前暂存版本的预检通过后才允许导入，更像正式文件导入产品。</view>
       </view>
     </view>
 
-    <view class="field-label field-gap">导入原因 / 工单说明</view>
-    <input class="input" value="{{importReason}}" bindinput="onImportReasonInput" placeholder="例如：3 月校招题库增量导入" />
-
-    <view class="btn-row">
-      <button class="secondary-btn" loading="{{loading}}" bindtap="previewOnCloud">先做预检</button>
-      <button class="primary-btn" loading="{{loading}}" bindtap="handleImport">执行导入</button>
+    <view class="glass-card" wx:if="{{!canImport}}">
+      <view class="section-title">当前角色没有导入权限</view>
+      <view class="section-caption">仍可查看暂存结构和本地预览，但云端预检 / 正式导入按钮会被禁用。请使用具备 <text selectable>question.import</text> 权限的角色。</view>
     </view>
-  </view>
 
-  <view class="glass-card" wx:if="{{preview}}">
-    <view class="section-title">本地暂存预览</view>
-    <view class="feature-desc">已解析记录：{{preview.total}}</view>
-    <view class="feature-desc">检测到的列：{{preview.columns.join('、')}}</view>
-    <view class="feature-desc" wx:if="{{preview.mode === 'manifest'}}">导入任务：{{preview.taskName}} ｜ 文件：{{preview.fileName}}</view>
-    <view class="field-block" wx:if="{{preview.sheetSummary && preview.sheetSummary.length}}">
-      <view class="field-label">Sheet / 分片概况</view>
-      <view class="feature-desc" wx:for="{{preview.sheetSummary}}" wx:key="sheetName">{{item.sheetName}}：{{item.total}} 条</view>
-    </view>
-    <view class="field-block">
-      <view class="field-label">样例记录</view>
-      <view class="feature-desc" wx:for="{{preview.sample}}" wx:key="index">#{{item.index + 1}} {{item.title}} ｜ {{item.keys}}</view>
-    </view>
-  </view>
+    <view class="card">
+      <view class="title">导入配置</view>
+      <view class="subtitle">这版导入不再只是“粘 JSON 写库”，而是模拟真实的文件导入暂存流：支持 JSON / JSONL / CSV 文本，也支持 workbook manifest 来表达文件、sheet、row、任务 ID、审批策略和默认治理信息。</view>
 
-  <view class="card">
-    <view class="section-title">生产环境字段标准</view>
-    <view class="feature-desc">必填：title / content / answer</view>
-    <view class="feature-desc">搜索增强：answerSummary / titleVariants / imageText / relatedIds</view>
-    <view class="feature-desc">治理字段：status / reviewStatus / lifecycleState / source / externalId / owner / ownerTeam / reviewer / reviewComment</view>
-    <view class="feature-desc">导入任务字段：taskId / taskName / fileName / sheetName / rowNumber / approvalPolicy / stagingChecksum</view>
-    <view class="feature-desc">支持别名：title ← title / 题目 / questionTitle；content ← content / 题干 / description；answer ← answer / 答案 / result</view>
-  </view>
+      <view class="field-label field-gap">导入模板 / 文件类型</view>
+      <picker mode="selector" range="{{presetOptions}}" range-key="label" value="{{presetIndex}}" bindchange="onPresetChange">
+        <view class="picker-chip picker-block">{{presetOptions[presetIndex].label}}</view>
+      </picker>
 
-  <view class="glass-card" wx:if="{{importResult && resultSummary}}">
-    <view class="section-header">
-      <view>
-        <view class="section-title">云端预检 / 导入结果</view>
-        <view class="section-caption">状态：{{importResult.success ? '成功' : '失败'}}</view>
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">去重策略</view>
+          <picker mode="selector" range="{{dedupeOptions}}" range-key="label" value="{{dedupeIndex}}" bindchange="onDedupeChange">
+            <view class="picker-chip picker-block">{{dedupeOptions[dedupeIndex].label}}</view>
+          </picker>
+        </view>
+        <view>
+          <view class="field-label field-gap">导入批次 ID</view>
+          <input class="input" value="{{importBatchId}}" bindinput="onBatchIdInput" placeholder="例如：school-a-20260320-01" />
+        </view>
       </view>
-      <text class="toolbar-note">批次：{{importBatchId}}</text>
+
+      <view class="field-label field-gap">暂存区原始内容</view>
+      <view wx:if="{{parseError}}" class="error-text">{{parseError}}</view>
+      <textarea class="textarea textarea-xl" value="{{text}}" bindinput="onInput"></textarea>
+
+      <view class="field-label field-gap">字段映射补充（可选 JSON）</view>
+      <textarea class="textarea" value="{{fieldMappingsText}}" bindinput="onFieldMappingsInput"></textarea>
     </view>
 
-    <view class="panel-grid">
-      <view class="panel-card">
-        <view class="panel-title">总记录</view>
-        <view class="kpi-value">{{resultSummary.total}}</view>
-        <view class="panel-desc">本次预检 / 导入涉及条数</view>
+    <view class="glass-card">
+      <view class="section-header">
+        <view>
+          <view class="section-title">模拟文件 / 任务元数据</view>
+          <view class="section-caption">即使当前还没接真实上传，这里也把导入描述成“一个文件任务”，而不是一坨文本。</view>
+        </view>
+        <text class="toolbar-note">staging checksum：{{stageMeta ? stageMeta.stageChecksum : '--'}}</text>
       </view>
-      <view class="panel-card">
-        <view class="panel-title">有效</view>
-        <view class="kpi-value">{{resultSummary.valid}}</view>
-        <view class="panel-desc">可继续导入或已成功处理</view>
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">任务名称</view>
+          <input class="input" value="{{taskName}}" bindinput="onTaskNameInput" placeholder="例如：3 月校招题库增量" />
+        </view>
+        <view>
+          <view class="field-label field-gap">文件名</view>
+          <input class="input" value="{{fileName}}" bindinput="onFileNameInput" placeholder="例如：school-east-march.xlsx" />
+        </view>
+        <view>
+          <view class="field-label field-gap">文件类型</view>
+          <input class="input" value="{{fileType}}" bindinput="onFileTypeInput" placeholder="例如：application/json" />
+        </view>
+        <view>
+          <view class="field-label field-gap">来源引用</view>
+          <input class="input" value="{{sourceRef}}" bindinput="onSourceRefInput" placeholder="例如：cos://imports/question-bank.xlsx" />
+        </view>
       </view>
-      <view class="panel-card">
-        <view class="panel-title">无效</view>
-        <view class="kpi-value">{{resultSummary.invalid}}</view>
-        <view class="panel-desc">需要修正字段或去重问题</view>
-      </view>
-      <view class="panel-card">
-        <view class="panel-title">预警</view>
-        <view class="kpi-value">{{resultSummary.warnings}}</view>
-        <view class="panel-desc">建议补齐治理或搜索增强字段</view>
+      <view class="meta-row wrap-row large-gap" wx:if="{{stageMeta}}">
+        <text class="meta-pill meta-pill-light">记录数：{{stageMeta.rowCount}}</text>
+        <text class="meta-pill meta-pill-light">Sheet：{{stageMeta.sheetCount || 0}}</text>
+        <text class="meta-pill meta-pill-light">字符数：{{stageMeta.charCount}}</text>
       </view>
     </view>
 
-    <view class="feature-desc" wx:if="{{importResult.data}}">新增：{{importResult.data.inserted || 0}} ｜ 更新：{{importResult.data.updated || 0}} ｜ 去重命中：{{importResult.data.deduplicated || 0}}</view>
-    <view class="feature-desc" wx:if="{{importResult.data}}">来源类型：{{importResult.data.sourceType || '--'}} ｜ 模板类型：{{importResult.data.templateType || '--'}} ｜ 策略：{{importResult.data.dedupeStrategy || dedupeStrategy}}</view>
-    <view class="feature-desc" wx:if="{{importResult.data && importResult.data.task}}">任务：{{importResult.data.task.taskId || '--'}} ｜ {{importResult.data.task.taskName || '--'}}</view>
-
-    <view class="field-block" wx:if="{{importResult.data && importResult.data.sheets && importResult.data.sheets.length}}">
-      <view class="field-label">任务分片结果</view>
-      <view class="feature-desc" wx:for="{{importResult.data.sheets}}" wx:key="sheetName">{{item.sheetName}}：总 {{item.total}} / 有效 {{item.valid}} / 无效 {{item.invalid}}</view>
-    </view>
-
-    <view class="field-block" wx:if="{{importResult.data && importResult.data.preview && importResult.data.preview.length}}">
-      <view class="field-label">预检样例</view>
-      <view class="feature-desc" wx:for="{{importResult.data.preview}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}} ｜ {{item.subject || '未分类'}} ｜ {{item.type}} ｜ {{item.difficulty}} ｜ {{item.sheetName || '--'}} / row {{item.rowNumber || '--'}} ｜ {{item.ownerTeam || '未分配团队'}} {{item.errors.length ? '｜错误：' + item.errors.join(', ') : ''}}</view>
-    </view>
-
-    <view class="field-block" wx:if="{{importResult.data && importResult.data.warnings && importResult.data.warnings.length}}">
-      <view class="field-label">预警列表</view>
-      <view class="toolbar-note" wx:for="{{importResult.data.warnings}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}}（{{item.sheetName || '--'}} / row {{item.rowNumber || '--'}}）：{{item.warnings.join(', ')}}</view>
-    </view>
-
-    <view class="field-block" wx:if="{{importResult.data && importResult.data.errors && importResult.data.errors.length}}">
-      <view class="field-label">错误列表</view>
-      <view class="error-text" wx:for="{{importResult.data.errors}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}}（{{item.sheetName || '--'}} / row {{item.rowNumber || '--'}}）：{{item.errors.join(', ')}}</view>
-    </view>
-  </view>
-
-  <view class="card" wx:if="{{recentTasks.length}}">
-    <view class="section-header">
-      <view>
-        <view class="section-title">最近任务回执</view>
-        <view class="section-caption">本地保留最近 8 次预检 / 导入结果，方便后台演示“任务中心”的感觉。</view>
+    <view class="glass-card">
+      <view class="section-header">
+        <view>
+          <view class="section-title">治理默认值</view>
+          <view class="section-caption">把导入任务的默认状态、审核策略和归属团队显式配置出来，方便做预商用演示。</view>
+        </view>
+        <text class="toolbar-note">这些值会并入 import payload / manifest defaults</text>
       </view>
-      <text class="toolbar-note">仅本机缓存演示，不代替真实任务表</text>
+
+      <view class="grid-2">
+        <view>
+          <view class="field-label field-gap">默认状态</view>
+          <picker mode="selector" range="{{statusOptions}}" range-key="label" value="{{statusIndex}}" bindchange="onStatusChange">
+            <view class="picker-chip picker-block">{{statusOptions[statusIndex].label}}</view>
+          </picker>
+        </view>
+        <view>
+          <view class="field-label field-gap">默认审核态</view>
+          <picker mode="selector" range="{{reviewOptions}}" range-key="label" value="{{reviewIndex}}" bindchange="onReviewChange">
+            <view class="picker-chip picker-block">{{reviewOptions[reviewIndex].label}}</view>
+          </picker>
+        </view>
+        <view>
+          <view class="field-label field-gap">审批策略</view>
+          <picker mode="selector" range="{{approvalOptions}}" range-key="label" value="{{approvalIndex}}" bindchange="onApprovalChange">
+            <view class="picker-chip picker-block">{{approvalOptions[approvalIndex].label}}</view>
+          </picker>
+        </view>
+        <view>
+          <view class="field-label field-gap">默认团队</view>
+          <input class="input" value="{{defaultOwnerTeam}}" bindinput="onDefaultOwnerTeamInput" placeholder="例如：内容运营" />
+        </view>
+        <view>
+          <view class="field-label field-gap">默认负责人</view>
+          <input class="input" value="{{defaultOwner}}" bindinput="onDefaultOwnerInput" placeholder="例如：内容A" />
+        </view>
+        <view>
+          <view class="field-label field-gap">默认审核人</view>
+          <input class="input" value="{{defaultReviewer}}" bindinput="onDefaultReviewerInput" placeholder="例如：审核员A" />
+        </view>
+      </view>
+
+      <view class="field-label field-gap">导入原因 / 工单说明</view>
+      <input class="input" value="{{importReason}}" bindinput="onImportReasonInput" placeholder="例如：3 月校招题库增量导入" />
     </view>
-    <view class="feature-item" wx:for="{{recentTasks}}" wx:key="createdAt">
-      <view class="feature-title">{{item.statusLabel}} ｜ {{item.taskName || item.batchId}}</view>
-      <view class="feature-desc">批次：{{item.batchId}} ｜ 文件：{{item.fileName || '--'}} ｜ {{item.sourceType}} / {{item.templateType}}</view>
-      <view class="feature-desc">总 {{item.total}} ｜ 有效 {{item.valid}} ｜ 无效 {{item.invalid}} ｜ 预警 {{item.warnings}} ｜ 新增 {{item.inserted}} ｜ 更新 {{item.updated}}</view>
-      <view class="feature-desc">策略：{{item.dedupeStrategy}} ｜ 审批：{{item.approvalPolicy}} ｜ 团队：{{item.ownerTeam || '--'}} ｜ 时间：{{item.timeText}}</view>
+
+    <view class="glass-card" wx:if="{{readiness}}">
+      <view class="section-header">
+        <view>
+          <view class="section-title">暂存就绪度</view>
+          <view class="section-caption">导入按钮会跟随当前暂存版本的预检状态联动；改了内容或映射后必须重新预检。</view>
+        </view>
+        <text class="toolbar-note">{{previewState.statusText}}</text>
+      </view>
+      <view class="panel-grid">
+        <view class="panel-card">
+          <view class="panel-title">标题覆盖</view>
+          <view class="kpi-value">{{readiness.titleCount}} / {{readiness.total}}</view>
+          <view class="panel-desc">title / 题目 / questionTitle</view>
+        </view>
+        <view class="panel-card">
+          <view class="panel-title">题干覆盖</view>
+          <view class="kpi-value">{{readiness.contentCount}} / {{readiness.total}}</view>
+          <view class="panel-desc">content / 题干 / description</view>
+        </view>
+        <view class="panel-card">
+          <view class="panel-title">答案覆盖</view>
+          <view class="kpi-value">{{readiness.answerCount}} / {{readiness.total}}</view>
+          <view class="panel-desc">answer / 答案 / result</view>
+        </view>
+        <view class="panel-card">
+          <view class="panel-title">团队治理</view>
+          <view class="kpi-value">{{readiness.ownerTeamCount}} / {{readiness.total}}</view>
+          <view class="panel-desc">ownerTeam / 归属团队</view>
+        </view>
+      </view>
+      <view class="feature-desc small-gap">重复标题：{{readiness.duplicateTitleCount}} ｜ 预检错误：{{readiness.invalidCount}} ｜ 预警：{{readiness.warningCount}}</view>
+      <view class="feature-desc small-gap">上次预检时间：{{previewState.updatedAtText}}</view>
+      <view class="field-block" wx:if="{{readiness.blockers.length}}">
+        <view class="field-label">当前阻塞项</view>
+        <view class="error-text" wx:for="{{readiness.blockers}}" wx:key="*this">- {{item}}</view>
+      </view>
+      <view class="field-block" wx:else>
+        <view class="field-label">当前状态</view>
+        <view class="feature-desc">当前暂存版本已完成预检且没有错误，可直接执行导入。</view>
+      </view>
+      <view class="btn-row">
+        <button class="secondary-btn" loading="{{loading}}" bindtap="previewOnCloud" disabled="{{!canImport}}">先做预检</button>
+        <button class="primary-btn" loading="{{loading}}" bindtap="handleImport" disabled="{{!canImport || !readiness || readiness.blockers.length}}">执行导入</button>
+      </view>
     </view>
-  </view>
+
+    <view class="glass-card" wx:if="{{preview}}">
+      <view class="section-title">本地暂存预览</view>
+      <view class="feature-desc">已解析记录：{{preview.total}}</view>
+      <view class="feature-desc">检测到的列：{{preview.columns.join('、')}}</view>
+      <view class="feature-desc" wx:if="{{preview.mode === 'manifest'}}">导入任务：{{preview.taskName}} ｜ 文件：{{preview.fileName}}</view>
+      <view class="field-block" wx:if="{{preview.sheetSummary && preview.sheetSummary.length}}">
+        <view class="field-label">Sheet / 分片概况</view>
+        <view class="feature-desc" wx:for="{{preview.sheetSummary}}" wx:key="sheetName">{{item.sheetName}}：{{item.total}} 条</view>
+      </view>
+      <view class="field-block">
+        <view class="field-label">样例记录</view>
+        <view class="feature-desc" wx:for="{{preview.sample}}" wx:key="index">#{{item.index + 1}} {{item.title}} ｜ {{item.keys}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">生产环境字段标准</view>
+      <view class="feature-desc">必填：title / content / answer</view>
+      <view class="feature-desc">搜索增强：answerSummary / titleVariants / imageText / relatedIds</view>
+      <view class="feature-desc">治理字段：status / reviewStatus / lifecycleState / source / externalId / owner / ownerTeam / reviewer / reviewComment</view>
+      <view class="feature-desc">导入任务字段：taskId / taskName / fileName / sheetName / rowNumber / approvalPolicy / stagingChecksum</view>
+      <view class="feature-desc">支持别名：title ← title / 题目 / questionTitle；content ← content / 题干 / description；answer ← answer / 答案 / result</view>
+    </view>
+
+    <view class="glass-card" wx:if="{{importResult && resultSummary}}">
+      <view class="section-header">
+        <view>
+          <view class="section-title">云端预检 / 导入结果</view>
+          <view class="section-caption">状态：{{importResult.success ? '成功' : '失败'}}</view>
+        </view>
+        <text class="toolbar-note">批次：{{importBatchId}}</text>
+      </view>
+
+      <view class="panel-grid">
+        <view class="panel-card">
+          <view class="panel-title">总记录</view>
+          <view class="kpi-value">{{resultSummary.total}}</view>
+          <view class="panel-desc">本次预检 / 导入涉及条数</view>
+        </view>
+        <view class="panel-card">
+          <view class="panel-title">有效</view>
+          <view class="kpi-value">{{resultSummary.valid}}</view>
+          <view class="panel-desc">可继续导入或已成功处理</view>
+        </view>
+        <view class="panel-card">
+          <view class="panel-title">无效</view>
+          <view class="kpi-value">{{resultSummary.invalid}}</view>
+          <view class="panel-desc">需要修正字段或去重问题</view>
+        </view>
+        <view class="panel-card">
+          <view class="panel-title">预警</view>
+          <view class="kpi-value">{{resultSummary.warnings}}</view>
+          <view class="panel-desc">建议补齐治理或搜索增强字段</view>
+        </view>
+      </view>
+
+      <view class="feature-desc" wx:if="{{importResult.data}}">新增：{{importResult.data.inserted || 0}} ｜ 更新：{{importResult.data.updated || 0}} ｜ 去重命中：{{importResult.data.deduplicated || 0}}</view>
+      <view class="feature-desc" wx:if="{{importResult.data}}">来源类型：{{importResult.data.sourceType || '--'}} ｜ 模板类型：{{importResult.data.templateType || '--'}} ｜ 策略：{{importResult.data.dedupeStrategy || dedupeStrategy}}</view>
+      <view class="feature-desc" wx:if="{{importResult.data && importResult.data.task}}">任务：{{importResult.data.task.taskId || '--'}} ｜ {{importResult.data.task.taskName || '--'}}</view>
+
+      <view class="field-block" wx:if="{{importResult.data && importResult.data.sheets && importResult.data.sheets.length}}">
+        <view class="field-label">任务分片结果</view>
+        <view class="feature-desc" wx:for="{{importResult.data.sheets}}" wx:key="sheetName">{{item.sheetName}}：总 {{item.total}} / 有效 {{item.valid}} / 无效 {{item.invalid}}</view>
+      </view>
+
+      <view class="field-block" wx:if="{{importResult.data && importResult.data.preview && importResult.data.preview.length}}">
+        <view class="field-label">预检样例</view>
+        <view class="feature-desc" wx:for="{{importResult.data.preview}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}} ｜ {{item.subject || '未分类'}} ｜ {{item.type}} ｜ {{item.difficulty}} ｜ {{item.sheetName || '--'}} / row {{item.rowNumber || '--'}} ｜ {{item.ownerTeam || '未分配团队'}} {{item.errors.length ? '｜错误：' + item.errors.join(', ') : ''}}</view>
+      </view>
+
+      <view class="field-block" wx:if="{{importResult.data && importResult.data.warnings && importResult.data.warnings.length}}">
+        <view class="field-label">预警列表</view>
+        <view class="toolbar-note" wx:for="{{importResult.data.warnings}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}}（{{item.sheetName || '--'}} / row {{item.rowNumber || '--'}}）：{{item.warnings.join(', ')}}</view>
+      </view>
+
+      <view class="field-block" wx:if="{{importResult.data && importResult.data.errors && importResult.data.errors.length}}">
+        <view class="field-label">错误列表</view>
+        <view class="error-text" wx:for="{{importResult.data.errors}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}}（{{item.sheetName || '--'}} / row {{item.rowNumber || '--'}}）：{{item.errors.join(', ')}}</view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{recentTasks.length}}">
+      <view class="section-header">
+        <view>
+          <view class="section-title">最近任务回执</view>
+          <view class="section-caption">本地保留最近 8 次预检 / 导入结果，方便后台演示“任务中心”的感觉。</view>
+        </view>
+        <text class="toolbar-note">仅本机缓存演示，不代替真实任务表</text>
+      </view>
+      <view class="feature-item" wx:for="{{recentTasks}}" wx:key="createdAt">
+        <view class="feature-title">{{item.statusLabel}} ｜ {{item.taskName || item.batchId}}</view>
+        <view class="feature-desc">批次：{{item.batchId}} ｜ 文件：{{item.fileName || '--'}} ｜ {{item.sourceType}} / {{item.templateType}}</view>
+        <view class="feature-desc">总 {{item.total}} ｜ 有效 {{item.valid}} ｜ 无效 {{item.invalid}} ｜ 预警 {{item.warnings}} ｜ 新增 {{item.inserted}} ｜ 更新 {{item.updated}}</view>
+        <view class="feature-desc">策略：{{item.dedupeStrategy}} ｜ 审批：{{item.approvalPolicy}} ｜ 团队：{{item.ownerTeam || '--'}} ｜ 时间：{{item.timeText}}</view>
+      </view>
+    </view>
+  </block>
 </view>

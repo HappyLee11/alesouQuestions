@@ -1,5 +1,6 @@
 const api = require('../../utils/question');
 const { formatTime } = require('../../utils');
+const { hasPermission, syncAdminContext } = require('../../utils/permissions');
 
 const FILTERS = [
   { label: '全部', value: 'all' },
@@ -14,6 +15,15 @@ Page({
     keyword: '',
     list: [],
     loading: false,
+    checking: true,
+    isAdmin: false,
+    admin: null,
+    permissions: [],
+    canEdit: false,
+    canApprove: false,
+    canReject: false,
+    canPublish: false,
+    canArchive: false,
     filters: FILTERS,
     currentFilter: 'all',
     summaryCards: [
@@ -23,8 +33,35 @@ Page({
       { label: '最近更新', value: '--', desc: '方便演示时说明变更' }
     ]
   },
-  onShow() {
-    this.loadData();
+  async onShow() {
+    await this.bootstrap();
+  },
+  async bootstrap() {
+    this.setData({ checking: true });
+    try {
+      const info = await api.checkAdmin();
+      syncAdminContext(info);
+      const admin = info.admin || null;
+      const permissions = admin && Array.isArray(admin.permissions) ? admin.permissions : [];
+      const isAdmin = !!info.isAdmin;
+      this.setData({
+        isAdmin,
+        admin,
+        permissions,
+        canEdit: hasPermission(permissions, 'question.write'),
+        canApprove: hasPermission(permissions, 'review.approve'),
+        canReject: hasPermission(permissions, 'review.reject'),
+        canPublish: hasPermission(permissions, 'question.publish'),
+        canArchive: hasPermission(permissions, 'question.archive')
+      });
+      if (isAdmin) {
+        await this.loadData();
+      }
+    } catch (error) {
+      wx.showToast({ title: '权限校验失败', icon: 'none' });
+    } finally {
+      this.setData({ checking: false });
+    }
   },
   onKeywordInput(e) {
     this.setData({ keyword: e.detail.value });
@@ -45,6 +82,7 @@ Page({
     });
   },
   async loadData() {
+    if (!this.data.isAdmin) return;
     this.setData({ loading: true });
     try {
       const result = await api.searchQuestions({
@@ -68,10 +106,13 @@ Page({
         ownerText: item.governance && item.governance.owner ? item.governance.owner : '未分配负责人',
         importBatchText: item.importMeta && item.importMeta.batchId ? item.importMeta.batchId : '--',
         importPositionText: item.importMeta ? `${item.importMeta.sheetName || '--'} / row ${item.importMeta.rowNumber || '--'}` : '--',
-        canApprove: item.status !== 'deleted' && item.reviewStatus !== 'approved',
-        canReject: item.status !== 'deleted' && item.reviewStatus !== 'rejected',
-        canPublish: item.status !== 'deleted' && item.reviewStatus === 'approved' && item.status !== 'published',
-        canSendToReview: item.status !== 'deleted' && (item.status === 'draft' || item.reviewStatus === 'rejected')
+        canEdit: this.data.canEdit,
+        canApprove: this.data.canApprove && item.status !== 'deleted' && item.reviewStatus !== 'approved',
+        canReject: this.data.canReject && item.status !== 'deleted' && item.reviewStatus !== 'rejected',
+        canPublish: this.data.canPublish && item.status !== 'deleted' && item.reviewStatus === 'approved' && item.status !== 'published',
+        canSendToReview: this.data.canEdit && item.status !== 'deleted' && (item.status === 'draft' || item.reviewStatus === 'rejected'),
+        canArchive: this.data.canArchive && item.status !== 'deleted',
+        canRestore: this.data.canArchive && item.status === 'deleted'
       }));
       this.setData({ list });
       this.updateSummary(list);
@@ -94,6 +135,10 @@ Page({
     return { published: '已上线', review: '审核中', draft: '草稿中', archived: '已归档' }[value] || '未设置';
   },
   goEdit(e) {
+    if (!this.data.canEdit) {
+      wx.showToast({ title: '当前角色没有编辑权限', icon: 'none' });
+      return;
+    }
     const { id } = e.currentTarget.dataset;
     wx.navigateTo({ url: `/pages/edit/index?id=${id}` });
   },
@@ -110,7 +155,7 @@ Page({
       wx.showToast({ title: successTitle, icon: 'success' });
       await this.loadData();
     } catch (error) {
-      wx.showToast({ title: '操作失败', icon: 'none' });
+      wx.showToast({ title: error && error.message ? error.message : '操作失败', icon: 'none' });
     } finally {
       this.setData({ loading: false });
     }
@@ -178,7 +223,7 @@ Page({
       wx.showToast({ title: '已归档', icon: 'success' });
       this.loadData();
     } catch (error) {
-      wx.showToast({ title: '归档失败', icon: 'none' });
+      wx.showToast({ title: error && error.message ? error.message : '归档失败', icon: 'none' });
     }
   },
   async handleRestore(e) {
@@ -188,7 +233,7 @@ Page({
       wx.showToast({ title: '已恢复', icon: 'success' });
       this.loadData();
     } catch (error) {
-      wx.showToast({ title: '恢复失败', icon: 'none' });
+      wx.showToast({ title: error && error.message ? error.message : '恢复失败', icon: 'none' });
     }
   }
 });

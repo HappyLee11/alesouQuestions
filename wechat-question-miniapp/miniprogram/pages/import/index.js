@@ -1,5 +1,6 @@
 const api = require('../../utils/question');
 const { safeJsonParse, formatTime } = require('../../utils');
+const { hasPermission, syncAdminContext } = require('../../utils/permissions');
 
 const IMPORT_TASKS_KEY = 'question-import-task-receipts';
 
@@ -8,6 +9,8 @@ const TEMPLATE_PRESETS = {
     label: '标准 JSON 数组',
     sourceType: 'json-array',
     templateType: 'standard-json',
+    suggestedFileName: 'questions.json',
+    suggestedFileType: 'application/json',
     example: `[
   {
     "title": "Node.js 事件循环中微任务会在什么时候执行？",
@@ -28,6 +31,8 @@ const TEMPLATE_PRESETS = {
     label: '异构字段 JSON',
     sourceType: 'json-array',
     templateType: 'legacy-json',
+    suggestedFileName: 'legacy-question-export.json',
+    suggestedFileType: 'application/json',
     example: `[
   {
     "题目": "HTTPS 为什么更安全？",
@@ -49,6 +54,8 @@ const TEMPLATE_PRESETS = {
     label: 'JSON Lines / 导出日志',
     sourceType: 'json-lines',
     templateType: 'jsonl',
+    suggestedFileName: 'question-export.jsonl',
+    suggestedFileType: 'application/x-ndjson',
     example: `{"questionTitle":"什么是 CDN？","description":"请解释 CDN 的作用。","result":"内容分发网络，用于就近分发与加速。","questionType":"qa","subject":"运维与架构","category":"网络加速","level":"medium"}
 {"questionTitle":"React 中列表渲染为什么需要 key？","description":"请解释 key 的主要作用。","result":"帮助框架稳定识别节点，提高 diff 正确性。","questionType":"qa","subject":"前端开发","category":"React","level":"easy"}`
   },
@@ -56,6 +63,8 @@ const TEMPLATE_PRESETS = {
     label: 'CSV / 表格粘贴',
     sourceType: 'csv-text',
     templateType: 'spreadsheet-csv',
+    suggestedFileName: 'question-import.csv',
+    suggestedFileType: 'text/csv',
     example: `题目,题干,答案,标签,题型,学科,分类,难度,状态,审核状态
 HTTP 为什么无状态,解释 HTTP 为什么被称为无状态协议,协议本身不保存会话上下文,HTTP|协议,qa,Web 基础,协议,medium,published,approved
 Redis 热点缓存原因,说明 Redis 为什么常用作缓存层,内存存储且访问快,Redis|缓存,qa,后端开发,缓存,medium,draft,pending`
@@ -64,6 +73,8 @@ Redis 热点缓存原因,说明 Redis 为什么常用作缓存层,内存存储�
     label: 'XLSX/CSV 导入任务 Manifest',
     sourceType: 'xlsx-manifest',
     templateType: 'spreadsheet-workbook',
+    suggestedFileName: 'question-import-manifest.json',
+    suggestedFileType: 'application/json',
     example: `{
   "sourceType": "xlsx-manifest",
   "templateType": "spreadsheet-workbook",
@@ -154,6 +165,11 @@ const APPROVAL_OPTIONS = [
 ];
 
 const PRESET_KEYS = Object.keys(TEMPLATE_PRESETS);
+const REQUIRED_FIELD_ALIASES = {
+  title: ['title', '题目', 'questionTitle', 'name'],
+  content: ['content', '题干', 'description', 'question', 'body'],
+  answer: ['answer', '答案', 'result']
+};
 
 function splitCsvLine(line = '') {
   const result = [];
@@ -182,7 +198,6 @@ function splitCsvLine(line = '') {
 function parseRawText(text = '', presetKey = 'json') {
   const raw = String(text || '').trim();
   if (!raw) return null;
-  const preset = TEMPLATE_PRESETS[presetKey] || TEMPLATE_PRESETS.json;
 
   if (presetKey === 'json' || presetKey === 'aliases') {
     const parsed = safeJsonParse(raw, null);
@@ -223,7 +238,7 @@ function parseRawText(text = '', presetKey = 'json') {
     return manifest && typeof manifest === 'object' ? { type: 'manifest', manifest } : null;
   }
 
-  return preset.sourceType === 'json-array' ? { type: 'items', items: safeJsonParse(raw, []) } : null;
+  return null;
 }
 
 function flattenManifestRows(manifest = {}) {
@@ -252,12 +267,87 @@ function summarizeResult(result = {}) {
   };
 }
 
+function simpleHash(text = '') {
+  let hash = 0;
+  const input = String(text || '');
+  for (let i = 0; i < input.length; i += 1) {
+    hash = ((hash << 5) - hash) + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return `stg-${Math.abs(hash).toString(16)}`;
+}
+
+function pickValue(row = {}, aliases = []) {
+  for (let i = 0; i < aliases.length; i += 1) {
+    const key = aliases[i];
+    if (row[key] !== undefined && row[key] !== null && row[key] !== '') {
+      return String(row[key]).trim();
+    }
+  }
+  return '';
+}
+
+function countFilled(items = [], aliases = []) {
+  return items.filter((row) => !!pickValue(row, aliases)).length;
+}
+
+function buildStageReadiness(items = [], preview = null) {
+  const total = items.length;
+  const duplicateTitleCount = (() => {
+    const seen = new Set();
+    let duplicates = 0;
+    items.forEach((row) => {
+      const title = pickValue(row, REQUIRED_FIELD_ALIASES.title).replace(/[\s\-—_【】\[\]()（）]/g, '').toLowerCase();
+      if (!title) return;
+      if (seen.has(title)) duplicates += 1;
+      seen.add(title);
+    });
+    return duplicates;
+  })();
+  const titleCount = countFilled(items, REQUIRED_FIELD_ALIASES.title);
+  const contentCount = countFilled(items, REQUIRED_FIELD_ALIASES.content);
+  const answerCount = countFilled(items, REQUIRED_FIELD_ALIASES.answer);
+  const ownerTeamCount = countFilled(items, ['ownerTeam', '归属团队']);
+  const ownerCount = countFilled(items, ['owner', '负责人']);
+  const invalidCount = preview && preview.resultSummary ? preview.resultSummary.invalid : 0;
+  const warningCount = preview && preview.resultSummary ? preview.resultSummary.warnings : 0;
+  const previewPassed = !!(preview && preview.success && preview.batchMatched && invalidCount === 0);
+  return {
+    total,
+    titleCount,
+    contentCount,
+    answerCount,
+    ownerTeamCount,
+    ownerCount,
+    duplicateTitleCount,
+    invalidCount,
+    warningCount,
+    previewPassed,
+    blockers: [
+      !total ? '暂存区没有可导入记录' : '',
+      total && titleCount < total ? '存在缺少标题的记录' : '',
+      total && contentCount < total ? '存在缺少题干的记录' : '',
+      total && answerCount < total ? '存在缺少答案的记录' : '',
+      duplicateTitleCount ? '同一批次内存在重复标题' : '',
+      invalidCount ? '云端预检仍有错误记录' : ''
+    ].filter(Boolean)
+  };
+}
+
 Page({
   data: {
+    checking: true,
+    isAdmin: false,
+    admin: null,
+    canImport: false,
     presetOptions: PRESET_KEYS.map((key) => ({ key, label: TEMPLATE_PRESETS[key].label })),
     presetKey: 'workbook',
     presetIndex: PRESET_KEYS.indexOf('workbook'),
     text: TEMPLATE_PRESETS.workbook.example,
+    taskName: '华东校招题库 3 月增量',
+    fileName: TEMPLATE_PRESETS.workbook.suggestedFileName,
+    fileType: TEMPLATE_PRESETS.workbook.suggestedFileType,
+    sourceRef: 'local://staging/question-import-manifest.json',
     loading: false,
     parseError: '',
     preview: null,
@@ -280,11 +370,49 @@ Page({
     defaultReviewer: '',
     importReason: '批量导入新题',
     recentTasks: [],
-    resultSummary: null
+    resultSummary: null,
+    stageMeta: null,
+    readiness: null,
+    previewState: {
+      statusText: '尚未预检',
+      batchMatched: false,
+      stageSignature: '',
+      success: false,
+      resultSummary: null,
+      updatedAtText: '--'
+    }
   },
   onLoad() {
     this.loadRecentTasks();
+    this.applyPresetDefaults(this.data.presetKey, false);
     this.updatePreview(this.data.text, this.data.presetKey);
+    this.bootstrapAccess();
+  },
+  async bootstrapAccess() {
+    this.setData({ checking: true });
+    try {
+      const info = await api.checkAdmin();
+      syncAdminContext(info);
+      this.setData({
+        isAdmin: !!info.isAdmin,
+        admin: info.admin || null,
+        canImport: hasPermission(info.admin, 'question.import')
+      });
+    } catch (error) {
+      wx.showToast({ title: '权限校验失败', icon: 'none' });
+    } finally {
+      this.setData({ checking: false });
+    }
+  },
+  applyPresetDefaults(presetKey = 'json', replaceText = true) {
+    const preset = TEMPLATE_PRESETS[presetKey] || TEMPLATE_PRESETS.json;
+    this.setData({
+      fileName: preset.suggestedFileName,
+      fileType: preset.suggestedFileType,
+      sourceRef: `local://staging/${preset.suggestedFileName}`,
+      taskName: presetKey === 'workbook' ? '华东校招题库 3 月增量' : `题库导入-${preset.label}`,
+      ...(replaceText ? { text: preset.example } : {})
+    });
   },
   onPresetChange(e) {
     const index = Number(e.detail.value) || 0;
@@ -295,20 +423,53 @@ Page({
       presetKey,
       text: preset.example,
       importResult: null,
-      resultSummary: null
+      resultSummary: null,
+      previewState: {
+        statusText: '尚未预检',
+        batchMatched: false,
+        stageSignature: '',
+        success: false,
+        resultSummary: null,
+        updatedAtText: '--'
+      }
     });
+    this.applyPresetDefaults(presetKey);
     this.updatePreview(preset.example, presetKey);
   },
   onInput(e) {
     const text = e.detail.value;
     this.setData({ text, importResult: null, resultSummary: null });
+    this.resetPreviewState();
     this.updatePreview(text, this.data.presetKey);
   },
   onFieldMappingsInput(e) {
     this.setData({ fieldMappingsText: e.detail.value });
+    this.resetPreviewState();
   },
   onBatchIdInput(e) {
     this.setData({ importBatchId: e.detail.value });
+    this.resetPreviewState();
+    this.refreshStageMeta();
+  },
+  onTaskNameInput(e) {
+    this.setData({ taskName: e.detail.value });
+    this.resetPreviewState();
+    this.refreshStageMeta();
+  },
+  onFileNameInput(e) {
+    this.setData({ fileName: e.detail.value });
+    this.resetPreviewState();
+    this.refreshStageMeta();
+  },
+  onFileTypeInput(e) {
+    this.setData({ fileType: e.detail.value });
+    this.resetPreviewState();
+    this.refreshStageMeta();
+  },
+  onSourceRefInput(e) {
+    this.setData({ sourceRef: e.detail.value });
+    this.resetPreviewState();
+    this.refreshStageMeta();
   },
   onDedupeChange(e) {
     const index = Number(e.detail.value) || 0;
@@ -316,27 +477,48 @@ Page({
       dedupeIndex: index,
       dedupeStrategy: DEDUPE_OPTIONS[index].value
     });
+    this.resetPreviewState();
   },
   onStatusChange(e) {
     this.setData({ statusIndex: Number(e.detail.value) || 0 });
+    this.resetPreviewState();
   },
   onReviewChange(e) {
     this.setData({ reviewIndex: Number(e.detail.value) || 0 });
+    this.resetPreviewState();
   },
   onApprovalChange(e) {
     this.setData({ approvalIndex: Number(e.detail.value) || 0 });
+    this.resetPreviewState();
   },
   onDefaultOwnerInput(e) {
     this.setData({ defaultOwner: e.detail.value });
+    this.resetPreviewState();
   },
   onDefaultOwnerTeamInput(e) {
     this.setData({ defaultOwnerTeam: e.detail.value });
+    this.resetPreviewState();
   },
   onDefaultReviewerInput(e) {
     this.setData({ defaultReviewer: e.detail.value });
+    this.resetPreviewState();
   },
   onImportReasonInput(e) {
     this.setData({ importReason: e.detail.value });
+    this.resetPreviewState();
+  },
+  resetPreviewState() {
+    this.setData({
+      previewState: {
+        statusText: '暂存内容已变化，需重新预检',
+        batchMatched: false,
+        stageSignature: '',
+        success: false,
+        resultSummary: null,
+        updatedAtText: '--'
+      }
+    });
+    this.refreshReadiness();
   },
   loadRecentTasks() {
     const recentTasks = (wx.getStorageSync(IMPORT_TASKS_KEY) || []).map((item) => ({
@@ -351,32 +533,86 @@ Page({
     wx.setStorageSync(IMPORT_TASKS_KEY, next);
     this.loadRecentTasks();
   },
+  refreshStageMeta(items = this.data.stagingItems, preview = this.data.preview) {
+    const preset = TEMPLATE_PRESETS[this.data.presetKey] || TEMPLATE_PRESETS.json;
+    const rawText = this.data.text || '';
+    const stageMeta = {
+      sourceType: preset.sourceType,
+      templateType: preset.templateType,
+      charCount: rawText.length,
+      rowCount: items.length,
+      sheetCount: preview && preview.sheetSummary ? preview.sheetSummary.length : 0,
+      stageChecksum: simpleHash(rawText),
+      fileName: this.data.fileName || preset.suggestedFileName,
+      fileType: this.data.fileType || preset.suggestedFileType,
+      sourceRef: this.data.sourceRef || `local://staging/${preset.suggestedFileName}`,
+      taskName: this.data.taskName || `题库导入-${preset.label}`,
+      batchId: this.data.importBatchId || 'demo-batch',
+      stageSignature: ''
+    };
+    stageMeta.stageSignature = this.buildStageSignature(stageMeta);
+    this.setData({ stageMeta });
+    this.refreshReadiness(items, null, stageMeta);
+    return stageMeta;
+  },
+  buildStageSignature(stageMeta = this.data.stageMeta || {}) {
+    return [
+      stageMeta.stageChecksum || '',
+      this.data.importBatchId || '',
+      this.data.dedupeStrategy || '',
+      this.data.statusOptions[this.data.statusIndex].value,
+      this.data.reviewOptions[this.data.reviewIndex].value,
+      this.data.approvalOptions[this.data.approvalIndex].value,
+      this.data.defaultOwner || '',
+      this.data.defaultOwnerTeam || '',
+      this.data.defaultReviewer || '',
+      this.data.importReason || '',
+      this.data.fieldMappingsText || ''
+    ].join('::');
+  },
+  refreshReadiness(items = this.data.stagingItems, previewState = this.data.previewState, stageMeta = this.data.stageMeta) {
+    const batchMatched = previewState && previewState.stageSignature && stageMeta
+      ? previewState.stageSignature === this.buildStageSignature(stageMeta)
+      : false;
+    const readiness = buildStageReadiness(items, {
+      success: previewState && previewState.success,
+      batchMatched,
+      resultSummary: previewState && previewState.resultSummary
+    });
+    this.setData({ readiness });
+  },
   updatePreview(text, presetKey) {
     try {
       const parsed = parseRawText(text, presetKey);
       if (!parsed) {
         this.setData({ preview: null, stagingItems: [], importManifest: null, parseError: '当前内容无法解析为可导入记录，请检查格式或切换模板类型。' });
+        this.refreshStageMeta([], null);
         return;
       }
       if (parsed.type === 'manifest') {
         const rows = flattenManifestRows(parsed.manifest);
         if (!rows.length) {
           this.setData({ preview: null, stagingItems: [], importManifest: null, parseError: 'Manifest 中没有可导入 rows。' });
+          this.refreshStageMeta([], null);
           return;
         }
         const preview = this.buildManifestPreview(parsed.manifest, rows);
         this.setData({ preview, importManifest: parsed.manifest, stagingItems: rows.map((item) => item.row), parseError: '' });
+        this.refreshStageMeta(rows.map((item) => item.row), preview);
         return;
       }
       const items = parsed.items || [];
       if (!Array.isArray(items) || !items.length) {
         this.setData({ preview: null, stagingItems: [], importManifest: null, parseError: '当前内容无法解析为可导入记录，请检查格式或切换模板类型。' });
+        this.refreshStageMeta([], null);
         return;
       }
       const preview = this.buildLocalPreview(items);
       this.setData({ preview, stagingItems: items, importManifest: null, parseError: '' });
+      this.refreshStageMeta(items, preview);
     } catch (error) {
       this.setData({ preview: null, stagingItems: [], importManifest: null, parseError: '解析失败，请检查内容格式。' });
+      this.refreshStageMeta([], null);
     }
   },
   buildLocalPreview(items = []) {
@@ -422,8 +658,23 @@ Page({
     const mappings = safeJsonParse(this.data.fieldMappingsText || '{}', {});
     return mappings && typeof mappings === 'object' ? mappings : {};
   },
+  buildTaskPayload() {
+    const stageMeta = this.data.stageMeta || this.refreshStageMeta();
+    return {
+      taskId: `${this.data.importBatchId || 'demo-batch'}-${stageMeta.stageChecksum}`,
+      taskName: this.data.taskName || stageMeta.taskName,
+      taskStatus: 'staged',
+      fileName: this.data.fileName || stageMeta.fileName,
+      fileType: this.data.fileType || stageMeta.fileType,
+      sourceRef: this.data.sourceRef || stageMeta.sourceRef,
+      approvalPolicy: this.data.approvalOptions[this.data.approvalIndex].value,
+      stagedAt: Date.now(),
+      stagingChecksum: stageMeta.stageChecksum
+    };
+  },
   buildImportPayload() {
     const preset = TEMPLATE_PRESETS[this.data.presetKey] || TEMPLATE_PRESETS.json;
+    const task = this.buildTaskPayload();
     const base = {
       dedupeStrategy: this.data.dedupeStrategy,
       sourceType: preset.sourceType,
@@ -437,7 +688,14 @@ Page({
       defaultOwner: this.data.defaultOwner.trim(),
       defaultReviewer: this.data.defaultReviewer.trim(),
       approvalPolicy: this.data.approvalOptions[this.data.approvalIndex].value,
-      importReason: this.data.importReason.trim()
+      importReason: this.data.importReason.trim(),
+      task,
+      taskId: task.taskId,
+      taskName: task.taskName,
+      fileName: task.fileName,
+      fileType: task.fileType,
+      sourceRef: task.sourceRef,
+      stagingChecksum: task.stagingChecksum
     };
     if (this.data.importManifest) {
       return {
@@ -460,6 +718,7 @@ Page({
           },
           task: {
             ...((this.data.importManifest && this.data.importManifest.task) || {}),
+            ...task,
             approvalPolicy: base.approvalPolicy,
             reason: base.importReason
           }
@@ -473,7 +732,7 @@ Page({
   },
   buildReceipt(mode = 'preview', result = {}) {
     const data = result.data || {};
-    const task = data.task || (this.data.importManifest && this.data.importManifest.task) || {};
+    const task = data.task || this.buildTaskPayload();
     const preset = TEMPLATE_PRESETS[this.data.presetKey] || TEMPLATE_PRESETS.json;
     return {
       mode,
@@ -482,6 +741,9 @@ Page({
       taskId: task.taskId || '',
       taskName: task.taskName || task.fileName || `${this.data.importBatchId}-${mode}`,
       fileName: task.fileName || (this.data.preview && this.data.preview.fileName) || '--',
+      fileType: task.fileType || this.data.fileType,
+      sourceRef: task.sourceRef || this.data.sourceRef,
+      stagingChecksum: (this.data.stageMeta && this.data.stageMeta.stageChecksum) || '',
       sourceType: data.sourceType || preset.sourceType,
       templateType: data.templateType || preset.templateType,
       dedupeStrategy: data.dedupeStrategy || this.data.dedupeStrategy,
@@ -499,6 +761,10 @@ Page({
   },
   async previewOnCloud() {
     try {
+      if (!this.data.canImport) {
+        wx.showToast({ title: '当前角色没有导入权限', icon: 'none' });
+        return;
+      }
       if (!this.data.stagingItems.length && !this.data.importManifest) {
         wx.showToast({ title: '请先生成有效暂存数据', icon: 'none' });
         return;
@@ -508,9 +774,24 @@ Page({
         ...this.buildImportPayload(),
         previewOnly: true
       });
-      this.setData({ importResult: result, resultSummary: summarizeResult(result) });
+      const resultSummary = summarizeResult(result);
+      const stageSignature = this.buildStageSignature();
+      const success = !!(result && result.success);
+      this.setData({
+        importResult: result,
+        resultSummary,
+        previewState: {
+          statusText: success ? (resultSummary.invalid ? '预检未通过' : '预检通过，可执行导入') : '预检失败',
+          batchMatched: true,
+          stageSignature,
+          success,
+          resultSummary,
+          updatedAtText: formatTime(Date.now())
+        }
+      });
+      this.refreshReadiness();
       this.saveRecentTask(this.buildReceipt('preview', result));
-      wx.showToast({ title: '预检完成', icon: 'success' });
+      wx.showToast({ title: success ? '预检完成' : '预检失败', icon: success ? 'success' : 'none' });
     } catch (error) {
       wx.showToast({ title: '预检失败，请检查映射配置', icon: 'none' });
     } finally {
@@ -519,8 +800,16 @@ Page({
   },
   async handleImport() {
     try {
+      if (!this.data.canImport) {
+        wx.showToast({ title: '当前角色没有导入权限', icon: 'none' });
+        return;
+      }
       if (!this.data.stagingItems.length && !this.data.importManifest) {
         wx.showToast({ title: '请先生成有效暂存数据', icon: 'none' });
+        return;
+      }
+      if (!this.data.readiness || this.data.readiness.blockers.length) {
+        wx.showToast({ title: '请先修正暂存问题并完成预检', icon: 'none' });
         return;
       }
       this.setData({ loading: true });

@@ -1,1 +1,4 @@
 /* import page */
+.textarea-xl {
+  min-height: 560rpx;
+}

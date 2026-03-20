@@ -4,7 +4,8 @@ App({
     useMockOnFail: true,
     userInfo: null,
     adminChecked: false,
-    isAdmin: false
+    isAdmin: false,
+    adminInfo: null
   },
   onLaunch() {
     if (!wx.cloud) {

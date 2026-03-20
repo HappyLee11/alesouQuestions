@@ -83,7 +83,7 @@ async function getQuestionDetail(id, options = {}) {
 }
 
 async function checkAdmin() {
-  const result = await callFunction('checkAdmin');
+  const result = await callFunction('checkAdmin', {}, { useMockOnFail: false });
   if (result && !result.__mockFallback) {
     return {
       success: !!result.success,
@@ -97,6 +97,20 @@ async function checkAdmin() {
     isAdmin: false,
     openid: '',
     admin: null
+  };
+}
+
+async function getAdminOverview() {
+  const result = await callFunction('getAdminOverview', {}, { useMockOnFail: false });
+  if (!result || !result.success) {
+    throw new Error(result && result.message ? result.message : 'get admin overview failed');
+  }
+  const data = result.data || {};
+  return {
+    openid: result.openid || '',
+    admin: data.admin || null,
+    recentImportTasks: data.recentImportTasks || [],
+    recentAuditLogs: data.recentAuditLogs || []
   };
 }
 
@@ -121,6 +135,7 @@ module.exports = {
   searchQuestions,
   getQuestionDetail,
   checkAdmin,
+  getAdminOverview,
   saveQuestion,
   deleteQuestion,
   importQuestions
