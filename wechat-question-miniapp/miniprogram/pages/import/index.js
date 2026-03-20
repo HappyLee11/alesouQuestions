@@ -1,6 +1,7 @@
 const api = require('../../utils/question');
 const { safeJsonParse, formatTime } = require('../../utils');
 const { hasPermission, syncAdminContext } = require('../../utils/permissions');
+const { buildDemoJsonText, buildDemoWorkbookManifest, buildFieldMappingsText, buildAdminSeedText } = require('../../utils/bootstrap');
 
 const IMPORT_TASKS_KEY = 'question-import-task-receipts';
 
@@ -338,6 +339,7 @@ Page({
   data: {
     checking: true,
     isAdmin: false,
+    openid: '',
     admin: null,
     canImport: false,
     presetOptions: PRESET_KEYS.map((key) => ({ key, label: TEMPLATE_PRESETS[key].label })),
@@ -357,7 +359,7 @@ Page({
     dedupeStrategy: 'skip',
     stagingItems: [],
     importManifest: null,
-    fieldMappingsText: '{\n  "title": ["题目", "questionTitle"],\n  "content": ["题干", "description"],\n  "answer": ["答案", "result"],\n  "owner": ["负责人"],\n  "ownerTeam": ["归属团队"]\n}',
+    fieldMappingsText: buildFieldMappingsText(),
     importBatchId: 'demo-batch-20260320',
     statusOptions: STATUS_OPTIONS,
     statusIndex: 0,
@@ -395,6 +397,7 @@ Page({
       syncAdminContext(info);
       this.setData({
         isAdmin: !!info.isAdmin,
+        openid: info.openid || '',
         admin: info.admin || null,
         canImport: hasPermission(info.admin, 'question.import')
       });
@@ -435,6 +438,55 @@ Page({
     });
     this.applyPresetDefaults(presetKey);
     this.updatePreview(preset.example, presetKey);
+  },
+  loadDemoPreset(mode = 'json') {
+    const isWorkbook = mode === 'workbook';
+    const presetKey = isWorkbook ? 'workbook' : 'json';
+    const presetIndex = PRESET_KEYS.indexOf(presetKey);
+    const text = isWorkbook ? buildDemoWorkbookManifest() : buildDemoJsonText();
+    const nextBatchId = isWorkbook ? 'demo-first-run-workbook' : 'demo-first-run-json';
+    this.applyPresetDefaults(presetKey, false);
+    this.setData({
+      presetKey,
+      presetIndex,
+      text,
+      taskName: isWorkbook ? '上传后首日演示任务（Workbook）' : '上传后首日演示任务（JSON）',
+      fileName: isWorkbook ? 'demo-first-run-seed.xlsx' : 'demo-first-run-seed.json',
+      fileType: isWorkbook ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/json',
+      sourceRef: isWorkbook ? 'local://staging/demo-first-run-seed.xlsx' : 'local://staging/demo-first-run-seed.json',
+      importBatchId: nextBatchId,
+      fieldMappingsText: buildFieldMappingsText(),
+      defaultOwnerTeam: '内容运营',
+      defaultOwner: '内容A',
+      defaultReviewer: '审核员A',
+      importReason: '上传后首日初始化演示题库',
+      importResult: null,
+      resultSummary: null,
+      previewState: {
+        statusText: '已填入演示样例，建议先预检',
+        batchMatched: false,
+        stageSignature: '',
+        success: false,
+        resultSummary: null,
+        updatedAtText: '--'
+      }
+    });
+    this.updatePreview(text, presetKey);
+  },
+  useDemoJsonPreset() {
+    this.loadDemoPreset('json');
+  },
+  useDemoWorkbookPreset() {
+    this.loadDemoPreset('workbook');
+  },
+  copyFieldMappings() {
+    wx.setClipboardData({ data: buildFieldMappingsText() });
+  },
+  copyAdminSeed() {
+    wx.setClipboardData({ data: buildAdminSeedText(this.data.openid) });
+  },
+  goAdmin() {
+    wx.navigateTo({ url: '/pages/admin/index' });
   },
   onInput(e) {
     const text = e.detail.value;

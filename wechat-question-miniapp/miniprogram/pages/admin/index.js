@@ -1,5 +1,6 @@
 const api = require('../../utils/question');
 const { formatTime } = require('../../utils');
+const { buildAdminSeedText, buildCollectionChecklistText } = require('../../utils/bootstrap');
 
 const IMPORT_TASKS_KEY = 'question-import-task-receipts';
 
@@ -149,6 +150,19 @@ Page({
     if (action === 'import') return this.goImport();
     if (action === 'taskCenter') return this.goTaskCenter();
     return this.goCreate();
+  },
+  copyOpenid() {
+    if (!this.data.openid) {
+      wx.showToast({ title: '还没拿到 OPENID', icon: 'none' });
+      return;
+    }
+    wx.setClipboardData({ data: this.data.openid });
+  },
+  copyAdminSeed() {
+    wx.setClipboardData({ data: buildAdminSeedText(this.data.openid) });
+  },
+  copyCollectionChecklist() {
+    wx.setClipboardData({ data: buildCollectionChecklistText() });
   },
   goList() {
     wx.navigateTo({ url: '/pages/list/index' });

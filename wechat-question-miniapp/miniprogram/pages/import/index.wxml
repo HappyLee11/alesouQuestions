@@ -10,7 +10,15 @@
   </view>
 
   <view wx:if="{{checking}}" class="card empty">正在校验权限...</view>
-  <view wx:elif="{{!isAdmin}}" class="card empty">当前账号不是管理员，无法进入导入后台。</view>
+  <view wx:elif="{{!isAdmin}}" class="card empty">
+    <view class="section-title">当前账号还不是管理员</view>
+    <view class="feature-desc">先去后台页拿 OPENID 并写入 `admins` 集合；需要的话也可以先复制下面这份管理员 JSON 作为初始化模板。</view>
+    <view class="feature-desc">当前 OPENID：{{openid || '--'}}</view>
+    <view class="btn-row">
+      <button class="primary-btn" bindtap="copyAdminSeed">复制管理员 JSON</button>
+      <button class="secondary-btn" bindtap="goAdmin">去后台页继续配置</button>
+    </view>
+  </view>
   <block wx:else>
     <view class="timeline-grid">
       <view class="timeline-card">
@@ -43,6 +51,11 @@
     <view class="card">
       <view class="title">导入配置</view>
       <view class="subtitle">这版导入不再只是“粘 JSON 写库”，而是模拟真实的文件导入暂存流：支持 JSON / JSONL / CSV 文本，也支持 workbook manifest 来表达文件、sheet、row、任务 ID、审批策略和默认治理信息。</view>
+      <view class="btn-row">
+        <button class="secondary-btn" bindtap="useDemoJsonPreset">一键填入 9 条演示 JSON</button>
+        <button bindtap="useDemoWorkbookPreset">切换成 workbook 演示任务</button>
+        <button bindtap="copyFieldMappings">复制字段映射模板</button>
+      </view>
 
       <view class="field-label field-gap">导入模板 / 文件类型</view>
       <picker mode="selector" range="{{presetOptions}}" range-key="label" value="{{presetIndex}}" bindchange="onPresetChange">

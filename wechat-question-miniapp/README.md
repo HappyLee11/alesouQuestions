@@ -119,6 +119,7 @@ miniprogram/pages/
 更多说明见：
 
 - [`docs/setup.md`](./docs/setup.md)
+- [`docs/first-run-checklist.md`](./docs/first-run-checklist.md)
 - [`docs/architecture.md`](./docs/architecture.md)
 - [`docs/import-normalization.md`](./docs/import-normalization.md)
 - [`docs/governance-model.md`](./docs/governance-model.md)
@@ -177,6 +178,13 @@ miniprogram/pages/
 - `data/import-template.csv`
 - `data/import-workbook-manifest.json`
 - `data/question-governance-schema.json`
+
+如果你是**上传成功后的第一次联调**，现在也可以直接在小程序导入页里使用：
+
+- 一键填入 9 条演示 JSON
+- 一键切换成 workbook 演示任务
+
+这样可以更快跑通 `questions / import_tasks / audit_logs` 的首日链路。
 
 ### 7. 配置管理员
 
