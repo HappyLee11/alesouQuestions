@@ -16,7 +16,7 @@
   "compileType": "miniprogram",
   "libVersion": "3.3.3",
   "appid": "wx33b53b8c2d9d1fda",
-  "projectname": "wechat-question-miniapp",
+  "projectname": "阿乐题库",
   "cloudfunctionRoot": "cloudfunctions/",
   "miniprogramRoot": "miniprogram/",
   "cloudbaseRoot": "",

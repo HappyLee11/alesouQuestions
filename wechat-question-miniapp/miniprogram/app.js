@@ -1,6 +1,6 @@
 App({
   globalData: {
-    envId: 'your-cloud-env-id',
+    envId: 'cloudbase-6gffo8cld63d6b10',
     useMockOnFail: true,
     userInfo: null,
     adminChecked: false,
