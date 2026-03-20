@@ -1,118 +1,73 @@
 <view class="container page-shell page-home">
-  <view class="hero-card">
-    <view class="eyebrow">Demo Ready · Productized UI</view>
-    <view class="hero-title">阿乐搜题 · 题库检索与治理演示版</view>
-    <view class="hero-subtitle">把搜题入口、结果体验、后台治理、批量导入和 GitHub 项目呈现整理成一套更像产品 Demo 的小程序样子。</view>
-    <view class="quick-nav">
-      <view class="quick-nav-item">统一视觉系统</view>
-      <view class="quick-nav-item">搜索摘要与分页</view>
-      <view class="quick-nav-item">后台治理流转</view>
-      <view class="quick-nav-item">导入预检链路</view>
-    </view>
-    <view class="btn-row btn-row-tight">
-      <button class="primary-btn" bindtap="goSearch">开始搜索</button>
-      <button class="ghost-btn" bindtap="goAdmin">进入后台</button>
-      <button class="secondary-btn" bindtap="goImport">查看导入页</button>
-    </view>
-  </view>
+  <view class="hero-card home-hero">
+    <view class="eyebrow">阿乐搜题</view>
+    <view class="hero-title">打开就能搜题</view>
+    <view class="hero-subtitle">输入题目关键词、题干片段或知识点，马上开始查答案和解析。</view>
 
-  <view class="stats-grid">
-    <view class="metric-card">
-      <view class="metric-value">{{stats.total}}</view>
-      <view class="metric-label">示例题目</view>
+    <view class="home-search-box">
+      <input class="input home-search-input" placeholder="例如：HTTP 状态码 404 是什么" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="submitSearch" />
+      <button class="primary-btn home-search-btn" bindtap="submitSearch">搜索</button>
     </view>
-    <view class="metric-card">
-      <view class="metric-value">{{stats.published}}</view>
-      <view class="metric-label">已发布</view>
-    </view>
-    <view class="metric-card">
-      <view class="metric-value">{{stats.draft}}</view>
-      <view class="metric-label">草稿中</view>
-    </view>
-    <view class="metric-card">
-      <view class="metric-value">{{stats.tags}}</view>
-      <view class="metric-label">标签数量</view>
-    </view>
-  </view>
 
-  <view class="glass-card section-block" wx:if="{{runtime}}">
-    <view class="section-header">
-      <view>
-        <view class="section-title">上传后首次打开建议</view>
-        <view class="section-caption">把环境、管理员和演示题库初始化压缩成一个顺手的首日动作清单。</view>
-      </view>
-      <text class="toolbar-note">env：{{runtime.envId || '--'}}</text>
-    </view>
-    <view class="meta-row wrap-row large-gap">
-      <text class="meta-pill meta-pill-light">云能力：{{runtime.cloudAvailable ? '可用' : '不可用'}}</text>
-      <text class="meta-pill meta-pill-light">环境配置：{{runtime.cloudConfigured ? '已配置' : '待填写'}}</text>
-      <text class="meta-pill meta-pill-light">失败兜底：{{runtime.useMockOnFail ? '开启 mock fallback' : '仅云端'}}</text>
-    </view>
-    <view class="feature-item" wx:for="{{firstRunChecklist}}" wx:key="title">
-      <view class="feature-title">{{index + 1}}. {{item.title}}</view>
-      <view class="feature-desc">{{item.desc}}</view>
-    </view>
-    <view class="btn-row">
-      <button class="secondary-btn" bindtap="goAdmin">先去后台拿 OPENID</button>
-      <button bindtap="goImport">打开导入页做首批数据</button>
-      <button bindtap="copyCollectionChecklist">复制集合清单</button>
+    <view class="quick-hint-row">
+      <text class="quick-hint">支持题干片段</text>
+      <text class="quick-hint">支持知识点</text>
+      <text class="quick-hint">支持标签词</text>
     </view>
   </view>
 
   <view class="glass-card section-block">
     <view class="section-header">
       <view>
-        <view class="section-title">推荐搜索</view>
-        <view class="section-caption">直接点热词就能开始演示搜索、筛选和结果高亮。</view>
+        <view class="section-title">热门搜索</view>
+        <view class="section-caption">点一下就能直接搜</view>
       </view>
-      <text class="toolbar-note">用户侧入口</text>
     </view>
     <view class="tag-row small-gap">
-      <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapHotTerm">{{item}}</text>
+      <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 
-  <view class="card section-block">
+  <view class="card section-block" wx:if="{{history.length}}">
     <view class="section-header">
       <view>
-        <view class="section-title">这版可以怎么讲</view>
-        <view class="section-caption">按 2~4 分钟的演示节奏排好顺序，现场切页更顺。</view>
+        <view class="section-title">最近搜索</view>
+        <view class="section-caption">继续上次的查找</view>
       </view>
-      <text class="toolbar-note">Demo Flow</text>
+      <text class="link-text" bindtap="clearHistory">清空</text>
     </view>
-    <view class="timeline-grid large-gap">
-      <view class="timeline-card" wx:for="{{demoJourney}}" wx:key="step">
-        <view class="timeline-step">STEP {{item.step}}</view>
-        <view class="timeline-title">{{item.title}}</view>
-        <view class="timeline-desc">{{item.desc}}</view>
-      </view>
+    <view class="tag-row small-gap">
+      <text class="tag tag-clickable" wx:for="{{history}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 
-  <view class="card section-block">
+  <view class="card section-block" wx:if="{{subjects.length}}">
     <view class="section-header">
       <view>
-        <view class="section-title">产品化亮点</view>
-        <view class="section-caption">不只是“能跑”，而是尽量像一套可讲、可展示、可继续迭代的产品原型。</view>
+        <view class="section-title">按学科找题</view>
+        <view class="section-caption">先选范围，再看结果更快</view>
       </view>
     </view>
-    <view class="feature-item" wx:for="{{featureList}}" wx:key="title">
-      <view class="feature-title">{{item.title}}</view>
-      <view class="feature-desc">{{item.desc}}</view>
+    <view class="tag-row small-gap">
+      <text class="filter-chip tag-clickable" wx:for="{{subjects}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 
-  <view class="glass-card section-block">
+  <view class="glass-card section-block" wx:if="{{sampleQuestions.length}}">
     <view class="section-header">
       <view>
-        <view class="section-title">仓库展示面也一起补齐</view>
-        <view class="section-caption">README、结构说明、上手步骤和视觉占位图都会同步整理。</view>
+        <view class="section-title">试试这些题目</view>
+        <view class="section-caption">直接进入结果页查看答案和解析</view>
       </view>
-      <text class="toolbar-note">GitHub First Impression</text>
     </view>
-    <view class="feature-item" wx:for="{{repoHighlights}}" wx:key="title">
-      <view class="feature-title">{{item.title}}</view>
-      <view class="feature-desc">{{item.desc}}</view>
+    <view class="sample-list">
+      <view class="sample-item" wx:for="{{sampleQuestions}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
+        <view class="sample-title">{{item.title}}</view>
+        <view class="meta-row wrap-row small-gap">
+          <text class="meta-pill">{{item.subject || '未分类'}}</text>
+          <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
+        </view>
+      </view>
     </view>
   </view>
 </view>

@@ -4,13 +4,9 @@ const { highlightText, formatTime } = require('../../utils');
 const HISTORY_KEY = 'question-search-history';
 const HOT_TERMS = ['HTTP', 'JavaScript', 'Redis', 'Vue', 'MySQL', 'HTTPS'];
 const SORT_OPTIONS = [
-  { label: '综合相关', value: 'relevance' },
+  { label: '综合排序', value: 'relevance' },
   { label: '最近更新', value: 'updatedAt' },
-  { label: '难度优先', value: 'difficulty' }
-];
-const GROUP_OPTIONS = [
-  { label: '按学科分组', value: 'subject' },
-  { label: '按分类分组', value: 'category' }
+  { label: '按难度', value: 'difficulty' }
 ];
 const TYPE_LABELS = { single: '单选题', multiple: '多选题', qa: '问答题' };
 const DIFFICULTY_LABELS = { easy: '简单', medium: '中等', hard: '困难' };
@@ -22,35 +18,17 @@ function facetToChips(list = [], allLabel = '全部') {
   })));
 }
 
-function groupItems(list = [], key = 'subject') {
-  const map = {};
-  list.forEach((item) => {
-    const name = item[key] || '未设置';
-    if (!map[name]) map[name] = [];
-    map[name].push(item);
-  });
-  return Object.keys(map).map((name) => ({
-    name,
-    count: map[name].length,
-    items: map[name]
-  })).sort((a, b) => b.count - a.count);
-}
-
 Page({
   data: {
     keyword: '',
     loading: false,
     list: [],
     displayList: [],
-    groupedList: [],
     history: [],
     hotTerms: HOT_TERMS,
+    quickTerms: HOT_TERMS.slice(0, 4),
     sortOptions: SORT_OPTIONS,
     sortIndex: 0,
-    groupOptions: GROUP_OPTIONS,
-    groupIndex: 0,
-    useGroupView: true,
-    searchMode: 'keyword',
     currentFilters: {
       subject: '',
       difficulty: '',
@@ -73,15 +51,8 @@ Page({
       hasPrev: false,
       request: {}
     },
-    resultInsights: [
-      { label: '结果总数', value: '0', desc: '当前命中题目' },
-      { label: '结果来源', value: '本地 mock', desc: '支持云端切换' },
-      { label: '检索模式', value: '关键词', desc: '可切换图片示例' },
-      { label: '展示视图', value: '分组视图', desc: '支持切换列表' }
-    ],
     activeFilterText: '未启用筛选',
     expandMap: {},
-    queryDigest: [],
     topSuggestions: []
   },
   onLoad(options = {}) {
@@ -93,19 +64,11 @@ Page({
     this.handleSearch({ resetPage: true });
   },
   onKeywordInput(e) {
-    this.setData({ keyword: e.detail.value, searchMode: 'keyword' });
+    this.setData({ keyword: e.detail.value });
   },
   onChangeSort(e) {
     this.setData({ sortIndex: Number(e.detail.value) || 0 });
     this.handleSearch({ resetPage: true });
-  },
-  onChangeGroup(e) {
-    this.setData({ groupIndex: Number(e.detail.value) || 0 });
-    this.applyLocalFilters();
-  },
-  toggleGroupView() {
-    this.setData({ useGroupView: !this.data.useGroupView });
-    this.updateInsights();
   },
   onTapFilter(e) {
     const { field, value } = e.currentTarget.dataset;
@@ -113,7 +76,6 @@ Page({
     this.applyLocalFilters();
   },
   buildDisplayItem(item, keyword) {
-    const matchedFields = Array.isArray(item.matchedFields) ? item.matchedFields : [];
     return {
       ...item,
       titleSegments: highlightText(item.title, keyword),
@@ -122,8 +84,7 @@ Page({
       analysisPreview: item.analysis || '暂无解析',
       updatedAtText: formatTime(item.updatedAt),
       difficultyText: DIFFICULTY_LABELS[item.difficulty] || '未设置',
-      typeText: TYPE_LABELS[item.type] || '未知题型',
-      matchedFieldText: matchedFields.length ? matchedFields.join(' / ') : '标题 / 题干'
+      typeText: TYPE_LABELS[item.type] || '未知题型'
     };
   },
   getActiveFilterText() {
@@ -135,36 +96,8 @@ Page({
     if (currentFilters.tag) parts.push(`标签：${currentFilters.tag}`);
     return parts.length ? parts.join(' · ') : '未启用筛选';
   },
-  buildQueryDigest(keyword = '', request = {}) {
-    const filters = request.filters || {};
-    const parts = [];
-    if (keyword) parts.push(`关键词：${keyword}`);
-    parts.push(`排序：${this.data.sortOptions[this.data.sortIndex].label}`);
-    if (filters.subject) parts.push(`学科限定：${filters.subject}`);
-    if (filters.category) parts.push(`分类限定：${filters.category}`);
-    if (filters.difficulty) parts.push(`难度限定：${DIFFICULTY_LABELS[filters.difficulty] || filters.difficulty}`);
-    if (filters.type) parts.push(`题型限定：${TYPE_LABELS[filters.type] || filters.type}`);
-    return parts;
-  },
-  updateInsights() {
-    const { resultMeta, displayList, searchMode, useGroupView, currentFilters, filterOptions } = this.data;
-    const activeCount = ['subject', 'difficulty', 'type', 'tag'].filter((key) => !!currentFilters[key]).length;
-    const request = resultMeta.request || {};
-    this.setData({
-      resultInsights: [
-        { label: '结果总数', value: String(resultMeta.total || displayList.length || 0), desc: '当前命中题目' },
-        { label: '结果来源', value: resultMeta.from === 'cloud' ? '云端' : '本地 mock', desc: `第 ${resultMeta.page || 1} / ${resultMeta.totalPages || 1} 页` },
-        { label: '检索模式', value: searchMode === 'image' ? '图片示例' : '关键词', desc: activeCount ? `${activeCount} 个筛选生效` : '可继续缩小范围' },
-        { label: '展示视图', value: useGroupView ? '分组视图' : '列表视图', desc: useGroupView ? '更适合现场讲解' : '更适合快速浏览' }
-      ],
-      activeFilterText: this.getActiveFilterText(),
-      queryDigest: this.buildQueryDigest(this.data.keyword.trim(), request),
-      topSuggestions: (resultMeta.suggestions || []).slice(0, 6),
-      resultSummaryText: `学科 ${Math.max((filterOptions.subject || []).length - 1, 0)} 项 · 标签 ${Math.max((filterOptions.tag || []).length - 1, 0)} 项`
-    });
-  },
   applyLocalFilters() {
-    const { list, currentFilters, groupOptions, groupIndex, keyword } = this.data;
+    const { list, currentFilters, keyword } = this.data;
     const filtered = (list || []).filter((item) => {
       if (currentFilters.subject && item.subject !== currentFilters.subject) return false;
       if (currentFilters.difficulty && item.difficulty !== currentFilters.difficulty) return false;
@@ -175,9 +108,9 @@ Page({
 
     this.setData({
       displayList: filtered,
-      groupedList: groupItems(filtered, groupOptions[groupIndex].value)
+      activeFilterText: this.getActiveFilterText(),
+      topSuggestions: (this.data.resultMeta.suggestions || []).slice(0, 6)
     });
-    this.updateInsights();
   },
   async handleSearch(options = {}) {
     const targetPage = options.page || (options.resetPage ? 1 : this.data.resultMeta.page || 1);
@@ -191,7 +124,7 @@ Page({
         page: targetPage,
         pageSize: 4,
         status: 'all',
-        searchMode: this.data.searchMode
+        searchMode: 'keyword'
       });
       const list = (result.items || []).filter((item) => item.status !== 'deleted');
       const pagination = result.pagination || {};
@@ -214,7 +147,8 @@ Page({
           tag: facetToChips(result.facets && result.facets.tags, '全部标签')
         },
         currentFilters: { subject: '', difficulty: '', type: '', tag: '' },
-        expandMap: {}
+        expandMap: {},
+        topSuggestions: (result.suggestions || []).slice(0, 6)
       });
       this.applyLocalFilters();
       if (keyword) this.saveHistory(keyword);
@@ -247,14 +181,7 @@ Page({
   },
   onTapTerm(e) {
     const keyword = e.currentTarget.dataset.term;
-    this.setData({ keyword, searchMode: 'keyword' });
-    this.handleSearch({ resetPage: true });
-  },
-  onUseImageDemo() {
-    this.setData({
-      keyword: '图中题干 HTTP 状态码 资源不存在',
-      searchMode: 'image'
-    });
+    this.setData({ keyword });
     this.handleSearch({ resetPage: true });
   },
   toggleAnswer(e) {

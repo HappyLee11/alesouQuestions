@@ -1,35 +1,40 @@
 <svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="1200" height="720" rx="32" fill="#EEF4FF"/>
   <rect x="48" y="40" width="1104" height="640" rx="28" fill="white" stroke="#DBE7FB"/>
-  <rect x="84" y="84" width="420" height="220" rx="28" fill="url(#g1)"/>
-  <text x="120" y="150" fill="white" font-size="40" font-family="Arial" font-weight="700">阿乐搜题 · Demo Ready</text>
-  <text x="120" y="198" fill="#DCEBFF" font-size="24" font-family="Arial">统一搜索、详情、后台治理与批量导入体验</text>
-  <rect x="120" y="228" width="132" height="40" rx="20" fill="rgba(255,255,255,0.18)"/>
-  <text x="146" y="253" fill="white" font-size="18" font-family="Arial">Mini Program</text>
-  <rect x="540" y="84" width="280" height="104" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
-  <rect x="852" y="84" width="260" height="104" rx="24" fill="#F8FBFF" stroke="#DBE7FB"/>
-  <rect x="540" y="204" width="572" height="100" rx="24" fill="#EFF6FF"/>
-  <text x="572" y="142" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">搜索结果 + 筛选 + 分页</text>
-  <text x="572" y="170" fill="#64748B" font-size="18" font-family="Arial">展示更像产品化搜题结果页，而不是简单列表。</text>
-  <text x="884" y="142" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">后台治理</text>
-  <text x="884" y="170" fill="#64748B" font-size="18" font-family="Arial">审核态、归档恢复、版本快照</text>
-  <text x="572" y="246" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">导入链路：本地暂存 → 云端预检 → 正式导入</text>
-  <text x="572" y="275" fill="#64748B" font-size="18" font-family="Arial">支持 JSON / JSONL / CSV / workbook manifest，多模板字段映射与去重策略。</text>
-  <rect x="84" y="340" width="1028" height="292" rx="28" fill="#FBFDFF" stroke="#E2E8F0"/>
-  <rect x="116" y="376" width="300" height="220" rx="24" fill="#FFFFFF" stroke="#DBE7FB"/>
-  <rect x="450" y="376" width="300" height="220" rx="24" fill="#FFFFFF" stroke="#DBE7FB"/>
-  <rect x="784" y="376" width="296" height="220" rx="24" fill="#FFFFFF" stroke="#DBE7FB"/>
-  <text x="146" y="424" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">01 首页 / Landing</text>
-  <text x="146" y="460" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">讲产品定位</text>
-  <text x="146" y="495" fill="#64748B" font-size="18" font-family="Arial">一眼看出这是搜题 + 治理后台 Demo</text>
-  <text x="480" y="424" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">02 Search / Detail</text>
-  <text x="480" y="460" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">讲用户体验</text>
-  <text x="480" y="495" fill="#64748B" font-size="18" font-family="Arial">关键词、高亮、分页、摘要、相关推荐</text>
-  <text x="814" y="424" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">03 Admin / Import</text>
-  <text x="814" y="460" fill="#0F172A" font-size="28" font-family="Arial" font-weight="700">讲治理能力</text>
-  <text x="814" y="495" fill="#64748B" font-size="18" font-family="Arial">生命周期、审核流、导入预检与任务化数据</text>
+  <rect x="84" y="84" width="1032" height="210" rx="28" fill="url(#g1)"/>
+  <text x="122" y="152" fill="white" font-size="42" font-family="Arial" font-weight="700">阿乐搜题</text>
+  <text x="122" y="202" fill="#DCEBFF" font-size="24" font-family="Arial">打开小程序后，先搜题，再按结果继续筛选和查看解析。</text>
+  <rect x="122" y="230" width="520" height="42" rx="21" fill="rgba(255,255,255,0.94)"/>
+  <text x="148" y="257" fill="#64748B" font-size="18" font-family="Arial">例如：HTTP 状态码 404 是什么</text>
+  <rect x="666" y="230" width="128" height="42" rx="21" fill="#FFFFFF" fill-opacity="0.24"/>
+  <text x="710" y="257" fill="white" font-size="18" font-family="Arial">搜索</text>
+
+  <rect x="84" y="328" width="504" height="286" rx="28" fill="#FBFDFF" stroke="#E2E8F0"/>
+  <text x="118" y="382" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">首页</text>
+  <text x="118" y="424" fill="#0F172A" font-size="30" font-family="Arial" font-weight="700">搜索框放在第一屏</text>
+  <text x="118" y="462" fill="#64748B" font-size="18" font-family="Arial">热门搜索、最近搜索、按学科找题，用户打开就能开始使用。</text>
+  <rect x="118" y="500" width="122" height="36" rx="18" fill="#E8F0FF"/>
+  <text x="144" y="523" fill="#1D4ED8" font-size="16" font-family="Arial">热门搜索</text>
+  <rect x="254" y="500" width="122" height="36" rx="18" fill="#E8F0FF"/>
+  <text x="280" y="523" fill="#1D4ED8" font-size="16" font-family="Arial">最近搜索</text>
+  <rect x="390" y="500" width="108" height="36" rx="18" fill="#E8F0FF"/>
+  <text x="416" y="523" fill="#1D4ED8" font-size="16" font-family="Arial">按学科找题</text>
+
+  <rect x="612" y="328" width="504" height="286" rx="28" fill="#FBFDFF" stroke="#E2E8F0"/>
+  <text x="646" y="382" fill="#2563EB" font-size="22" font-family="Arial" font-weight="700">结果页</text>
+  <text x="646" y="424" fill="#0F172A" font-size="30" font-family="Arial" font-weight="700">筛选、分页、解析更直接</text>
+  <text x="646" y="462" fill="#64748B" font-size="18" font-family="Arial">保留用户真正需要的排序、筛选、答案摘要和详情入口，不再展示演示措辞。</text>
+  <rect x="646" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
+  <text x="670" y="526" fill="#4B5563" font-size="16" font-family="Arial">学科</text>
+  <rect x="750" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
+  <text x="774" y="526" fill="#4B5563" font-size="16" font-family="Arial">难度</text>
+  <rect x="854" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
+  <text x="878" y="526" fill="#4B5563" font-size="16" font-family="Arial">题型</text>
+  <rect x="958" y="504" width="90" height="34" rx="17" fill="#F3F4F6"/>
+  <text x="982" y="526" fill="#4B5563" font-size="16" font-family="Arial">标签</text>
+
   <defs>
-    <linearGradient id="g1" x1="84" y1="84" x2="504" y2="304" gradientUnits="userSpaceOnUse">
+    <linearGradient id="g1" x1="84" y1="84" x2="1116" y2="294" gradientUnits="userSpaceOnUse">
       <stop stop-color="#123FA5"/>
       <stop offset="0.58" stop-color="#2563EB"/>
       <stop offset="1" stop-color="#60A5FA"/>

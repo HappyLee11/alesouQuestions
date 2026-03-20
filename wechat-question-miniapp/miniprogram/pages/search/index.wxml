@@ -1,52 +1,34 @@
-<view class="container page-shell">
-  <view class="hero-card">
-    <view class="eyebrow">Search Experience</view>
-    <view class="hero-title">搜题结果页</view>
-    <view class="hero-subtitle">支持关键词检索、图片示例入口、结果分组、高亮摘要、筛选与分页，适合直接做现场产品演示。</view>
-    <view class="btn-row btn-row-tight">
-      <button class="primary-btn search-btn" loading="{{loading}}" bindtap="handleSearch">立即搜索</button>
-      <button class="ghost-btn" size="mini" bindtap="onUseImageDemo">演示图片搜题入口</button>
-      <button class="secondary-btn" size="mini" bindtap="toggleGroupView">{{useGroupView ? '切换列表视图' : '切换分组视图'}}</button>
-    </view>
-  </view>
+<view class="container page-shell page-search">
+  <view class="hero-card search-hero">
+    <view class="eyebrow">搜索题目</view>
+    <view class="hero-title">找答案，直接搜</view>
+    <view class="hero-subtitle">输入关键词后，可按学科、难度、题型和标签继续缩小范围。</view>
 
-  <view class="glass-card">
-    <view class="search-bar">
-      <input class="input search-input" placeholder="输入关键词，或粘贴图片识别出的题干片段" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
+    <view class="search-bar search-hero-bar">
+      <input class="input search-input search-hero-input" placeholder="输入题目关键词或题干片段" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
       <button class="primary-btn search-btn" loading="{{loading}}" bindtap="handleSearch">搜索</button>
     </view>
-    <view class="search-toolbar search-toolbar-wrap large-gap">
-      <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onChangeSort">
-        <view class="picker-chip">排序：{{sortOptions[sortIndex].label}}</view>
-      </picker>
-      <picker mode="selector" range="{{groupOptions}}" range-key="label" value="{{groupIndex}}" bindchange="onChangeGroup">
-        <view class="picker-chip">{{groupOptions[groupIndex].label}}</view>
-      </picker>
-      <view class="toolbar-note">结果源：{{resultMeta.from === 'cloud' ? '云端' : '本地 mock'}} · 共 {{resultMeta.total}} 条 · 第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
-    </view>
-    <view class="subtitle small-gap">面向真实场景：先用热词或 OCR 文本发起检索，再通过学科 / 难度 / 题型 / 标签逐步缩小范围，最后进入详情页查看完整答案与解析。</view>
-  </view>
 
-  <view class="panel-grid">
-    <view class="panel-card" wx:for="{{resultInsights}}" wx:key="label">
-      <view class="panel-title">{{item.label}}</view>
-      <view class="kpi-value">{{item.value}}</view>
-      <view class="panel-desc">{{item.desc}}</view>
+    <view class="tag-row small-gap" wx:if="{{quickTerms.length}}">
+      <text class="hero-chip" wx:for="{{quickTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 
   <view class="glass-card">
     <view class="section-header">
       <view>
-        <view class="section-title">检索摘要</view>
-        <view class="section-caption">{{activeFilterText}}</view>
+        <view class="section-title">搜索结果</view>
+        <view class="section-caption">共 {{resultMeta.total}} 条结果</view>
       </view>
-      <text class="toolbar-note">{{displayList.length}} 条正在展示</text>
+      <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onChangeSort">
+        <view class="picker-chip">{{sortOptions[sortIndex].label}}</view>
+      </picker>
     </view>
-    <view class="tag-row small-gap" wx:if="{{queryDigest.length}}">
-      <text class="tag" wx:for="{{queryDigest}}" wx:key="*this">{{item}}</text>
+
+    <view class="toolbar-note small-gap" wx:if="{{activeFilterText !== '未启用筛选'}}">当前筛选：{{activeFilterText}}</view>
+    <view class="tag-row small-gap" wx:if="{{topSuggestions.length}}">
+      <text class="tag tag-clickable" wx:for="{{topSuggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
-    <view class="toolbar-note small-gap">{{resultSummaryText}}</view>
   </view>
 
   <view class="card" wx:if="{{history.length}}">
@@ -61,31 +43,17 @@
 
   <view class="card">
     <view class="section-title">热门关键词</view>
-    <view class="tag-row">
-      <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
-    </view>
-  </view>
-
-  <view class="card" wx:if="{{topSuggestions.length}}">
-    <view class="section-header">
-      <view>
-        <view class="section-title">相关推荐词</view>
-        <view class="section-caption">把结果里最常见的主题与标签收敛成推荐词，方便继续 refine 搜索。</view>
-      </view>
-      <text class="toolbar-note">正式产品可接搜索日志与点击率</text>
-    </view>
     <view class="tag-row small-gap">
-      <text class="tag tag-clickable" wx:for="{{topSuggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
+      <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 
   <view class="card" wx:if="{{displayList.length}}">
     <view class="section-header">
       <view>
-        <view class="section-title">缩小结果范围</view>
-        <view class="section-caption">优先按学科或难度筛一层，再进入详情页看完整答案。</view>
+        <view class="section-title">筛选结果</view>
+        <view class="section-caption">按条件继续缩小范围</view>
       </view>
-      <text class="toolbar-note">现场演示更清楚</text>
     </view>
     <view class="filter-label">学科</view>
     <view class="tag-row small-gap">
@@ -103,34 +71,9 @@
     <view class="tag-row small-gap">
       <text class="filter-chip {{currentFilters.tag === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.tag}}" wx:key="label" data-field="tag" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
     </view>
-    <view class="toolbar-note small-gap" wx:if="{{resultMeta.total > 8}}">结果较多，建议先按学科/难度/标签缩小范围，再分页浏览并进入详情查看完整答案与解析。</view>
   </view>
 
-  <view wx:if="{{displayList.length && useGroupView}}">
-    <view class="card" wx:for="{{groupedList}}" wx:for-item="section" wx:key="name">
-      <view class="section-header">
-        <view class="section-title">{{section.name}}</view>
-        <text class="toolbar-note">{{section.count}} 条</text>
-      </view>
-      <view class="result-card compact-result" wx:for="{{section.items}}" wx:for-item="question" wx:key="_id" data-id="{{question._id}}" bindtap="goDetail">
-        <view class="result-title">
-          <text wx:for="{{question.titleSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
-        </view>
-        <view class="result-desc clamp-2">
-          <text wx:for="{{question.contentSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
-        </view>
-        <view class="toolbar-note small-gap">命中字段：{{question.matchedFieldText}}</view>
-        <view class="meta-row wrap-row">
-          <text class="meta-pill">{{question.subject || '未分类'}}</text>
-          <text class="meta-pill meta-pill-light">{{question.category || '通用'}}</text>
-          <text class="meta-pill meta-pill-light">{{question.difficultyText}}</text>
-          <text class="meta-pill meta-pill-light">{{question.typeText}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <view wx:elif="{{displayList.length}}">
+  <view wx:if="{{displayList.length}}">
     <view class="result-card" wx:for="{{displayList}}" wx:key="_id">
       <view data-id="{{item._id}}" bindtap="goDetail">
         <view class="result-title">
@@ -140,16 +83,14 @@
           <text wx:for="{{item.contentSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
         </view>
       </view>
-      <view class="meta-row wrap-row">
+      <view class="meta-row wrap-row result-meta-row">
         <text class="meta-pill">{{item.subject || '未分类'}}</text>
         <text class="meta-pill meta-pill-light">{{item.category || '通用'}}</text>
         <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
         <text class="meta-pill meta-pill-light">{{item.typeText}}</text>
       </view>
-      <view class="toolbar-note small-gap">命中字段：{{item.matchedFieldText}}</view>
-      <view class="toolbar-note small-gap" wx:if="{{item.excerpt}}">命中摘要：{{item.excerpt}}</view>
       <view class="answer-preview">答案摘要：{{expandMap[item._id] ? item.analysisPreview : item.answerPreview}}</view>
-      <text class="link-text small-gap inline-link" data-id="{{item._id}}" bindtap="toggleAnswer">{{expandMap[item._id] ? '收起解析' : '展开更多'}}</text>
+      <text class="link-text small-gap inline-link" data-id="{{item._id}}" bindtap="toggleAnswer">{{expandMap[item._id] ? '收起解析' : '展开解析'}}</text>
       <view class="result-footer">
         <view class="tag-row inline-tags">
           <text class="tag" wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>
@@ -159,13 +100,12 @@
     </view>
   </view>
 
-  <view class="card" wx:if="{{displayList.length}}">
+  <view class="card" wx:if="{{displayList.length && resultMeta.totalPages > 1}}">
     <view class="section-header">
       <view>
         <view class="section-title">分页浏览</view>
         <view class="section-caption">第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
       </view>
-      <text class="toolbar-note">适合大题库场景演示</text>
     </view>
     <view class="btn-row">
       <button size="mini" bindtap="goPrevPage" disabled="{{!resultMeta.hasPrev}}">上一页</button>
@@ -173,9 +113,9 @@
     </view>
   </view>
 
-  <view wx:else class="card empty">
+  <view wx:if="{{!displayList.length}}" class="card empty">
     <view class="title-small">暂无匹配结果</view>
-    <view class="subtitle small-gap">可以试试：1）换更短的词；2）使用图片搜题入口示例；3）从这些相关词继续搜。</view>
+    <view class="subtitle small-gap">试试更短的关键词，或者点这些相关词继续搜索。</view>
     <view class="tag-row small-gap" wx:if="{{resultMeta.suggestions.length}}">
       <text class="tag tag-clickable" wx:for="{{resultMeta.suggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
