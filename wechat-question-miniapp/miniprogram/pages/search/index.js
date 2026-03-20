@@ -43,7 +43,8 @@ Page({
     },
     resultMeta: {
       total: 0,
-      from: 'mock',
+      from: 'builtin',
+      sourceLabel: '内置题库',
       suggestions: [],
       page: 1,
       totalPages: 1,
@@ -133,6 +134,7 @@ Page({
         resultMeta: {
           total: result.total || list.length,
           from: result.from || 'cloud',
+          sourceLabel: (result.from || 'cloud') === 'cloud' ? '云端题库' : '内置题库',
           suggestions: result.suggestions || [],
           page: pagination.page || targetPage,
           totalPages: pagination.totalPages || result.totalPages || 1,

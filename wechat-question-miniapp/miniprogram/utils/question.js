@@ -70,7 +70,7 @@ async function searchQuestions(params) {
     pagination: fallback.pagination || {},
     request: fallback.request || {},
     searchMode: payload.searchMode,
-    from: 'mock'
+    from: 'builtin'
   };
 }
 

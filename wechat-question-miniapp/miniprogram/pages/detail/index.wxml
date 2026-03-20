@@ -1,20 +1,32 @@
-<view class="container page-shell">
-  <view wx:if="{{detail}}" class="hero-card">
-    <view class="eyebrow">Question Detail</view>
+<view class="container page-shell page-detail">
+  <view wx:if="{{detail}}" class="hero-card detail-hero">
+    <view class="eyebrow">题目详情</view>
     <view class="hero-title">{{detail.title}}</view>
-    <view class="hero-subtitle">在详情页补齐题干、答案、解析、标签、来源信息和相关题，让搜索后的用户路径更完整。</view>
+    <view class="hero-subtitle">答案、解析、来源信息和关联题目都集中在这一页，查到后可直接继续复习。</view>
     <view class="meta-row large-gap wrap-row">
       <text class="meta-pill">{{detail.subject || '未分类'}}</text>
       <text class="meta-pill meta-pill-light">{{detail.category || '通用'}}</text>
+      <text class="meta-pill meta-pill-light">{{detail.typeText}}</text>
       <text class="meta-pill meta-pill-light">{{detail.difficultyText}}</text>
       <text class="meta-pill meta-pill-light">{{detail.statusText}}</text>
     </view>
+    <view class="btn-row detail-hero-actions">
+      <button class="ghost-btn" bindtap="goSearch">继续搜相关题</button>
+      <button bindtap="copyAnswer">复制答案</button>
+    </view>
   </view>
 
-  <view wx:if="{{detail}}" class="panel-grid">
-    <view class="panel-card">
+  <view wx:if="{{detail}}" class="stats-grid detail-stats">
+    <view class="metric-card" wx:for="{{detail.stats}}" wx:key="label">
+      <view class="metric-value">{{item.value}}</view>
+      <view class="metric-label">{{item.label}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{detail}}" class="panel-grid detail-panels">
+    <view class="panel-card panel-accent">
       <view class="panel-title">答案摘要</view>
-      <view class="panel-desc">{{detail.answerShort}}</view>
+      <view class="panel-desc detail-answer-summary">{{detail.answerShort}}</view>
     </view>
     <view class="panel-card">
       <view class="panel-title">最近更新</view>
@@ -24,9 +36,9 @@
 
   <view wx:if="{{detail}}" class="card">
     <view class="field-block" wx:if="{{detail.titleVariants && detail.titleVariants.length}}">
-      <view class="field-label">标题变体 / 别名</view>
+      <view class="field-label">别名 / 常见问法</view>
       <view class="tag-row">
-        <text class="tag" wx:for="{{detail.titleVariants}}" wx:key="*this">{{item}}</text>
+        <text class="tag tag-clickable" wx:for="{{detail.titleVariants}}" wx:key="*this" data-tag="{{item}}" bindtap="searchByTag">{{item}}</text>
       </view>
     </view>
 
@@ -37,7 +49,9 @@
 
     <view class="field-block" wx:if="{{detail.options && detail.options.length}}">
       <view class="field-label">选项</view>
-      <view class="option-item" wx:for="{{detail.options}}" wx:key="index">{{index + 1}}. {{item}}</view>
+      <view class="option-list">
+        <view class="option-item option-card" wx:for="{{detail.options}}" wx:key="index">{{index + 1}}. {{item}}</view>
+      </view>
     </view>
 
     <view class="field-block">
@@ -48,17 +62,18 @@
 
     <view class="field-block">
       <view class="field-label">解析</view>
-      <view class="content-text">{{detail.analysis || '暂无解析'}}</view>
+      <view class="content-text">{{showFullAnalysis ? detail.analysis : detail.analysisShort}}</view>
+      <text class="link-text small-gap inline-link" bindtap="toggleAnalysis">{{showFullAnalysis ? '收起解析' : '展开完整解析'}}</text>
     </view>
 
     <view class="field-block">
-      <view class="field-label">题目标签</view>
+      <view class="field-label">知识标签</view>
       <view class="tag-row">
-        <text class="tag" wx:for="{{detail.tags}}" wx:key="*this">{{item}}</text>
+        <text class="tag tag-clickable" wx:for="{{detail.tags}}" wx:key="*this" data-tag="{{item}}" bindtap="searchByTag">{{item}}</text>
       </view>
     </view>
 
-    <view class="info-grid">
+    <view class="info-grid detail-info-grid">
       <view class="info-item">
         <view class="info-label">来源</view>
         <view class="info-value">{{detail.source || '--'}}</view>
@@ -68,8 +83,8 @@
         <view class="info-value">{{detail.year || '--'}}</view>
       </view>
       <view class="info-item">
-        <view class="info-label">分值</view>
-        <view class="info-value">{{detail.score || '--'}}</view>
+        <view class="info-label">创建时间</view>
+        <view class="info-value">{{detail.createdAtText}}</view>
       </view>
       <view class="info-item">
         <view class="info-label">更新时间</view>
@@ -79,11 +94,16 @@
   </view>
 
   <view class="glass-card" wx:if="{{related.length}}">
-    <view class="section-title">相关题目</view>
-    <view class="subtitle">当用户觉得当前答案还不够时，可继续跳转到相近题目，而不是直接终止在单题详情。</view>
+    <view class="section-header">
+      <view>
+        <view class="section-title">相关题目</view>
+        <view class="section-caption">继续刷同主题题目，不用回到首页重找。</view>
+      </view>
+    </view>
     <view class="result-card compact-result" wx:for="{{related}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRelated">
       <view class="result-title">{{item.title}}</view>
-      <view class="meta-row wrap-row small-gap">
+      <view class="result-desc clamp-2">{{item.answerSummary}}</view>
+      <view class="meta-row wrap-row small-gap compact-result-meta">
         <text class="meta-pill">{{item.subject || '未分类'}}</text>
         <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
       </view>

@@ -3,8 +3,50 @@
   flex-wrap: wrap;
 }
 
+.page-detail {
+  padding-bottom: 40rpx;
+}
+
+.detail-hero {
+  padding-bottom: 32rpx;
+}
+
+.detail-hero-actions {
+  margin-top: 22rpx;
+}
+
+.detail-stats .metric-card {
+  width: calc(25% - 14rpx);
+  min-width: 0;
+}
+
+.detail-panels {
+  margin-top: 6rpx;
+}
+
+.detail-answer-summary {
+  color: #1e3a8a;
+}
+
+.option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.option-card {
+  padding: 20rpx 22rpx;
+  border-radius: 18rpx;
+  background: #f8fbff;
+  border: 1rpx solid #dbe7fb;
+}
+
 .inline-link {
   display: inline-block;
+}
+
+.detail-info-grid {
+  margin-top: 10rpx;
 }
 
 .compact-result {
@@ -18,4 +60,8 @@
   margin-top: 16rpx;
   padding-top: 16rpx;
   border-top: 1rpx solid #edf2f7;
+}
+
+.compact-result-meta {
+  margin-top: 14rpx;
 }

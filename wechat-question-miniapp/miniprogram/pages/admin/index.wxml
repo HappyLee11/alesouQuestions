@@ -2,7 +2,7 @@
   <view class="hero-card">
     <view class="eyebrow">Admin Console</view>
     <view class="hero-title">题库治理后台</view>
-    <view class="hero-subtitle">统一展示管理员校验、内容生命周期、审核态、导入治理、角色权限和审计轨迹，适合在 Demo 中承接用户侧搜索页面。</view>
+    <view class="hero-subtitle">统一展示管理员校验、内容生命周期、审核态、导入治理、角色权限和审计轨迹，作为题库运营后台的总览入口。</view>
     <view class="quick-nav">
       <view class="quick-nav-item">权限校验</view>
       <view class="quick-nav-item">状态治理</view>
@@ -15,7 +15,7 @@
     <view class="title">后台管理</view>
     <view wx:if="{{checking}}" class="subtitle">正在校验管理员权限...</view>
     <block wx:elif="{{isAdmin}}">
-      <view class="subtitle">管理员校验已通过，可进行题库维护与演示。这版把角色能力、导入任务和审计日志也拉进后台首页，更接近正式内容运营系统。</view>
+      <view class="subtitle">管理员校验已通过，可直接进行题库维护。后台首页集中呈现角色能力、导入任务和审计日志，方便日常运营处理。</view>
       <view class="meta-row wrap-row large-gap">
         <text class="meta-pill">OPENID：{{openid || '--'}}</text>
         <text class="meta-pill meta-pill-light">角色：{{admin && (admin.roleLabel || admin.role) ? (admin.roleLabel || admin.role) : 'admin'}}</text>
@@ -44,8 +44,8 @@
         <view class="feature-desc">推荐角色：super_admin；记得把 enabled 设为 true。</view>
       </view>
       <view class="feature-item">
-        <view class="feature-title">3. 创建缺失集合并导入演示数据</view>
-        <view class="feature-desc">集合建议至少包括 questions / admins / import_tasks / audit_logs，然后去导入页做首批题库预检。</view>
+        <view class="feature-title">3. 创建缺失集合并导入首批数据</view>
+        <view class="feature-desc">集合建议至少包括 questions / admins / import_tasks / audit_logs，然后去导入页完成首批题库预检。</view>
       </view>
       <view class="btn-row">
         <button class="primary-btn" bindtap="copyOpenid">复制 OPENID</button>
@@ -71,7 +71,7 @@
     <view class="section-header">
       <view>
         <view class="section-title">角色权限矩阵</view>
-        <view class="section-caption">把管理员角色从“一个布尔值”升级为可展示的权限集合，方便销售或方案演示。</view>
+        <view class="section-caption">把管理员能力拆成明确的权限集合，便于运营分工、交接和权限核验。</view>
       </view>
       <text class="toolbar-note">当前角色：{{admin && (admin.roleLabel || admin.role) ? (admin.roleLabel || admin.role) : 'admin'}}</text>
     </view>
@@ -135,21 +135,21 @@
   <view class="glass-card" wx:if="{{isAdmin}}">
     <view class="section-header">
       <view>
-        <view class="section-title">推荐演示顺序</view>
-        <view class="section-caption">先讲用户侧，再讲后台治理，最后落到导入和版本历史。</view>
+        <view class="section-title">推荐工作路径</view>
+        <view class="section-caption">按用户消费、内容维护、批量导入的顺序处理日常运营任务。</view>
       </view>
     </view>
     <view class="feature-item">
-      <view class="feature-title">1. 先从首页进入搜索页</view>
-      <view class="feature-desc">演示热词、搜索历史、高亮结果、分页浏览和筛选分组。</view>
+      <view class="feature-title">1. 先检查首页与搜索页</view>
+      <view class="feature-desc">确认热门词、搜索历史、高亮结果、分页浏览和筛选分组可正常使用。</view>
     </view>
     <view class="feature-item">
-      <view class="feature-title">2. 再进入后台题目列表 / 编辑页</view>
-      <view class="feature-desc">演示状态、审核、版本化内容字段，以及归档、快捷审核与恢复操作。</view>
+      <view class="feature-title">2. 进入题目列表 / 编辑页</view>
+      <view class="feature-desc">处理状态、审核、版本化内容字段，以及归档、快捷审核与恢复操作。</view>
     </view>
     <view class="feature-item">
-      <view class="feature-title">3. 最后展示导入页和后台首页</view>
-      <view class="feature-desc">演示任务预检、导入回执、角色权限矩阵与审计日志闭环。</view>
+      <view class="feature-title">3. 最后进入导入页和后台首页</view>
+      <view class="feature-desc">检查任务预检、导入回执、角色权限矩阵与审计日志是否闭环。</view>
     </view>
   </view>
 

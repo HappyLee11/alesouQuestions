@@ -25,7 +25,7 @@ App({
     };
 
     if (!wx.cloud) {
-      this.globalData.runtime.initError = '当前基础库不支持云能力，部分功能将使用本地 mock。';
+      this.globalData.runtime.initError = '当前基础库不支持云能力，部分功能将使用内置题库数据。';
       console.warn(this.globalData.runtime.initError);
       return;
     }

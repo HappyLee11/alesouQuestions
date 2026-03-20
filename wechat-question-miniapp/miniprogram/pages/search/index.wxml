@@ -25,6 +25,10 @@
       </picker>
     </view>
 
+    <view class="meta-row wrap-row small-gap source-meta-row">
+      <text class="meta-pill meta-pill-light">数据来源：{{resultMeta.sourceLabel}}</text>
+      <text class="meta-pill meta-pill-light">第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</text>
+    </view>
     <view class="toolbar-note small-gap" wx:if="{{activeFilterText !== '未启用筛选'}}">当前筛选：{{activeFilterText}}</view>
     <view class="tag-row small-gap" wx:if="{{topSuggestions.length}}">
       <text class="tag tag-clickable" wx:for="{{topSuggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>

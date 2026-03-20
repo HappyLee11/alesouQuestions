@@ -1,70 +1,53 @@
 # 阿乐搜题 / WeChat Question Search Mini Program
 
-一个以**用户搜题体验为先**的微信小程序题库项目：打开小程序后先搜索、看结果、进详情；管理员治理、批量导入和数据维护能力放在后台页与文档里。
+面向微信小程序场景的题库检索与内容运营项目。产品入口以用户搜题为核心：打开即搜索、查看结果、进入详情；题目治理、批量导入与审计能力集中在后台页面与配套文档中。
 
-> GitHub repo: `HappyLee11/alesouQuestions`  
-> 当前仓库目录：`wechat-question-miniapp`
+> GitHub repo: `HappyLee11/alesouQuestions`
 
 ![阿乐搜题首页预览](./assets/hero-overview.png)
 
 ## 产品预览
 
-### 用户首页 / 搜索入口
+### 用户首页
 
 ![阿乐搜题首页效果图](./assets/hero-overview.svg)
 
-- 首页第一屏直接给搜索框
-- 提供热门搜索、最近搜索、按学科找题
-- 不再把产品定位、治理说明、演示流程塞给普通用户
+- 首页首屏直接提供搜索框
+- 支持热门搜索、最近搜索、按学科找题
+- 入口文案保持用户视角，避免运营说明干扰主路径
 
 ### 搜索结果页
 
 ![搜题结果页效果图](./assets/search-page-preview.svg)
 
-- 支持关键词检索
-- 可按学科 / 难度 / 题型 / 标签继续筛选
-- 列表里先看答案摘要，再展开解析或进入详情
+- 支持关键词检索与结果高亮
+- 可按学科、难度、题型、标签继续筛选
+- 列表先展示答案摘要，再按需展开解析或进入详情
 
-### 后台 / 导入工作台
+### 后台与导入工作台
 
 ![后台与导入预览](./assets/admin-import-preview.svg)
 
 - 管理员权限校验
 - 题目维护、审核、归档与恢复
-- 批量导入、预检、任务回执与审计能力
+- 批量导入、预检回执、任务续做与审计记录
 
-## 这是什么
+## 核心能力
 
-这是一个可直接导入微信开发者工具的小程序题库项目，分成两层：
+### 用户侧
 
-- **用户侧**：搜索入口、热门词、最近搜索、筛选结果、答案摘要、详情页
-- **管理侧**：管理员校验、题目维护、批量导入、审核与生命周期管理
+- 搜题首页与快捷入口
+- 搜索结果分页、排序、筛选
+- 题目详情页：答案、解析、来源、标签、相关题目
+- 最近搜索记录
 
-用户首页不再承担“讲产品”“讲方案”“讲治理链路”的任务，而是回到正常小程序该做的事：**让用户一打开就能用**。
+### 管理侧
 
-## 当前体验重点
-
-### 1) 搜题入口更直接
-
-- 首页第一屏就是搜索框
-- 提供热门搜索、最近搜索、按学科找题
-- 可直接进入结果页或题目详情页
-- 文案保持用户态表达，避免首页出现技术 / 管理 / 治理说明
-
-### 2) 结果页更像正常使用流
-
-- 关键词检索
-- 热门词、最近搜索、相关推荐词
-- 学科 / 难度 / 题型 / 标签筛选
-- 答案摘要与展开解析
-- 分页浏览与详情跳转
-
-### 3) 管理能力保留在后台与文档
-
-- 管理员权限校验
-- 题目列表筛选、编辑、归档与恢复
-- 批量导入、预检、任务回执
-- 审核状态、生命周期与审计能力
+- 管理员校验与角色权限
+- 题目列表、编辑、生命周期管理
+- 批量导入与预检
+- 最近任务回执恢复
+- 审计日志与后台概览
 
 ## 页面结构
 
@@ -84,11 +67,11 @@ miniprogram/pages/
 
 ### 1. 环境准备
 
-你需要：
+需要：
 
 - 微信开发者工具
-- 一个小程序 AppID（没有也可先用游客模式调 UI）
-- 一个云开发环境（若要跑真实后台动作）
+- 一个小程序 AppID（也可先使用游客模式调试界面）
+- 一个云开发环境（用于真实后台动作）
 
 ### 2. 导入项目
 
@@ -100,19 +83,19 @@ miniprogram/pages/
 
 ### 3. 配置云环境 ID
 
-把以下文件中的 `your-cloud-env-id` 改成真实值：
+将以下文件中的云环境 ID 替换为实际值：
 
 - `miniprogram/app.js`
 - `project.config.json`
 
 ### 4. 创建数据库集合
 
-创建：
+建议创建：
 
 - `questions`
 - `admins`
-- `import_tasks`（推荐，用于导入任务中心 / 预检回执）
-- `audit_logs`（推荐，用于后台审计轨迹）
+- `import_tasks`
+- `audit_logs`
 
 ### 5. 部署云函数
 
@@ -127,7 +110,7 @@ miniprogram/pages/
 
 ### 6. 初始化数据
 
-推荐先用这些文件：
+可先使用以下数据文件完成首批导入：
 
 - `data/sample-questions.json`
 - `data/import-template.csv`
@@ -147,61 +130,34 @@ miniprogram/pages/
 }
 ```
 
-## 技术 / 架构概览
+## 运行说明
 
-### 前端
+### 数据来源
 
-- 微信小程序原生页面
-- 页面位于 `miniprogram/pages/*`
-- 公共样式集中在 `miniprogram/app.wxss`
-- API 封装在 `miniprogram/utils/question.js`
-
-### 云函数
-
-- `searchQuestions`
-- `getQuestionDetail`
-- `checkAdmin`
-- `saveQuestion`
-- `deleteQuestion`
-- `importQuestions`
-
-### 数据层
-
-建议使用云开发数据库：
-
-- `questions`
-- `admins`
-- `import_tasks`（推荐，用于导入任务中心 / 预检回执）
-- `audit_logs`（推荐，用于后台审计轨迹）
-
-### 运行模式
-
-- **搜索 / 详情**：支持 mock fallback，方便本地调试与 UI 联调
+- **搜索 / 详情**：优先读取云端；云端不可用时回退到内置题库数据，便于本地联调
 - **管理动作**：需要真实云函数与管理员权限
 - **导入动作**：需要真实 `importQuestions` 云函数
 
-更多说明见：
+### 推荐阅读
 
 - [`docs/setup.md`](./docs/setup.md)
 - [`docs/first-run-checklist.md`](./docs/first-run-checklist.md)
 - [`docs/architecture.md`](./docs/architecture.md)
 - [`docs/import-normalization.md`](./docs/import-normalization.md)
 - [`docs/governance-model.md`](./docs/governance-model.md)
-- [`docs/demo-script.md`](./docs/demo-script.md)
 - [`docs/release-prep-0.1.2.md`](./docs/release-prep-0.1.2.md)
 
-## 建议查看顺序
-
-如果你第一次打开这个仓库，建议按下面顺序看：
+## 仓库查看顺序
 
 1. `README.md`
 2. `docs/setup.md`
 3. `docs/architecture.md`
 4. `miniprogram/pages/home`
 5. `miniprogram/pages/search`
-6. `miniprogram/pages/admin`
-7. `cloudfunctions/*`
+6. `miniprogram/pages/detail`
+7. `miniprogram/pages/admin`
+8. `cloudfunctions/*`
 
 ## License
 
-当前仓库未单独声明 License；如要公开分发，建议补充许可证说明。
+当前仓库未单独声明 License；如需公开分发，建议补充许可证说明。
