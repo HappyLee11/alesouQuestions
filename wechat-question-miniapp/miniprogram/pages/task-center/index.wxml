@@ -20,6 +20,7 @@
         <text class="meta-pill">角色：{{admin && (admin.roleLabel || admin.role) ? (admin.roleLabel || admin.role) : 'admin'}}</text>
         <text class="meta-pill meta-pill-light" wx:if="{{admin && admin.ownerTeam}}">团队：{{admin.ownerTeam}}</text>
         <text class="meta-pill meta-pill-light">队列：{{reviewQueue.length}} 条</text>
+        <text class="meta-pill meta-pill-light">审批：{{canApprove || canReject ? '可执行快捷审核' : '仅查看'}}</text>
       </view>
       <view class="btn-row">
         <button class="secondary-btn" bindtap="goImport">去导入页</button>
@@ -36,22 +37,32 @@
     <view class="metric-card"><view class="metric-value">{{queueStats.published}}</view><view class="metric-label">已发布</view></view>
   </view>
 
-  <view class="glass-card" wx:if="{{isAdmin && reviewQueue.length}}">
+  <view class="glass-card" wx:if="{{isAdmin}}">
     <view class="section-header">
       <view>
         <view class="section-title">待处理审核队列</view>
         <view class="section-caption">优先展示待审核、已驳回和审核中的题目，方便管理员集中处理。</view>
       </view>
-      <text class="toolbar-note">共 {{reviewQueue.length}} 条</text>
+      <text class="toolbar-note">{{queueSummaryText}}</text>
     </view>
-    <view class="feature-item" wx:for="{{reviewQueue}}" wx:key="_id">
-      <view class="feature-title">{{item.title}} ｜ {{item.reviewStatusText}} / {{item.lifecycleText}}</view>
-      <view class="feature-desc">团队：{{item.ownerTeamText}} ｜ 负责人：{{item.ownerText}} ｜ {{item.versionText}}</view>
-      <view class="feature-desc">学科：{{item.subject || '未分类'}} ｜ 分类：{{item.category || '通用'}} ｜ 更新时间：{{item.updatedAtText}}</view>
-      <view class="btn-row">
-        <button size="mini" data-id="{{item._id}}" bindtap="goEdit">去处理</button>
+    <view class="tag-row small-gap">
+      <text class="filter-chip {{activeQueueFilter === item.value ? 'filter-chip-active' : ''}}" wx:for="{{queueFilters}}" wx:key="value" data-value="{{item.value}}" bindtap="onTapQueueFilter">{{item.label}}</text>
+    </view>
+    <view wx:if="{{reviewQueue.length}}">
+      <view class="feature-item" wx:for="{{reviewQueue}}" wx:key="_id">
+        <view class="feature-title">{{item.title}} ｜ {{item.reviewStatusText}} / {{item.lifecycleText}}</view>
+        <view class="feature-desc">团队：{{item.ownerTeamText}} ｜ 负责人：{{item.ownerText}} ｜ 审核人：{{item.reviewerText}}</view>
+        <view class="feature-desc">学科：{{item.subject || '未分类'}} ｜ 分类：{{item.category || '通用'}} ｜ 更新时间：{{item.updatedAtText}} ｜ {{item.versionText}}</view>
+        <view class="feature-desc">审核备注：{{item.reviewCommentText}}</view>
+        <view class="btn-row">
+          <button wx:if="{{item.canEdit}}" size="mini" data-id="{{item._id}}" bindtap="goEdit">去处理</button>
+          <button wx:if="{{item.canApprove}}" size="mini" class="secondary-btn" data-id="{{item._id}}" bindtap="handleApprove">通过</button>
+          <button wx:if="{{item.canReject}}" size="mini" class="danger-btn" data-id="{{item._id}}" bindtap="handleReject">驳回</button>
+          <button wx:if="{{item.canPublish}}" size="mini" class="primary-btn" data-id="{{item._id}}" bindtap="handlePublish">发布</button>
+        </view>
       </view>
     </view>
+    <view wx:else class="feature-desc">当前筛选下暂无待处理题目。</view>
   </view>
 
   <view class="glass-card" wx:if="{{isAdmin && recentImportTasks.length}}">

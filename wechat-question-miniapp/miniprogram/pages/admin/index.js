@@ -24,7 +24,8 @@ Page({
     moduleCards: [
       { title: '题目列表', desc: '筛选、搜索、归档与恢复，展示生命周期状态。', action: 'list' },
       { title: '新增 / 编辑', desc: '维护题干、答案、负责人、审核备注和版本快照。', action: 'create' },
-      { title: '批量导入', desc: '本地暂存 → 云端预检 → 正式导入，适合讲治理链路。', action: 'import' }
+      { title: '批量导入', desc: '本地暂存 → 云端预检 → 正式导入，适合讲治理链路。', action: 'import' },
+      { title: '任务中心', desc: '聚合审核队列、导入任务和审计轨迹，更像真实运营工作台。', action: 'taskCenter' }
     ],
     governanceChecklist: [
       '管理员权限校验',
