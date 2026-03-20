@@ -26,6 +26,8 @@
         <text class="meta-pill meta-pill-light">{{item.versionText}}</text>
       </view>
       <view class="subtitle small-gap">答案：{{item.answer || '未填写'}}</view>
+      <view class="subtitle small-gap">归属：{{item.ownerTeamText}} / {{item.ownerText}}</view>
+      <view class="subtitle small-gap">导入：{{item.importBatchText}} ｜ {{item.importPositionText}}</view>
       <view class="subtitle">最近更新：{{item.updatedAtText}}</view>
       <view class="tag-row inline-tags">
         <text class="tag" wx:for="{{item.tags}}" wx:key="*this">{{item}}</text>

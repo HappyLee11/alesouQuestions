@@ -8,7 +8,7 @@
 - `pages/admin`: 管理员校验、后台统计卡片、生命周期与审核态概览
 - `pages/list`: 后台题目列表、状态筛选、软删除（归档）/恢复、版本/审核态展示
 - `pages/edit`: 题目录入/编辑，支持更完整的数据模型与治理字段
-- `pages/import`: 本地暂存导入，支持 JSON / JSONL / CSV 文本解析、字段别名映射、预检、去重与错误反馈
+- `pages/import`: 本地暂存导入，支持 JSON / JSONL / CSV 文本解析，也支持 workbook manifest 模拟 XLSX/CSV 导入任务；包含字段别名映射、预检、去重与错误反馈
 
 ## User-side search state model
 
@@ -46,6 +46,7 @@
 - 生命周期：`status` `reviewStatus` `lifecycleState` `version` `statusHistory`
 - 软删除：`isDeleted` `deletedAt` `deletedBy` `deletedReason` `previousStatus`
 - 审计/导入：`createdAt` `updatedAt` `createdBy` `updatedBy` `importMeta`
+- 治理/版本：`governance` `versionSnapshots`
 - 可选扩展：`viewCount` `favoriteCount`
 
 ## Search cloud function behavior
@@ -113,12 +114,13 @@
 
 - 支持多种列名别名：`题目 / questionTitle / title`
 - 支持 `fieldMappings` 合并自定义别名
+- 支持 workbook manifest：可表达 `task / file / sheet / row`
 - 标题归一化去重：便于识别“空格不同、括号不同、轻微标题变体”
 - `previewOnly=true` 时返回预检报告，不真正写入
 - `dedupeStrategy=skip|update` 可控制重复题处理策略
-- 批量错误输出统一为 `[{ index, title, errors }]`
-- 批量预警输出统一为 `[{ index, title, warnings }]`
-- 导入成功后补齐 `importMeta` 与 `statusHistory`
+- 批量错误输出统一为 `[{ index, title, sheetName, rowNumber, errors }]`
+- 批量预警输出统一为 `[{ index, title, sheetName, rowNumber, warnings }]`
+- 导入成功后补齐 `importMeta`、`governance`、`statusHistory`、`versionSnapshots`
 
 ## Recommended next iterations
 

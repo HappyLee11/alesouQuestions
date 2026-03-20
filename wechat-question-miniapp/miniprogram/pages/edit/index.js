@@ -1,5 +1,5 @@
 const api = require('../../utils/question');
-const { splitLines, splitCommaText } = require('../../utils');
+const { splitLines, splitCommaText, formatTime } = require('../../utils');
 
 const TYPE_OPTIONS = [
   { label: '单选题', value: 'single' },
@@ -42,7 +42,14 @@ const emptyForm = {
   status: 'draft',
   reviewStatus: 'pending',
   imageText: '',
-  relatedIdsText: ''
+  relatedIdsText: '',
+  externalId: '',
+  owner: '',
+  ownerTeam: '',
+  reviewer: '',
+  reviewComment: '',
+  sourceRef: '',
+  changeReason: ''
 };
 
 Page({
@@ -59,7 +66,10 @@ Page({
     typeIndex: 0,
     difficultyIndex: 1,
     statusIndex: 0,
-    reviewIndex: 0
+    reviewIndex: 0,
+    statusHistory: [],
+    versionSnapshots: [],
+    importMeta: null
   },
   async onLoad(options) {
     const id = options.id || '';
@@ -96,14 +106,30 @@ Page({
           status: detail.status === 'deleted' ? 'draft' : (detail.status || 'draft'),
           reviewStatus: detail.reviewStatus || 'pending',
           imageText: detail.imageText || '',
-          relatedIdsText: (detail.relatedIds || []).join(', ')
+          relatedIdsText: (detail.relatedIds || []).join(', '),
+          externalId: detail.externalId || '',
+          owner: detail.governance && detail.governance.owner ? detail.governance.owner : '',
+          ownerTeam: detail.governance && detail.governance.ownerTeam ? detail.governance.ownerTeam : '',
+          reviewer: detail.governance && detail.governance.reviewer ? detail.governance.reviewer : '',
+          reviewComment: detail.governance && detail.governance.reviewComment ? detail.governance.reviewComment : '',
+          sourceRef: detail.governance && detail.governance.sourceRef ? detail.governance.sourceRef : '',
+          changeReason: ''
         },
         version: detail.version || 1,
         lifecycleState: detail.lifecycleState || 'draft',
         typeIndex: typeIndex >= 0 ? typeIndex : 0,
         difficultyIndex: difficultyIndex >= 0 ? difficultyIndex : 1,
         statusIndex: statusIndex >= 0 ? statusIndex : 0,
-        reviewIndex: reviewIndex >= 0 ? reviewIndex : 0
+        reviewIndex: reviewIndex >= 0 ? reviewIndex : 0,
+        statusHistory: (detail.statusHistory || []).slice(-6).reverse().map((item) => ({
+          ...item,
+          atText: formatTime(item.at)
+        })),
+        versionSnapshots: (detail.versionSnapshots || []).slice(-6).reverse().map((item) => ({
+          ...item,
+          atText: formatTime(item.at)
+        })),
+        importMeta: detail.importMeta || null
       });
     } catch (error) {
       wx.showToast({ title: '详情加载失败', icon: 'none' });
@@ -155,7 +181,14 @@ Page({
       status: form.status,
       reviewStatus: form.reviewStatus,
       imageText: form.imageText,
-      relatedIds: splitCommaText(form.relatedIdsText)
+      relatedIds: splitCommaText(form.relatedIdsText),
+      externalId: form.externalId,
+      owner: form.owner,
+      ownerTeam: form.ownerTeam,
+      reviewer: form.reviewer,
+      reviewComment: form.reviewComment,
+      sourceRef: form.sourceRef,
+      changeReason: form.changeReason
     };
 
     try {

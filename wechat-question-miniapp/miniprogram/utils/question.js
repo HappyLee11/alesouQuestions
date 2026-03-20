@@ -110,7 +110,11 @@ async function deleteQuestion(payload) {
 }
 
 async function importQuestions(items, options = {}) {
-  return callFunction('importQuestions', { items, ...options }, { useMockOnFail: false });
+  const payload = { ...options };
+  if (Array.isArray(items)) {
+    payload.items = items;
+  }
+  return callFunction('importQuestions', payload, { useMockOnFail: false });
 }
 
 module.exports = {

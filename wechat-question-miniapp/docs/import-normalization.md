@@ -13,6 +13,7 @@
   - 异构字段 JSON
   - JSON Lines / 导出日志
   - CSV / 表格粘贴
+  - XLSX/CSV 导入任务 Manifest（用 JSON 模拟 workbook staging）
 - 把原始文本粘贴到暂存区
 - 小程序本地先解析成 `stagingItems`
 - 本地展示列集合、样例记录、记录数
@@ -30,7 +31,9 @@
 - 归一化标题去重
 - 基础必填校验
 - 题型 / 难度 / 状态 / 审核状态校验
-- 预警输出（例如问答题摘要缺失、选择题缺 options）
+- 导入任务 / 文件 / sheet / row 元信息回传
+- 治理字段补齐（owner / ownerTeam / reviewer / reviewComment / approvalPolicy）
+- 预警输出（例如问答题摘要缺失、选择题缺 options、ownerTeam 缺失）
 - 重复命中判断（skip / update）
 
 ### 3）正式导入
@@ -83,6 +86,32 @@
 - `importMeta.importedAt`
 - `importMeta.importedBy`
 - `importMeta.rowFingerprint`
+- `importMeta.taskId`
+- `importMeta.taskName`
+- `importMeta.taskStatus`
+- `importMeta.fileName`
+- `importMeta.fileType`
+- `importMeta.sourceRef`
+- `importMeta.sheetName`
+- `importMeta.rowNumber`
+- `importMeta.stagedAt`
+- `importMeta.stagingChecksum`
+
+### 治理字段
+
+- `governance.owner`
+- `governance.ownerTeam`
+- `governance.reviewer`
+- `governance.reviewComment`
+- `governance.reviewUpdatedAt`
+- `governance.reviewUpdatedBy`
+- `governance.sourceRef`
+- `governance.importTaskId`
+- `governance.importTaskStatus`
+- `governance.importSheet`
+- `governance.importRowNumber`
+- `governance.approvalPolicy`
+- `governance.changeReason`
 
 ---
 
@@ -152,6 +181,36 @@
 ```csv
 题目,题干,答案,标签,题型,学科,分类,难度,状态,审核状态
 HTTP 为什么无状态,解释 HTTP 为什么被称为无状态协议,协议本身不保存会话上下文,HTTP|协议,qa,Web 基础,协议,medium,published,approved
+```
+
+### E. Workbook / XLSX 导入任务 Manifest
+
+```json
+{
+  "sourceType": "xlsx-manifest",
+  "task": {
+    "taskId": "import-task-20260320-001",
+    "fileName": "school-east-march.xlsx"
+  },
+  "defaults": {
+    "status": "review",
+    "reviewStatus": "pending",
+    "ownerTeam": "内容运营"
+  },
+  "sheets": [
+    {
+      "sheetName": "问答题",
+      "rows": [
+        {
+          "__rowNumber": 2,
+          "questionTitle": "为什么需要 CDN？",
+          "description": "请解释 CDN 的作用。",
+          "result": "内容分发网络，用于就近分发与加速。"
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ---

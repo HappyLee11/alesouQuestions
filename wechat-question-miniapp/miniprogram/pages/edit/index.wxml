@@ -1,10 +1,15 @@
 <view class="container">
   <view class="card">
     <view class="title">{{isEdit ? '编辑题目' : '新增题目'}}</view>
-    <view class="subtitle">这版把内容治理字段一起带上：题目除了基础题干/答案，还可以维护摘要、标题变体、审核状态与关联题，便于更接近真实商用后台。</view>
+    <view class="subtitle">这版把内容治理字段一起带上：题目除了基础题干/答案，还可以维护负责人、审核人、审核备注、外部来源与变更原因；编辑页也会展示最近版本快照和状态流转。</view>
     <view class="meta-row large-gap">
       <text class="meta-pill">版本：v{{version}}</text>
       <text class="meta-pill meta-pill-light">生命周期：{{lifecycleState}}</text>
+    </view>
+    <view class="meta-row large-gap" wx:if="{{importMeta}}">
+      <text class="meta-pill meta-pill-light">导入批次：{{importMeta.batchId || '--'}}</text>
+      <text class="meta-pill meta-pill-light">任务：{{importMeta.taskId || '--'}}</text>
+      <text class="meta-pill meta-pill-light">位置：{{importMeta.sheetName || '--'}} / row {{importMeta.rowNumber || '--'}}</text>
     </view>
 
     <view class="field-label field-gap">标题</view>
@@ -94,11 +99,57 @@
       </view>
     </view>
 
+    <view class="grid-2">
+      <view>
+        <view class="field-label field-gap">外部题目 ID</view>
+        <input class="input" data-field="externalId" value="{{form.externalId}}" bindinput="onFieldInput" placeholder="例如：bank-a-0001" />
+      </view>
+      <view>
+        <view class="field-label field-gap">来源引用</view>
+        <input class="input" data-field="sourceRef" value="{{form.sourceRef}}" bindinput="onFieldInput" placeholder="例如：sheet://2026-q1/单选题/2" />
+      </view>
+    </view>
+
+    <view class="grid-2">
+      <view>
+        <view class="field-label field-gap">负责人</view>
+        <input class="input" data-field="owner" value="{{form.owner}}" bindinput="onFieldInput" placeholder="内容运营 A" />
+      </view>
+      <view>
+        <view class="field-label field-gap">归属团队</view>
+        <input class="input" data-field="ownerTeam" value="{{form.ownerTeam}}" bindinput="onFieldInput" placeholder="教研组 / 内容运营" />
+      </view>
+    </view>
+
+    <view class="grid-2">
+      <view>
+        <view class="field-label field-gap">审核人</view>
+        <input class="input" data-field="reviewer" value="{{form.reviewer}}" bindinput="onFieldInput" placeholder="审核员姓名" />
+      </view>
+      <view>
+        <view class="field-label field-gap">变更原因</view>
+        <input class="input" data-field="changeReason" value="{{form.changeReason}}" bindinput="onFieldInput" placeholder="例如：修正答案摘要 / 审核通过" />
+      </view>
+    </view>
+
+    <view class="field-label field-gap">审核备注</view>
+    <textarea class="textarea" data-field="reviewComment" value="{{form.reviewComment}}" bindinput="onFieldInput" placeholder="记录审核意见、驳回原因或上线说明"></textarea>
+
     <view class="field-label field-gap">关联题 ID（逗号分隔）</view>
     <input class="input" data-field="relatedIdsText" value="{{form.relatedIdsText}}" bindinput="onFieldInput" placeholder="q1, q2" />
 
     <view class="btn-row">
       <button class="primary-btn" loading="{{loading}}" bindtap="handleSave">保存题目</button>
     </view>
+  </view>
+
+  <view class="card" wx:if="{{versionSnapshots.length}}">
+    <view class="section-title">最近版本快照</view>
+    <view class="feature-desc" wx:for="{{versionSnapshots}}" wx:key="index">v{{item.version}} ｜ {{item.action}} ｜ {{item.status}} / {{item.reviewStatus}} ｜ {{item.ownerTeam || '未分配团队'}} ｜ {{item.atText}} {{item.reason ? '｜' + item.reason : ''}}</view>
+  </view>
+
+  <view class="card" wx:if="{{statusHistory.length}}">
+    <view class="section-title">最近状态流转</view>
+    <view class="feature-desc" wx:for="{{statusHistory}}" wx:key="index">{{item.atText}} ｜ {{item.action}} → {{item.toLifecycleState}} / {{item.toReviewStatus}} {{item.reason ? '｜' + item.reason : ''}}</view>
   </view>
 </view>

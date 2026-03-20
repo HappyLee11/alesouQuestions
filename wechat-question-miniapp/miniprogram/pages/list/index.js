@@ -46,7 +46,11 @@ Page({
         difficultyText: this.formatDifficulty(item.difficulty),
         reviewStatusText: this.formatReview(item.reviewStatus),
         lifecycleText: this.formatLifecycle(item.lifecycleState),
-        versionText: `v${item.version || 1}`
+        versionText: `v${item.version || 1}`,
+        ownerTeamText: item.governance && item.governance.ownerTeam ? item.governance.ownerTeam : '未分配团队',
+        ownerText: item.governance && item.governance.owner ? item.governance.owner : '未分配负责人',
+        importBatchText: item.importMeta && item.importMeta.batchId ? item.importMeta.batchId : '--',
+        importPositionText: item.importMeta ? `${item.importMeta.sheetName || '--'} / row ${item.importMeta.rowNumber || '--'}` : '--'
       }));
       this.setData({ list });
     } catch (error) {

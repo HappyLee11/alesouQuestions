@@ -1,0 +1,68 @@
+{
+  "sourceType": "xlsx-manifest",
+  "templateType": "spreadsheet-workbook",
+  "fieldMappings": {
+    "title": ["题目", "questionTitle", "试题名称"],
+    "content": ["题干", "description", "正文"],
+    "answer": ["答案", "result", "参考答案"],
+    "owner": ["负责人"],
+    "ownerTeam": ["归属团队"],
+    "reviewer": ["审核人"],
+    "reviewComment": ["审核备注"]
+  },
+  "task": {
+    "taskId": "import-task-20260320-001",
+    "taskName": "区域题库月度增量导入",
+    "taskStatus": "staged",
+    "fileName": "region-bank-2026-03.xlsx",
+    "fileType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "sourceRef": "cos://question-imports/region-bank-2026-03.xlsx",
+    "approvalPolicy": "manual-review"
+  },
+  "defaults": {
+    "status": "review",
+    "reviewStatus": "pending",
+    "ownerTeam": "内容运营",
+    "reviewComment": "导入后进入审核池"
+  },
+  "sheets": [
+    {
+      "sheetName": "单选题",
+      "templateType": "worksheet-single-choice",
+      "rows": [
+        {
+          "__rowNumber": 2,
+          "题目": "HTTP 301 表示什么？",
+          "题干": "请说明 301 状态码的语义。",
+          "答案": "永久重定向",
+          "标签": "HTTP|协议",
+          "题型": "qa",
+          "学科": "Web 基础",
+          "分类": "协议",
+          "难度": "easy",
+          "负责人": "内容A",
+          "审核人": "审核员张三"
+        }
+      ]
+    },
+    {
+      "sheetName": "问答题",
+      "templateType": "worksheet-qa",
+      "rows": [
+        {
+          "__rowNumber": 2,
+          "questionTitle": "为什么需要 CDN？",
+          "description": "请解释 CDN 在静态资源或题库图片场景中的价值。",
+          "result": "内容分发网络可以就近分发资源、降低源站压力并提升访问速度。",
+          "tagList": "CDN|网络加速",
+          "questionType": "qa",
+          "subject": "运维与架构",
+          "category": "网络加速",
+          "level": "medium",
+          "归属团队": "教研组",
+          "审核备注": "检查概念表述是否面向校招用户"
+        }
+      ]
+    }
+  ]
+}

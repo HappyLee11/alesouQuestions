@@ -51,12 +51,53 @@ function buildStatusHistoryEntry(payload = {}, openid = '', action = 'save', rea
   };
 }
 
+function buildVersionSnapshot(payload = {}, version = 1, openid = '', action = 'save', reason = '') {
+  return {
+    version,
+    at: Date.now(),
+    by: openid,
+    action,
+    reason: reason || (action === 'create' ? 'manual create' : 'manual edit'),
+    title: payload.title,
+    answerSummary: payload.answerSummary,
+    status: payload.status,
+    reviewStatus: payload.reviewStatus,
+    lifecycleState: payload.lifecycleState,
+    owner: payload.governance && payload.governance.owner ? payload.governance.owner : '',
+    ownerTeam: payload.governance && payload.governance.ownerTeam ? payload.governance.ownerTeam : '',
+    reviewer: payload.governance && payload.governance.reviewer ? payload.governance.reviewer : ''
+  };
+}
+
+function normalizeGovernance(event = {}, existing = {}, openid = '') {
+  const current = existing.governance || {};
+  const reviewer = String(event.reviewer || current.reviewer || '').trim();
+  const reviewComment = String(event.reviewComment || current.reviewComment || '').trim();
+  const touchedReview = !!(event.reviewer !== undefined || event.reviewComment !== undefined);
+  return {
+    owner: String(event.owner || current.owner || '').trim(),
+    ownerTeam: String(event.ownerTeam || current.ownerTeam || '').trim(),
+    reviewer,
+    reviewComment,
+    reviewUpdatedAt: touchedReview && (reviewer || reviewComment) ? Date.now() : (current.reviewUpdatedAt || null),
+    reviewUpdatedBy: touchedReview && (reviewer || reviewComment) ? openid : (current.reviewUpdatedBy || ''),
+    sourceRef: String(event.sourceRef || current.sourceRef || '').trim(),
+    importTaskId: current.importTaskId || '',
+    importTaskStatus: current.importTaskStatus || '',
+    importSheet: current.importSheet || '',
+    importRowNumber: current.importRowNumber || null,
+    approvalPolicy: String(event.approvalPolicy || current.approvalPolicy || '').trim() || 'manual-review',
+    changeReason: String(event.changeReason || '').trim() || 'manual edit'
+  };
+}
+
 function normalizePayload(event = {}, openid = '', existing = {}) {
   const now = Date.now();
   const status = sanitizeStatus(event.status || existing.status || 'draft');
   const reviewStatus = sanitizeReviewStatus(event.reviewStatus || existing.reviewStatus, status);
   const lifecycleState = buildLifecycleState(status, reviewStatus);
   const title = String(event.title || '').trim();
+  const governance = normalizeGovernance(event, existing, openid);
   const payload = {
     title,
     content: String(event.content || event.title || '').trim(),
@@ -78,6 +119,7 @@ function normalizePayload(event = {}, openid = '', existing = {}) {
     titleVariants: Array.isArray(event.titleVariants) ? event.titleVariants.filter(Boolean) : [],
     imageText: String(event.imageText || '').trim(),
     relatedIds: Array.isArray(event.relatedIds) ? event.relatedIds.filter(Boolean) : [],
+    externalId: String(event.externalId || existing.externalId || '').trim(),
     normalizedTitle: normalizeTitle(title),
     isDeleted: status === 'deleted',
     lastAction: event.id ? 'update' : 'create',
@@ -85,7 +127,9 @@ function normalizePayload(event = {}, openid = '', existing = {}) {
     updatedBy: openid,
     deletedAt: status === 'deleted' ? now : null,
     deletedBy: status === 'deleted' ? openid : '',
-    deletedReason: status === 'deleted' ? (event.deletedReason || 'manual archive via edit') : ''
+    deletedReason: status === 'deleted' ? (event.deletedReason || 'manual archive via edit') : '',
+    governance,
+    importMeta: existing.importMeta || null
   };
   return payload;
 }
@@ -112,13 +156,17 @@ exports.main = async (event = {}) => {
       const statusHistory = (existing.statusHistory || []).concat(
         buildStatusHistoryEntry(payload, auth.openid, 'update', event.changeReason)
       ).slice(-20);
+      const versionSnapshots = (existing.versionSnapshots || []).concat(
+        buildVersionSnapshot(payload, version, auth.openid, 'update', event.changeReason)
+      ).slice(-20);
       await db.collection('questions').doc(event.id).update({
         data: {
           ...payload,
           createdAt: existing.createdAt,
           createdBy: existing.createdBy,
           version,
-          statusHistory
+          statusHistory,
+          versionSnapshots
         }
       });
       return {
@@ -131,13 +179,15 @@ exports.main = async (event = {}) => {
 
     const createdAt = Date.now();
     const statusHistory = [buildStatusHistoryEntry(payload, auth.openid, 'create', event.changeReason)];
+    const versionSnapshots = [buildVersionSnapshot(payload, 1, auth.openid, 'create', event.changeReason)];
     const res = await db.collection('questions').add({
       data: {
         ...payload,
         version: 1,
         createdAt,
         createdBy: auth.openid,
-        statusHistory
+        statusHistory,
+        versionSnapshots
       }
     });
     return {

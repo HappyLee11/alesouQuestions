@@ -24,7 +24,11 @@ const BASE_FIELD_ALIASES = {
   imageText: ['imageText', '识图文本', 'ocrText'],
   relatedIds: ['relatedIds', '关联题目', 'relatedQuestionIds'],
   externalId: ['externalId', '外部ID', 'sourceId'],
-  importBatchId: ['importBatchId', '导入批次']
+  importBatchId: ['importBatchId', '导入批次'],
+  owner: ['owner', '负责人', '题目负责人'],
+  ownerTeam: ['ownerTeam', '负责团队', '归属团队'],
+  reviewer: ['reviewer', '审核人'],
+  reviewComment: ['reviewComment', '审核备注', '审核意见']
 };
 
 async function ensureAdmin() {
@@ -99,20 +103,82 @@ function buildFingerprint(item = {}) {
     content: item.content,
     answer: item.answer,
     subject: item.subject,
-    category: item.category
+    category: item.category,
+    externalId: item.externalId,
+    source: item.source
   })).digest('hex');
+}
+
+function buildVersionSnapshot(item = {}, version = 1, action = 'import', reason = '') {
+  return {
+    version,
+    at: Date.now(),
+    by: item.updatedBy || item.createdBy || '',
+    action,
+    reason: reason || action,
+    title: item.title,
+    answerSummary: item.answerSummary,
+    status: item.status,
+    reviewStatus: item.reviewStatus,
+    lifecycleState: item.lifecycleState,
+    importBatchId: item.importMeta && item.importMeta.batchId ? item.importMeta.batchId : '',
+    sourceType: item.importMeta && item.importMeta.sourceType ? item.importMeta.sourceType : '',
+    taskId: item.importMeta && item.importMeta.taskId ? item.importMeta.taskId : ''
+  };
+}
+
+function normalizeGovernance(raw = {}, aliasMap, openid = '', options = {}) {
+  const now = Date.now();
+  const owner = String(pickField(raw, 'owner', aliasMap) || options.defaultOwner || '').trim();
+  const ownerTeam = String(pickField(raw, 'ownerTeam', aliasMap) || options.defaultOwnerTeam || '').trim();
+  const reviewer = String(pickField(raw, 'reviewer', aliasMap) || options.defaultReviewer || '').trim();
+  const reviewComment = String(pickField(raw, 'reviewComment', aliasMap) || options.defaultReviewComment || '').trim();
+  return {
+    owner,
+    ownerTeam,
+    reviewer,
+    reviewComment,
+    reviewUpdatedAt: reviewer || reviewComment ? now : null,
+    reviewUpdatedBy: reviewer || reviewComment ? openid : '',
+    sourceRef: String(options.sourceRef || '').trim(),
+    importTaskId: String(options.taskId || '').trim(),
+    importTaskStatus: String(options.taskStatus || '').trim() || 'validated',
+    importSheet: String(options.sheetName || '').trim(),
+    importRowNumber: Number(options.rowNumber) || null,
+    approvalPolicy: String(options.approvalPolicy || '').trim() || 'manual-review',
+    changeReason: String(options.importReason || '').trim() || 'bulk import'
+  };
 }
 
 function normalizeItem(raw = {}, openid = '', options = {}) {
   const now = Date.now();
   const aliasMap = options.aliasMap || BASE_FIELD_ALIASES;
-  const status = sanitizeStatus(pickField(raw, 'status', aliasMap) || 'draft');
-  const reviewStatus = sanitizeReviewStatus(pickField(raw, 'reviewStatus', aliasMap), status);
+  const status = sanitizeStatus(pickField(raw, 'status', aliasMap) || options.defaultStatus || 'draft');
+  const reviewStatus = sanitizeReviewStatus(pickField(raw, 'reviewStatus', aliasMap) || options.defaultReviewStatus, status);
   const title = String(pickField(raw, 'title', aliasMap) || '').trim();
   const content = String(pickField(raw, 'content', aliasMap) || title).trim();
   const answer = String(pickField(raw, 'answer', aliasMap) || '').trim();
   const titleVariants = splitMulti(pickField(raw, 'titleVariants', aliasMap));
   const importBatchId = String(options.importBatchId || pickField(raw, 'importBatchId', aliasMap) || '').trim();
+  const importMeta = {
+    mode: options.importMode || 'paste',
+    sourceType: options.sourceType || 'unknown',
+    templateType: options.templateType || 'custom',
+    batchId: importBatchId,
+    importedAt: now,
+    importedBy: openid,
+    rowFingerprint: '',
+    taskId: String(options.taskId || '').trim(),
+    taskName: String(options.taskName || '').trim(),
+    taskStatus: String(options.taskStatus || '').trim() || 'validated',
+    fileName: String(options.fileName || '').trim(),
+    fileType: String(options.fileType || '').trim(),
+    sourceRef: String(options.sourceRef || '').trim(),
+    sheetName: String(options.sheetName || '').trim(),
+    rowNumber: Number(options.rowNumber) || null,
+    stagedAt: options.stagedAt || now,
+    stagingChecksum: String(options.stagingChecksum || '').trim()
+  };
   const normalized = {
     title,
     content,
@@ -146,15 +212,8 @@ function normalizeItem(raw = {}, openid = '', options = {}) {
     deletedAt: status === 'deleted' ? now : null,
     deletedBy: status === 'deleted' ? openid : '',
     deletedReason: status === 'deleted' ? 'imported as archived' : '',
-    importMeta: {
-      mode: options.importMode || 'paste',
-      sourceType: options.sourceType || 'unknown',
-      templateType: options.templateType || 'custom',
-      batchId: importBatchId,
-      importedAt: now,
-      importedBy: openid,
-      rowFingerprint: ''
-    },
+    importMeta,
+    governance: normalizeGovernance(raw, aliasMap, openid, options),
     statusHistory: [{
       at: now,
       by: openid,
@@ -163,9 +222,11 @@ function normalizeItem(raw = {}, openid = '', options = {}) {
       toReviewStatus: reviewStatus,
       toLifecycleState: buildLifecycle(status, reviewStatus),
       reason: options.importReason || 'bulk import'
-    }]
+    }],
+    versionSnapshots: []
   };
   normalized.importMeta.rowFingerprint = buildFingerprint(normalized);
+  normalized.versionSnapshots = [buildVersionSnapshot(normalized, 1, 'import', options.importReason || 'bulk import')];
   return normalized;
 }
 
@@ -183,29 +244,124 @@ function validateItem(item = {}) {
   if (!item.answerSummary && item.answer.length > 24) warnings.push('answerSummary recommended for long answers');
   if (!item.subject) warnings.push('subject missing');
   if (!item.category) warnings.push('category missing');
+  if (!item.governance || !item.governance.ownerTeam) warnings.push('ownerTeam recommended for governance');
+  if (item.status === 'published' && item.reviewStatus !== 'approved') warnings.push('published item should usually be approved');
   return { errors, warnings };
+}
+
+function flattenImportManifest(manifest = {}, globalOptions = {}) {
+  const task = manifest.task || {};
+  const defaults = manifest.defaults || {};
+  const sheets = Array.isArray(manifest.sheets) ? manifest.sheets : [];
+  const sourceRows = [];
+
+  sheets.forEach((sheet, sheetIndex) => {
+    const rows = Array.isArray(sheet.rows) ? sheet.rows : [];
+    rows.forEach((row, rowIndex) => {
+      sourceRows.push({
+        raw: row,
+        meta: {
+          taskId: task.taskId || manifest.taskId || '',
+          taskName: task.taskName || manifest.taskName || manifest.fileName || '',
+          taskStatus: task.taskStatus || manifest.taskStatus || 'staged',
+          fileName: task.fileName || manifest.fileName || '',
+          fileType: task.fileType || manifest.fileType || manifest.sourceType || '',
+          sourceRef: task.sourceRef || manifest.sourceRef || '',
+          sheetName: sheet.sheetName || sheet.name || `Sheet${sheetIndex + 1}`,
+          rowNumber: Number(row.__rowNumber || row.rowNumber) || rowIndex + 2,
+          stagedAt: task.stagedAt || manifest.stagedAt || Date.now(),
+          stagingChecksum: task.stagingChecksum || manifest.stagingChecksum || '',
+          templateType: sheet.templateType || manifest.templateType || globalOptions.templateType || 'spreadsheet-sheet',
+          sourceType: manifest.sourceType || globalOptions.sourceType || 'xlsx-manifest',
+          importMode: globalOptions.importMode || manifest.importMode || 'staging',
+          importBatchId: globalOptions.importBatchId || manifest.importBatchId || task.batchId || '',
+          importReason: globalOptions.importReason || task.reason || 'bulk import',
+          approvalPolicy: task.approvalPolicy || defaults.approvalPolicy || 'manual-review',
+          defaultStatus: sheet.defaultStatus || defaults.status || 'draft',
+          defaultReviewStatus: sheet.defaultReviewStatus || defaults.reviewStatus || 'pending',
+          defaultOwner: sheet.defaultOwner || defaults.owner || '',
+          defaultOwnerTeam: sheet.defaultOwnerTeam || defaults.ownerTeam || '',
+          defaultReviewer: sheet.defaultReviewer || defaults.reviewer || '',
+          defaultReviewComment: sheet.defaultReviewComment || defaults.reviewComment || ''
+        }
+      });
+    });
+  });
+
+  return {
+    task,
+    sheets,
+    sourceRows,
+    fieldMappings: manifest.fieldMappings || {},
+    templateType: manifest.templateType || globalOptions.templateType || 'spreadsheet-workbook',
+    sourceType: manifest.sourceType || globalOptions.sourceType || 'xlsx-manifest'
+  };
+}
+
+function normalizeSource(event = {}) {
+  if (event.importManifest && typeof event.importManifest === 'object') {
+    const flattened = flattenImportManifest(event.importManifest, event);
+    return {
+      items: flattened.sourceRows.map((entry) => entry.raw),
+      perRowMeta: flattened.sourceRows.map((entry) => entry.meta),
+      fieldMappings: {
+        ...(flattened.fieldMappings || {}),
+        ...(event.fieldMappings || {})
+      },
+      sourceType: flattened.sourceType,
+      templateType: flattened.templateType,
+      task: flattened.task,
+      sheets: flattened.sheets
+    };
+  }
+  const items = Array.isArray(event.items) ? event.items : [];
+  return {
+    items,
+    perRowMeta: items.map(() => ({
+      taskId: event.taskId || '',
+      taskName: event.taskName || '',
+      taskStatus: event.taskStatus || 'staged',
+      fileName: event.fileName || '',
+      fileType: event.fileType || event.sourceType || '',
+      sourceRef: event.sourceRef || '',
+      sheetName: event.sheetName || '',
+      rowNumber: null,
+      stagedAt: Date.now(),
+      stagingChecksum: event.stagingChecksum || '',
+      templateType: event.templateType || 'custom',
+      sourceType: event.sourceType || 'paste',
+      importMode: event.importMode || 'staging',
+      importBatchId: event.importBatchId || '',
+      importReason: event.importReason || '',
+      approvalPolicy: event.approvalPolicy || 'manual-review',
+      defaultStatus: event.defaultStatus || 'draft',
+      defaultReviewStatus: event.defaultReviewStatus || 'pending',
+      defaultOwner: event.defaultOwner || '',
+      defaultOwnerTeam: event.defaultOwnerTeam || '',
+      defaultReviewer: event.defaultReviewer || '',
+      defaultReviewComment: event.defaultReviewComment || ''
+    })),
+    fieldMappings: event.fieldMappings || {},
+    sourceType: event.sourceType || 'paste',
+    templateType: event.templateType || 'custom',
+    task: event.task || null,
+    sheets: []
+  };
 }
 
 exports.main = async (event = {}) => {
   const auth = await ensureAdmin();
   if (!auth.isAdmin) return { success: false, code: 403, message: 'forbidden' };
 
-  const items = Array.isArray(event.items) ? event.items : [];
+  const normalizedSource = normalizeSource(event);
+  const items = normalizedSource.items;
   const previewOnly = !!event.previewOnly;
   const dedupeStrategy = event.dedupeStrategy || 'skip';
-  const aliasMap = buildAliasMap(event.fieldMappings || {});
-  const importOptions = {
-    aliasMap,
-    sourceType: event.sourceType || 'paste',
-    templateType: event.templateType || 'custom',
-    importMode: event.importMode || 'staging',
-    importBatchId: event.importBatchId || '',
-    importReason: event.importReason || ''
-  };
+  const aliasMap = buildAliasMap(normalizedSource.fieldMappings || {});
 
-  if (!items.length) return { success: false, code: 400, message: 'items is required' };
+  if (!items.length) return { success: false, code: 400, message: 'items or importManifest is required' };
 
-  const existingRes = await db.collection('questions').field({ _id: true, title: true, normalizedTitle: true, status: true }).limit(500).get();
+  const existingRes = await db.collection('questions').field({ _id: true, title: true, normalizedTitle: true, status: true, version: true, createdAt: true, createdBy: true, statusHistory: true, versionSnapshots: true }).limit(500).get();
   const existing = Array.isArray(existingRes.data) ? existingRes.data : [];
   const existingMap = {};
   existing.forEach((item) => {
@@ -215,7 +371,32 @@ exports.main = async (event = {}) => {
 
   const seenInBatch = new Set();
   const prepared = items.map((raw, index) => {
-    const normalized = normalizeItem(raw, auth.openid, importOptions);
+    const rowMeta = normalizedSource.perRowMeta[index] || {};
+    const normalized = normalizeItem(raw, auth.openid, {
+      aliasMap,
+      sourceType: rowMeta.sourceType || normalizedSource.sourceType || 'paste',
+      templateType: rowMeta.templateType || normalizedSource.templateType || 'custom',
+      importMode: rowMeta.importMode || event.importMode || 'staging',
+      importBatchId: rowMeta.importBatchId || event.importBatchId || '',
+      importReason: rowMeta.importReason || event.importReason || '',
+      taskId: rowMeta.taskId || '',
+      taskName: rowMeta.taskName || '',
+      taskStatus: previewOnly ? 'previewed' : (rowMeta.taskStatus || 'validated'),
+      fileName: rowMeta.fileName || '',
+      fileType: rowMeta.fileType || '',
+      sourceRef: rowMeta.sourceRef || '',
+      sheetName: rowMeta.sheetName || '',
+      rowNumber: rowMeta.rowNumber || null,
+      stagedAt: rowMeta.stagedAt || Date.now(),
+      stagingChecksum: rowMeta.stagingChecksum || '',
+      approvalPolicy: rowMeta.approvalPolicy || event.approvalPolicy || 'manual-review',
+      defaultStatus: rowMeta.defaultStatus || event.defaultStatus || 'draft',
+      defaultReviewStatus: rowMeta.defaultReviewStatus || event.defaultReviewStatus || 'pending',
+      defaultOwner: rowMeta.defaultOwner || event.defaultOwner || '',
+      defaultOwnerTeam: rowMeta.defaultOwnerTeam || event.defaultOwnerTeam || '',
+      defaultReviewer: rowMeta.defaultReviewer || event.defaultReviewer || '',
+      defaultReviewComment: rowMeta.defaultReviewComment || event.defaultReviewComment || ''
+    });
     const validation = validateItem(normalized);
     const duplicateKey = normalized.normalizedTitle;
     const duplicateExisting = duplicateKey && existingMap[duplicateKey] ? existingMap[duplicateKey] : null;
@@ -229,6 +410,7 @@ exports.main = async (event = {}) => {
     return {
       index,
       raw,
+      rowMeta,
       normalized,
       errors,
       warnings,
@@ -238,6 +420,16 @@ exports.main = async (event = {}) => {
 
   const valid = prepared.filter((item) => !item.errors.length);
   const invalid = prepared.filter((item) => item.errors.length);
+  const sheetSummaryMap = {};
+  prepared.forEach((item) => {
+    const key = item.rowMeta.sheetName || 'default';
+    if (!sheetSummaryMap[key]) {
+      sheetSummaryMap[key] = { sheetName: key, total: 0, valid: 0, invalid: 0 };
+    }
+    sheetSummaryMap[key].total += 1;
+    if (item.errors.length) sheetSummaryMap[key].invalid += 1;
+    else sheetSummaryMap[key].valid += 1;
+  });
 
   if (previewOnly) {
     return {
@@ -249,9 +441,17 @@ exports.main = async (event = {}) => {
         valid: valid.length,
         invalid: invalid.length,
         deduplicated: prepared.filter((item) => item.duplicateExistingId).length,
-        sourceType: importOptions.sourceType,
-        templateType: importOptions.templateType,
+        sourceType: normalizedSource.sourceType,
+        templateType: normalizedSource.templateType,
         dedupeStrategy,
+        task: normalizedSource.task ? {
+          taskId: normalizedSource.task.taskId || '',
+          taskName: normalizedSource.task.taskName || normalizedSource.task.fileName || '',
+          fileName: normalizedSource.task.fileName || '',
+          fileType: normalizedSource.task.fileType || normalizedSource.sourceType,
+          approvalPolicy: normalizedSource.task.approvalPolicy || 'manual-review'
+        } : null,
+        sheets: Object.keys(sheetSummaryMap).map((key) => sheetSummaryMap[key]),
         fieldMappings: Object.keys(aliasMap).reduce((acc, key) => {
           acc[key] = aliasMap[key].slice(0, 6);
           return acc;
@@ -266,11 +466,17 @@ exports.main = async (event = {}) => {
           reviewStatus: item.normalized.reviewStatus,
           lifecycleState: item.normalized.lifecycleState,
           duplicateExistingId: item.duplicateExistingId,
+          taskId: item.normalized.importMeta.taskId,
+          fileName: item.normalized.importMeta.fileName,
+          sheetName: item.normalized.importMeta.sheetName,
+          rowNumber: item.normalized.importMeta.rowNumber,
+          owner: item.normalized.governance.owner,
+          ownerTeam: item.normalized.governance.ownerTeam,
           warnings: item.warnings,
           errors: item.errors
         })),
-        errors: invalid.slice(0, 30).map((item) => ({ index: item.index, title: item.normalized.title, errors: item.errors })),
-        warnings: prepared.filter((item) => item.warnings.length).slice(0, 30).map((item) => ({ index: item.index, title: item.normalized.title, warnings: item.warnings }))
+        errors: invalid.slice(0, 30).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, errors: item.errors })),
+        warnings: prepared.filter((item) => item.warnings.length).slice(0, 30).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, warnings: item.warnings }))
       }
     };
   }
@@ -283,6 +489,7 @@ exports.main = async (event = {}) => {
         const currentRes = await db.collection('questions').doc(item.duplicateExistingId).get();
         const current = currentRes.data || {};
         const nextVersion = Number(current.version || 1) + 1;
+        const snapshot = buildVersionSnapshot(item.normalized, nextVersion, 'import-update', item.normalized.governance.changeReason);
         const updatePayload = {
           ...item.normalized,
           version: nextVersion,
@@ -290,7 +497,8 @@ exports.main = async (event = {}) => {
           updatedBy: auth.openid,
           createdAt: current.createdAt || item.normalized.createdAt,
           createdBy: current.createdBy || item.normalized.createdBy,
-          statusHistory: (current.statusHistory || []).concat(item.normalized.statusHistory || []).slice(-20)
+          statusHistory: (current.statusHistory || []).concat(item.normalized.statusHistory || []).slice(-20),
+          versionSnapshots: (current.versionSnapshots || []).concat([snapshot]).slice(-20)
         };
         await db.collection('questions').doc(item.duplicateExistingId).update({ data: updatePayload });
         updatedIds.push(item.duplicateExistingId);
@@ -309,8 +517,16 @@ exports.main = async (event = {}) => {
         failed: invalid.length,
         ids: insertedIds,
         updatedIds,
-        errors: invalid.map((item) => ({ index: item.index, title: item.normalized.title, errors: item.errors })),
-        warnings: prepared.filter((item) => item.warnings.length).map((item) => ({ index: item.index, title: item.normalized.title, warnings: item.warnings }))
+        sourceType: normalizedSource.sourceType,
+        templateType: normalizedSource.templateType,
+        dedupeStrategy,
+        task: normalizedSource.task ? {
+          taskId: normalizedSource.task.taskId || '',
+          taskName: normalizedSource.task.taskName || normalizedSource.task.fileName || ''
+        } : null,
+        sheets: Object.keys(sheetSummaryMap).map((key) => sheetSummaryMap[key]),
+        errors: invalid.map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, errors: item.errors })),
+        warnings: prepared.filter((item) => item.warnings.length).map((item) => ({ index: item.index, title: item.normalized.title, sheetName: item.normalized.importMeta.sheetName, rowNumber: item.normalized.importMeta.rowNumber, warnings: item.warnings }))
       }
     };
   } catch (error) {

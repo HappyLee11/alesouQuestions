@@ -4,8 +4,8 @@
 
 ## 这次 v4 强化的亮点
 
-- **导入更像真实系统**：支持 JSON / JSONL / CSV 文本暂存，先本地解析，再云端预检，再正式导入
-- **数据归一化更完整**：支持内置别名 + 自定义 `fieldMappings`，补齐 `reviewStatus`、`lifecycleState`、`version`、`importMeta`
+- **导入更像真实系统**：支持 JSON / JSONL / CSV 文本暂存，也支持 workbook manifest 方式模拟 XLSX/CSV 文件导入任务，先本地解析 / 暂存，再云端预检，再正式导入
+- **数据归一化更完整**：支持内置别名 + 自定义 `fieldMappings`，补齐 `reviewStatus`、`lifecycleState`、`version`、`importMeta`、`governance`、`versionSnapshots`
 - **搜索接口更正式**：增加 `pagination` / `request` / `excerpt` / `matchedFields` / `searchScore`
 - **前端搜索体验更完整**：补齐分页浏览、结果摘要与正式接口风格返回
 - **后台治理更严谨**：编辑页支持摘要、标题变体、OCR 文本、关联题、审核状态；归档恢复保留原状态
@@ -105,7 +105,8 @@ wechat-question-miniapp/
 ### 6. 初始化数据
 
 - 先导入 `data/sample-questions.json`
-- 或者登录管理员后，在导入页粘贴 JSON / JSONL / CSV 文本
+- 或者先参考 `data/import-workbook-manifest.json` 模拟 XLSX/CSV 导入任务
+- 登录管理员后，在导入页粘贴 JSON / JSONL / CSV 文本，或直接粘贴 workbook manifest JSON
 
 ## 当前推荐的数据模型
 
@@ -132,6 +133,14 @@ wechat-question-miniapp/
   "imageText": "图片题干里有 Redis 热点数据缓存",
   "relatedIds": ["q4"],
   "version": 4,
+  "governance": {
+    "owner": "内容运营 A",
+    "ownerTeam": "后端题库组",
+    "reviewer": "审核员 B",
+    "reviewComment": "导入后进入审核池",
+    "approvalPolicy": "manual-review",
+    "changeReason": "bulk import"
+  },
   "isDeleted": false,
   "createdAt": 1710000000000,
   "updatedAt": 1710000000000,
@@ -155,8 +164,9 @@ wechat-question-miniapp/
 2. **搜索页**：演示热门词、历史记录、图片搜题入口、分组/筛选/分页、空结果建议
 3. **详情页**：展示更完整的题目元信息、答案展开、相关题
 4. **后台首页**：展示管理员校验与生命周期 / 审核态统计
-5. **题目列表**：演示筛选、编辑、版本/审核态、归档 / 恢复
-6. **导入页**：切换 JSON / JSONL / CSV 模板，先做暂存预览，再云端预检，再执行导入
+5. **题目列表**：演示筛选、负责人 / 团队、导入批次、版本 / 审核态、归档 / 恢复
+6. **编辑页**：演示外部来源、审核备注、变更原因、最近版本快照与状态流转
+7. **导入页**：切换 JSON / JSONL / CSV / workbook manifest 模板，先做暂存预览，再云端预检，再执行导入
 
 ## 已知限制
 
@@ -171,6 +181,9 @@ wechat-question-miniapp/
 - `docs/setup.md`
 - `docs/architecture.md`
 - `docs/import-normalization.md`
+- `docs/governance-model.md`
 - `docs/scenario-solution-v3.md`
 - `data/sample-questions.json`
 - `data/import-template.csv`
+- `data/import-workbook-manifest.json`
+- `data/question-governance-schema.json`

@@ -57,6 +57,74 @@ const TEMPLATE_PRESETS = {
     example: `题目,题干,答案,标签,题型,学科,分类,难度,状态,审核状态
 HTTP 为什么无状态,解释 HTTP 为什么被称为无状态协议,协议本身不保存会话上下文,HTTP|协议,qa,Web 基础,协议,medium,published,approved
 Redis 热点缓存原因,说明 Redis 为什么常用作缓存层,内存存储且访问快,Redis|缓存,qa,后端开发,缓存,medium,draft,pending`
+  },
+  workbook: {
+    label: 'XLSX/CSV 导入任务 Manifest',
+    sourceType: 'xlsx-manifest',
+    templateType: 'spreadsheet-workbook',
+    example: `{
+  "sourceType": "xlsx-manifest",
+  "templateType": "spreadsheet-workbook",
+  "fieldMappings": {
+    "title": ["题目", "questionTitle", "试题名称"],
+    "content": ["题干", "description", "正文"],
+    "answer": ["答案", "result", "参考答案"],
+    "owner": ["负责人"],
+    "ownerTeam": ["归属团队"]
+  },
+  "task": {
+    "taskId": "import-task-20260320-001",
+    "taskName": "华东校招题库 3 月增量",
+    "taskStatus": "staged",
+    "fileName": "school-east-march.xlsx",
+    "fileType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "sourceRef": "cos://imports/school-east-march.xlsx",
+    "approvalPolicy": "manual-review"
+  },
+  "defaults": {
+    "status": "review",
+    "reviewStatus": "pending",
+    "ownerTeam": "内容运营"
+  },
+  "sheets": [
+    {
+      "sheetName": "单选题",
+      "templateType": "worksheet-single-choice",
+      "rows": [
+        {
+          "__rowNumber": 2,
+          "题目": "HTTP 301 表示什么？",
+          "题干": "请说明 301 状态码的语义。",
+          "答案": "永久重定向",
+          "标签": "HTTP|协议",
+          "题型": "qa",
+          "学科": "Web 基础",
+          "分类": "协议",
+          "难度": "easy",
+          "负责人": "内容A"
+        }
+      ]
+    },
+    {
+      "sheetName": "问答题",
+      "templateType": "worksheet-qa",
+      "rows": [
+        {
+          "__rowNumber": 2,
+          "questionTitle": "为什么需要 CDN？",
+          "description": "请解释 CDN 在题库、图片或静态资源场景中的价值。",
+          "result": "内容分发网络可以就近分发资源、降低源站压力并提升访问速度。",
+          "tagList": "CDN|网络加速",
+          "questionType": "qa",
+          "subject": "运维与架构",
+          "category": "网络加速",
+          "level": "medium",
+          "归属团队": "教研组"
+        }
+      ]
+    }
+  ]
+}`
   }
 };
 
@@ -93,46 +161,72 @@ function splitCsvLine(line = '') {
 
 function parseRawText(text = '', presetKey = 'json') {
   const raw = String(text || '').trim();
-  if (!raw) return [];
+  if (!raw) return null;
   const preset = TEMPLATE_PRESETS[presetKey] || TEMPLATE_PRESETS.json;
 
   if (presetKey === 'json' || presetKey === 'aliases') {
     const parsed = safeJsonParse(raw, null);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? { type: 'items', items: parsed } : null;
   }
 
   if (presetKey === 'jsonl') {
-    return raw
-      .split(/\n+/)
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => safeJsonParse(line, null))
-      .filter(Boolean);
+    return {
+      type: 'items',
+      items: raw
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => safeJsonParse(line, null))
+        .filter(Boolean)
+    };
   }
 
   if (presetKey === 'csv') {
     const lines = raw.split(/\n+/).map((line) => line.trim()).filter(Boolean);
-    if (lines.length < 2) return [];
+    if (lines.length < 2) return null;
     const headers = splitCsvLine(lines[0]);
-    return lines.slice(1).map((line) => {
-      const values = splitCsvLine(line);
-      const row = {};
-      headers.forEach((header, index) => {
-        row[header] = values[index] !== undefined ? values[index] : '';
-      });
-      return row;
-    });
+    return {
+      type: 'items',
+      items: lines.slice(1).map((line) => {
+        const values = splitCsvLine(line);
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] !== undefined ? values[index] : '';
+        });
+        return row;
+      })
+    };
   }
 
-  return preset.sourceType === 'json-array' ? safeJsonParse(raw, []) : [];
+  if (presetKey === 'workbook') {
+    const manifest = safeJsonParse(raw, null);
+    return manifest && typeof manifest === 'object' ? { type: 'manifest', manifest } : null;
+  }
+
+  return preset.sourceType === 'json-array' ? { type: 'items', items: safeJsonParse(raw, []) } : null;
+}
+
+function flattenManifestRows(manifest = {}) {
+  const sheets = Array.isArray(manifest.sheets) ? manifest.sheets : [];
+  const rows = [];
+  sheets.forEach((sheet) => {
+    (Array.isArray(sheet.rows) ? sheet.rows : []).forEach((row, index) => {
+      rows.push({
+        sheetName: sheet.sheetName || sheet.name || 'Sheet',
+        rowNumber: Number(row.__rowNumber || row.rowNumber) || index + 2,
+        row
+      });
+    });
+  });
+  return rows;
 }
 
 Page({
   data: {
     presetOptions: PRESET_KEYS.map((key) => ({ key, label: TEMPLATE_PRESETS[key].label })),
-    presetKey: 'aliases',
-    presetIndex: PRESET_KEYS.indexOf('aliases'),
-    text: TEMPLATE_PRESETS.aliases.example,
+    presetKey: 'workbook',
+    presetIndex: PRESET_KEYS.indexOf('workbook'),
+    text: TEMPLATE_PRESETS.workbook.example,
     loading: false,
     parseError: '',
     preview: null,
@@ -141,7 +235,8 @@ Page({
     dedupeIndex: 0,
     dedupeStrategy: 'skip',
     stagingItems: [],
-    fieldMappingsText: '{\n  "title": ["题目", "questionTitle"],\n  "content": ["题干", "description"],\n  "answer": ["答案", "result"]\n}',
+    importManifest: null,
+    fieldMappingsText: '{\n  "title": ["题目", "questionTitle"],\n  "content": ["题干", "description"],\n  "answer": ["答案", "result"],\n  "owner": ["负责人"],\n  "ownerTeam": ["归属团队"]\n}',
     importBatchId: 'demo-batch-20260320'
   },
   onLoad() {
@@ -179,15 +274,30 @@ Page({
   },
   updatePreview(text, presetKey) {
     try {
-      const items = parseRawText(text, presetKey);
+      const parsed = parseRawText(text, presetKey);
+      if (!parsed) {
+        this.setData({ preview: null, stagingItems: [], importManifest: null, parseError: '当前内容无法解析为可导入记录，请检查格式或切换模板类型。' });
+        return;
+      }
+      if (parsed.type === 'manifest') {
+        const rows = flattenManifestRows(parsed.manifest);
+        if (!rows.length) {
+          this.setData({ preview: null, stagingItems: [], importManifest: null, parseError: 'Manifest 中没有可导入 rows。' });
+          return;
+        }
+        const preview = this.buildManifestPreview(parsed.manifest, rows);
+        this.setData({ preview, importManifest: parsed.manifest, stagingItems: rows.map((item) => item.row), parseError: '' });
+        return;
+      }
+      const items = parsed.items || [];
       if (!Array.isArray(items) || !items.length) {
-        this.setData({ preview: null, stagingItems: [], parseError: '当前内容无法解析为可导入记录，请检查格式或切换模板类型。' });
+        this.setData({ preview: null, stagingItems: [], importManifest: null, parseError: '当前内容无法解析为可导入记录，请检查格式或切换模板类型。' });
         return;
       }
       const preview = this.buildLocalPreview(items);
-      this.setData({ preview, stagingItems: items, parseError: '' });
+      this.setData({ preview, stagingItems: items, importManifest: null, parseError: '' });
     } catch (error) {
-      this.setData({ preview: null, stagingItems: [], parseError: '解析失败，请检查内容格式。' });
+      this.setData({ preview: null, stagingItems: [], importManifest: null, parseError: '解析失败，请检查内容格式。' });
     }
   },
   buildLocalPreview(items = []) {
@@ -199,32 +309,78 @@ Page({
       keys: Object.keys(item || {}).join(' / ')
     }));
     return {
+      mode: 'items',
       total: items.length,
       columns,
-      sample
+      sample,
+      sheetSummary: []
+    };
+  },
+  buildManifestPreview(manifest = {}, rows = []) {
+    const sample = rows.slice(0, 5).map((item, index) => ({
+      index,
+      title: item.row.title || item.row.题目 || item.row.questionTitle || '--',
+      keys: `${item.sheetName} / row ${item.rowNumber} / ${Object.keys(item.row || {}).join(' / ')}`
+    }));
+    const columns = Array.from(new Set(rows.reduce((acc, item) => acc.concat(Object.keys(item.row || {})), []))).slice(0, 30);
+    const sheetSummary = [];
+    const map = {};
+    rows.forEach((item) => {
+      map[item.sheetName] = (map[item.sheetName] || 0) + 1;
+    });
+    Object.keys(map).forEach((key) => sheetSummary.push({ sheetName: key, total: map[key] }));
+    return {
+      mode: 'manifest',
+      total: rows.length,
+      columns,
+      sample,
+      taskName: manifest.task && (manifest.task.taskName || manifest.task.fileName) ? (manifest.task.taskName || manifest.task.fileName) : '--',
+      fileName: manifest.task && manifest.task.fileName ? manifest.task.fileName : '--',
+      sheetSummary
     };
   },
   getFieldMappings() {
     const mappings = safeJsonParse(this.data.fieldMappingsText || '{}', {});
     return mappings && typeof mappings === 'object' ? mappings : {};
   },
+  buildImportPayload() {
+    const preset = TEMPLATE_PRESETS[this.data.presetKey] || TEMPLATE_PRESETS.json;
+    const base = {
+      dedupeStrategy: this.data.dedupeStrategy,
+      sourceType: preset.sourceType,
+      templateType: preset.templateType,
+      importMode: 'staging',
+      importBatchId: this.data.importBatchId,
+      fieldMappings: this.getFieldMappings()
+    };
+    if (this.data.importManifest) {
+      return {
+        ...base,
+        importManifest: {
+          ...this.data.importManifest,
+          importBatchId: this.data.importBatchId,
+          fieldMappings: {
+            ...((this.data.importManifest && this.data.importManifest.fieldMappings) || {}),
+            ...this.getFieldMappings()
+          }
+        }
+      };
+    }
+    return {
+      ...base,
+      items: this.data.stagingItems || []
+    };
+  },
   async previewOnCloud() {
     try {
-      const items = this.data.stagingItems || [];
-      if (!items.length) {
+      if (!this.data.stagingItems.length && !this.data.importManifest) {
         wx.showToast({ title: '请先生成有效暂存数据', icon: 'none' });
         return;
       }
       this.setData({ loading: true });
-      const preset = TEMPLATE_PRESETS[this.data.presetKey] || TEMPLATE_PRESETS.json;
-      const result = await api.importQuestions(items, {
-        previewOnly: true,
-        dedupeStrategy: this.data.dedupeStrategy,
-        sourceType: preset.sourceType,
-        templateType: preset.templateType,
-        importMode: 'staging',
-        importBatchId: this.data.importBatchId,
-        fieldMappings: this.getFieldMappings()
+      const result = await api.importQuestions(undefined, {
+        ...this.buildImportPayload(),
+        previewOnly: true
       });
       this.setData({ importResult: result });
       wx.showToast({ title: '预检完成', icon: 'success' });
@@ -236,21 +392,12 @@ Page({
   },
   async handleImport() {
     try {
-      const items = this.data.stagingItems || [];
-      if (!items.length) {
+      if (!this.data.stagingItems.length && !this.data.importManifest) {
         wx.showToast({ title: '请先生成有效暂存数据', icon: 'none' });
         return;
       }
       this.setData({ loading: true });
-      const preset = TEMPLATE_PRESETS[this.data.presetKey] || TEMPLATE_PRESETS.json;
-      const result = await api.importQuestions(items, {
-        dedupeStrategy: this.data.dedupeStrategy,
-        sourceType: preset.sourceType,
-        templateType: preset.templateType,
-        importMode: 'staging',
-        importBatchId: this.data.importBatchId,
-        fieldMappings: this.getFieldMappings()
-      });
+      const result = await api.importQuestions(undefined, this.buildImportPayload());
       this.setData({ importResult: result });
       wx.showToast({ title: '导入已完成', icon: 'success' });
     } catch (error) {

@@ -14,6 +14,24 @@ async function ensureAdmin() {
   };
 }
 
+function buildVersionSnapshot(current = {}, version = 1, openid = '', action = 'archive', reason = '') {
+  return {
+    version,
+    at: Date.now(),
+    by: openid,
+    action,
+    reason: reason || action,
+    title: current.title || '',
+    answerSummary: current.answerSummary || '',
+    status: current.status || '',
+    reviewStatus: current.reviewStatus || '',
+    lifecycleState: current.lifecycleState || '',
+    owner: current.governance && current.governance.owner ? current.governance.owner : '',
+    ownerTeam: current.governance && current.governance.ownerTeam ? current.governance.ownerTeam : '',
+    reviewer: current.governance && current.governance.reviewer ? current.governance.reviewer : ''
+  };
+}
+
 exports.main = async (event = {}) => {
   if (!event.id) return { success: false, code: 400, message: 'id is required' };
   const auth = await ensureAdmin();
@@ -25,6 +43,7 @@ exports.main = async (event = {}) => {
   try {
     const currentRes = await db.collection('questions').doc(event.id).get();
     const current = currentRes.data || {};
+    const version = Number(current.version || 1) + 1;
     const restoredStatus = current.previousStatus || 'draft';
     const restoredReviewStatus = current.previousReviewStatus || (restoredStatus === 'published' ? 'approved' : 'pending');
     const restoredLifecycleState = restoredStatus === 'published' ? 'published' : restoredStatus === 'review' ? 'review' : 'draft';
@@ -39,6 +58,11 @@ exports.main = async (event = {}) => {
       lastAction: 'restore',
       updatedAt: now,
       updatedBy: auth.openid,
+      version,
+      governance: {
+        ...(current.governance || {}),
+        changeReason: event.reason || 'manual restore'
+      },
       statusHistory: (current.statusHistory || []).concat([{
         at: now,
         by: auth.openid,
@@ -47,7 +71,15 @@ exports.main = async (event = {}) => {
         toReviewStatus: restoredReviewStatus,
         toLifecycleState: restoredLifecycleState,
         reason: event.reason || 'manual restore'
-      }]).slice(-20)
+      }]).slice(-20),
+      versionSnapshots: (current.versionSnapshots || []).concat([
+        buildVersionSnapshot({
+          ...current,
+          status: restoredStatus,
+          reviewStatus: restoredReviewStatus,
+          lifecycleState: restoredLifecycleState
+        }, version, auth.openid, 'restore', event.reason || 'manual restore')
+      ]).slice(-20)
     } : {
       previousStatus: current.status || 'draft',
       previousReviewStatus: current.reviewStatus || 'pending',
@@ -61,6 +93,11 @@ exports.main = async (event = {}) => {
       lastAction: 'archive',
       updatedAt: now,
       updatedBy: auth.openid,
+      version,
+      governance: {
+        ...(current.governance || {}),
+        changeReason: event.reason || 'manual archive'
+      },
       statusHistory: (current.statusHistory || []).concat([{
         at: now,
         by: auth.openid,
@@ -69,7 +106,15 @@ exports.main = async (event = {}) => {
         toReviewStatus: current.reviewStatus || 'pending',
         toLifecycleState: 'archived',
         reason: event.reason || 'manual archive'
-      }]).slice(-20)
+      }]).slice(-20),
+      versionSnapshots: (current.versionSnapshots || []).concat([
+        buildVersionSnapshot({
+          ...current,
+          status: 'deleted',
+          reviewStatus: current.reviewStatus || 'pending',
+          lifecycleState: 'archived'
+        }, version, auth.openid, 'archive', event.reason || 'manual archive')
+      ]).slice(-20)
     };
 
     await db.collection('questions').doc(event.id).update({ data });
@@ -77,7 +122,7 @@ exports.main = async (event = {}) => {
       success: true,
       code: 0,
       message: restore ? 'restored' : 'archived',
-      data: { id: event.id, action: restore ? 'restore' : 'archive', updatedAt: now, lifecycleState: data.lifecycleState }
+      data: { id: event.id, action: restore ? 'restore' : 'archive', updatedAt: now, lifecycleState: data.lifecycleState, version }
     };
   } catch (error) {
     return { success: false, code: 500, message: 'delete failed', error: error.message || error };
