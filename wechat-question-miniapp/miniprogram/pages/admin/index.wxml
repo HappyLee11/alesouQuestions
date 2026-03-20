@@ -3,7 +3,7 @@
     <view class="title">后台管理</view>
     <view wx:if="{{checking}}" class="subtitle">正在校验管理员权限...</view>
     <block wx:elif="{{isAdmin}}">
-      <view class="subtitle">管理员校验已通过，可进行题库维护与演示。</view>
+      <view class="subtitle">管理员校验已通过，可进行题库维护与演示。这版把“发布 / 待审核 / 归档”生命周期也展示出来，更接近真实运营后台。</view>
       <view class="meta-row large-gap">
         <text class="meta-pill">OPENID：{{openid || '--'}}</text>
         <text class="meta-pill meta-pill-light">角色：{{admin && admin.role ? admin.role : 'admin'}}</text>
@@ -18,8 +18,24 @@
           <view class="metric-label">已发布</view>
         </view>
         <view class="metric-card">
+          <view class="metric-value">{{stats.review}}</view>
+          <view class="metric-label">待审核</view>
+        </view>
+        <view class="metric-card">
           <view class="metric-value">{{stats.draft}}</view>
           <view class="metric-label">草稿</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-value">{{stats.approved}}</view>
+          <view class="metric-label">审核通过</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-value">{{stats.pending}}</view>
+          <view class="metric-label">待处理</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-value">{{stats.rejected}}</view>
+          <view class="metric-label">已驳回</view>
         </view>
         <view class="metric-card">
           <view class="metric-value">{{stats.deleted}}</view>
@@ -39,15 +55,15 @@
     <view class="section-title">推荐演示顺序</view>
     <view class="feature-item">
       <view class="feature-title">1. 先从首页进入搜索页</view>
-      <view class="feature-desc">演示热词、搜索历史、高亮结果和排序切换。</view>
+      <view class="feature-desc">演示热词、搜索历史、高亮结果、分页浏览和筛选分组。</view>
     </view>
     <view class="feature-item">
-      <view class="feature-title">2. 再进入后台题目列表</view>
-      <view class="feature-desc">演示筛选、编辑、归档和恢复操作。</view>
+      <view class="feature-title">2. 再进入后台题目列表 / 编辑页</view>
+      <view class="feature-desc">演示状态、审核、版本化内容字段，以及归档与恢复操作。</view>
     </view>
     <view class="feature-item">
       <view class="feature-title">3. 最后展示导入页</view>
-      <view class="feature-desc">粘贴 JSON 预览后导入，适合做“运营批量录题”场景说明。</view>
+      <view class="feature-desc">演示多模板暂存、字段映射补充、预检、去重和导入结果反馈。</view>
     </view>
   </view>
 </view>

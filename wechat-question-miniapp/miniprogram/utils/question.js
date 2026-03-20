@@ -25,6 +25,9 @@ function normalizeSearchParams(input) {
     category: payload.category || '',
     difficulty: payload.difficulty || '',
     type: payload.type || '',
+    reviewStatus: payload.reviewStatus || '',
+    lifecycleState: payload.lifecycleState || '',
+    tag: payload.tag || '',
     searchMode: payload.searchMode || 'keyword'
   };
 }
@@ -39,11 +42,14 @@ async function searchQuestions(params) {
       total: data.total || 0,
       page: data.page || 1,
       pageSize: data.pageSize || payload.pageSize,
+      totalPages: data.totalPages || 1,
       sortBy: data.sortBy || payload.sortBy,
       keyword: data.keyword || payload.keyword,
       summary: data.summary || {},
       facets: data.facets || {},
       suggestions: data.suggestions || [],
+      pagination: data.pagination || {},
+      request: data.request || {},
       searchMode: data.searchMode || payload.searchMode,
       from: 'cloud'
     };
@@ -53,13 +59,16 @@ async function searchQuestions(params) {
   return {
     items: fallback.items || [],
     total: fallback.total || 0,
-    page: 1,
-    pageSize: payload.pageSize,
+    page: fallback.page || 1,
+    pageSize: fallback.pageSize || payload.pageSize,
+    totalPages: fallback.totalPages || 1,
     sortBy: payload.sortBy,
     keyword: payload.keyword,
     summary: fallback.summary || {},
     facets: fallback.facets || {},
     suggestions: fallback.suggestions || [],
+    pagination: fallback.pagination || {},
+    request: fallback.request || {},
     searchMode: payload.searchMode,
     from: 'mock'
   };

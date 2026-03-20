@@ -25,6 +25,7 @@
   "title": "HTTPS 相比 HTTP 主要增加了什么能力？",
   "content": "HTTPS 在 HTTP 的基础上通过什么机制提高了传输安全性？",
   "answer": "TLS/SSL 加密",
+  "answerSummary": "核心能力是 TLS/SSL 加密与身份校验。",
   "analysis": "HTTPS = HTTP + TLS/SSL。",
   "tags": ["HTTP", "安全"],
   "type": "single",
@@ -35,7 +36,13 @@
   "source": "面试高频题",
   "year": 2025,
   "score": 3,
-  "status": "published",
+  "status": "review",
+  "reviewStatus": "pending",
+  "lifecycleState": "review",
+  "version": 1,
+  "titleVariants": ["HTTPS 有什么提升"],
+  "imageText": "图片识别题干片段",
+  "relatedIds": ["q1"],
   "isDeleted": false,
   "createdAt": 1710000000000,
   "updatedAt": 1710000000000,
@@ -43,7 +50,14 @@
   "updatedBy": "openid",
   "deletedAt": null,
   "deletedBy": "",
-  "deletedReason": ""
+  "deletedReason": "",
+  "statusHistory": [],
+  "importMeta": {
+    "mode": "staging",
+    "sourceType": "json-array",
+    "templateType": "legacy-json",
+    "batchId": "demo-batch-001"
+  }
 }
 ```
 
@@ -65,8 +79,9 @@
 ## 6. 初始化示例数据
 
 - 可用 `data/sample-questions.json` 作为导入样例
-- 导入页支持直接粘贴 JSON 数组
+- 导入页支持直接粘贴 JSON / JSONL / CSV 文本到暂存区
 - `data/import-template.csv` 提供字段模板，便于后续扩展真正 CSV 上传
+- 字段映射与归一化规则见 `docs/import-normalization.md`
 
 ## 7. 部署云函数
 
@@ -81,8 +96,8 @@
 
 ## 8. Demo 建议检查项
 
-- 搜索页：热词 / 历史 / 高亮 / 排序
+- 搜索页：热词 / 历史 / 高亮 / 筛选 / 分页 / 结果摘要
 - 详情页：题目元信息展示是否正常
-- 管理页：管理员校验与统计卡片
-- 列表页：归档与恢复
-- 导入页：JSON 预览与导入结果提示
+- 管理页：管理员校验、生命周期/审核态统计
+- 列表页：版本、审核态、归档与恢复
+- 导入页：多模板暂存、云端预检、去重与导入结果提示

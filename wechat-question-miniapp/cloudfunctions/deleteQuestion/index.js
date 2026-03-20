@@ -21,31 +21,63 @@ exports.main = async (event = {}) => {
 
   const now = Date.now();
   const restore = !!event.restore;
-  const data = restore ? {
-    status: 'published',
-    isDeleted: false,
-    deletedAt: null,
-    deletedBy: '',
-    deletedReason: '',
-    updatedAt: now,
-    updatedBy: auth.openid
-  } : {
-    status: 'deleted',
-    isDeleted: true,
-    deletedAt: now,
-    deletedBy: auth.openid,
-    deletedReason: event.reason || 'manual archive',
-    updatedAt: now,
-    updatedBy: auth.openid
-  };
 
   try {
+    const currentRes = await db.collection('questions').doc(event.id).get();
+    const current = currentRes.data || {};
+    const restoredStatus = current.previousStatus || 'draft';
+    const restoredReviewStatus = current.previousReviewStatus || (restoredStatus === 'published' ? 'approved' : 'pending');
+    const restoredLifecycleState = restoredStatus === 'published' ? 'published' : restoredStatus === 'review' ? 'review' : 'draft';
+    const data = restore ? {
+      status: restoredStatus,
+      reviewStatus: restoredReviewStatus,
+      lifecycleState: restoredLifecycleState,
+      isDeleted: false,
+      deletedAt: null,
+      deletedBy: '',
+      deletedReason: '',
+      lastAction: 'restore',
+      updatedAt: now,
+      updatedBy: auth.openid,
+      statusHistory: (current.statusHistory || []).concat([{
+        at: now,
+        by: auth.openid,
+        action: 'restore',
+        toStatus: restoredStatus,
+        toReviewStatus: restoredReviewStatus,
+        toLifecycleState: restoredLifecycleState,
+        reason: event.reason || 'manual restore'
+      }]).slice(-20)
+    } : {
+      previousStatus: current.status || 'draft',
+      previousReviewStatus: current.reviewStatus || 'pending',
+      status: 'deleted',
+      reviewStatus: current.reviewStatus || 'pending',
+      lifecycleState: 'archived',
+      isDeleted: true,
+      deletedAt: now,
+      deletedBy: auth.openid,
+      deletedReason: event.reason || 'manual archive',
+      lastAction: 'archive',
+      updatedAt: now,
+      updatedBy: auth.openid,
+      statusHistory: (current.statusHistory || []).concat([{
+        at: now,
+        by: auth.openid,
+        action: 'archive',
+        toStatus: 'deleted',
+        toReviewStatus: current.reviewStatus || 'pending',
+        toLifecycleState: 'archived',
+        reason: event.reason || 'manual archive'
+      }]).slice(-20)
+    };
+
     await db.collection('questions').doc(event.id).update({ data });
     return {
       success: true,
       code: 0,
       message: restore ? 'restored' : 'archived',
-      data: { id: event.id, action: restore ? 'restore' : 'archive', updatedAt: now }
+      data: { id: event.id, action: restore ? 'restore' : 'archive', updatedAt: now, lifecycleState: data.lifecycleState }
     };
   } catch (error) {
     return { success: false, code: 500, message: 'delete failed', error: error.message || error };

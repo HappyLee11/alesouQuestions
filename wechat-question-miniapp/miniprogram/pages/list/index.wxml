@@ -17,10 +17,13 @@
         <view class="title title-small">{{item.title}}</view>
         <text class="meta-pill meta-pill-light">{{item.statusText}}</text>
       </view>
-      <view class="meta-row">
+      <view class="meta-row wrap-row large-gap">
         <text class="meta-pill">{{item.subject || '未分类'}}</text>
         <text class="meta-pill meta-pill-light">{{item.category || '通用'}}</text>
         <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
+        <text class="meta-pill meta-pill-light">{{item.reviewStatusText}}</text>
+        <text class="meta-pill meta-pill-light">{{item.lifecycleText}}</text>
+        <text class="meta-pill meta-pill-light">{{item.versionText}}</text>
       </view>
       <view class="subtitle small-gap">答案：{{item.answer || '未填写'}}</view>
       <view class="subtitle">最近更新：{{item.updatedAtText}}</view>

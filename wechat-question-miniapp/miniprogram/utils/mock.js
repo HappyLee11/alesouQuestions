@@ -17,9 +17,12 @@ const sampleQuestions = [
     year: 2025,
     score: 2,
     status: 'published',
+    reviewStatus: 'approved',
+    lifecycleState: 'published',
     createdAt: 1740000000000,
     updatedAt: 1742400000000,
     isDeleted: false,
+    version: 2,
     viewCount: 328,
     favoriteCount: 54,
     imageText: '图中问 HTTP 状态码 资源不存在',
@@ -43,9 +46,12 @@ const sampleQuestions = [
     year: 2024,
     score: 2,
     status: 'published',
+    reviewStatus: 'approved',
+    lifecycleState: 'published',
     createdAt: 1740200000000,
     updatedAt: 1742300000000,
     isDeleted: false,
+    version: 1,
     viewCount: 412,
     favoriteCount: 66,
     imageText: '图片里问 ES6 不可重新赋值变量',
@@ -68,10 +74,13 @@ const sampleQuestions = [
     source: '内部题库',
     year: 2023,
     score: 2,
-    status: 'published',
+    status: 'review',
+    reviewStatus: 'pending',
+    lifecycleState: 'review',
     createdAt: 1740300000000,
     updatedAt: 1742200000000,
     isDeleted: false,
+    version: 1,
     viewCount: 279,
     favoriteCount: 38,
     relatedIds: ['q2']
@@ -94,9 +103,12 @@ const sampleQuestions = [
     year: 2025,
     score: 3,
     status: 'published',
+    reviewStatus: 'approved',
+    lifecycleState: 'published',
     createdAt: 1740400000000,
     updatedAt: 1742500000000,
     isDeleted: false,
+    version: 3,
     viewCount: 180,
     favoriteCount: 20,
     relatedIds: ['q7']
@@ -119,9 +131,12 @@ const sampleQuestions = [
     year: 2025,
     score: 3,
     status: 'draft',
+    reviewStatus: 'rejected',
+    lifecycleState: 'draft',
     createdAt: 1740500000000,
     updatedAt: 1742600000000,
     isDeleted: false,
+    version: 2,
     viewCount: 145,
     favoriteCount: 17,
     relatedIds: ['q1', 'q9']
@@ -143,9 +158,12 @@ const sampleQuestions = [
     year: 2024,
     score: 3,
     status: 'published',
+    reviewStatus: 'approved',
+    lifecycleState: 'published',
     createdAt: 1740600000000,
     updatedAt: 1742650000000,
     isDeleted: false,
+    version: 1,
     viewCount: 199,
     favoriteCount: 25
   },
@@ -167,9 +185,12 @@ const sampleQuestions = [
     year: 2025,
     score: 5,
     status: 'published',
+    reviewStatus: 'approved',
+    lifecycleState: 'published',
     createdAt: 1740700000000,
     updatedAt: 1742700000000,
     isDeleted: false,
+    version: 4,
     viewCount: 132,
     favoriteCount: 12,
     imageText: '图片题干里有 Redis 热点数据缓存',
@@ -192,11 +213,14 @@ const sampleQuestions = [
     year: 2024,
     score: 4,
     status: 'deleted',
+    reviewStatus: 'approved',
+    lifecycleState: 'archived',
     isDeleted: true,
     deletedAt: 1742750000000,
     deletedReason: '重复录入示例',
     createdAt: 1740800000000,
     updatedAt: 1742750000000,
+    version: 2,
     viewCount: 75,
     favoriteCount: 7
   },
@@ -218,9 +242,12 @@ const sampleQuestions = [
     year: 2025,
     score: 4,
     status: 'published',
+    reviewStatus: 'approved',
+    lifecycleState: 'published',
     createdAt: 1740900000000,
     updatedAt: 1742760000000,
     isDeleted: false,
+    version: 2,
     viewCount: 111,
     favoriteCount: 14,
     relatedIds: ['q1', 'q5']
@@ -259,8 +286,10 @@ function calcRelevance(item, keyword) {
   if (!keyword) return 0;
   const text = searchableText(item);
   const direct = text.match(new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
-  if (direct && direct.length) return direct.length * 3;
-  return keywordTokens(keyword).reduce((sum, token) => sum + (text.includes(token) ? 1 : 0), 0);
+  let score = direct && direct.length ? direct.length * 3 : 0;
+  score += keywordTokens(keyword).reduce((sum, token) => sum + (text.includes(token) ? 1 : 0), 0);
+  if ((item.title || '').toLowerCase().includes(keyword)) score += 5;
+  return score;
 }
 
 function matchesKeyword(item, keyword) {
@@ -280,6 +309,16 @@ function countBy(list, key) {
     map[value] = (map[value] || 0) + 1;
   });
   return Object.keys(map).map((value) => ({ value, count: map[value] })).sort((a, b) => b.count - a.count);
+}
+
+function countTags(list = []) {
+  const map = {};
+  list.forEach((item) => {
+    (item.tags || []).forEach((tag) => {
+      map[tag] = (map[tag] || 0) + 1;
+    });
+  });
+  return Object.keys(map).map((value) => ({ value, count: map[value] })).sort((a, b) => b.count - a.count).slice(0, 12);
 }
 
 function applySort(list, sortBy = 'relevance', keyword = '') {
@@ -303,9 +342,21 @@ function buildSuggestions(keyword = '', list = []) {
   list.forEach((item) => {
     (item.tags || []).slice(0, 2).forEach((tag) => bag.add(tag));
     if (item.subject) bag.add(item.subject);
+    if (item.category) bag.add(item.category);
   });
   if (keyword && keyword.toLowerCase().includes('图')) bag.add('HTTP');
-  return Array.from(bag).slice(0, 6);
+  return Array.from(bag).slice(0, 8);
+}
+
+function buildExcerpt(item = {}, keyword = '') {
+  const source = String(item.content || item.answerSummary || item.answer || '').trim();
+  if (!source) return '';
+  if (!keyword) return source.slice(0, 88);
+  const index = source.toLowerCase().indexOf(keyword.toLowerCase());
+  if (index < 0) return source.slice(0, 88);
+  const start = Math.max(index - 18, 0);
+  const end = Math.min(index + 56, source.length);
+  return `${start > 0 ? '…' : ''}${source.slice(start, end)}${end < source.length ? '…' : ''}`;
 }
 
 function search(params = {}) {
@@ -314,6 +365,8 @@ function search(params = {}) {
   const status = options.status || 'published';
   const includeDeleted = !!options.includeDeleted || status === 'all' || options.management;
   const sortBy = options.sortBy || 'relevance';
+  const page = Math.max(Number(options.page) || 1, 1);
+  const pageSize = Math.min(Math.max(Number(options.pageSize) || 20, 1), 100);
 
   let list = sampleQuestions.filter((item) => {
     if (!includeDeleted && (item.isDeleted || item.status === 'deleted')) return false;
@@ -322,27 +375,72 @@ function search(params = {}) {
     if (options.category && item.category !== options.category) return false;
     if (options.difficulty && item.difficulty !== options.difficulty) return false;
     if (options.type && item.type !== options.type) return false;
+    if (options.reviewStatus && item.reviewStatus !== options.reviewStatus) return false;
+    if (options.lifecycleState && item.lifecycleState !== options.lifecycleState) return false;
+    if (options.tag && !(item.tags || []).includes(options.tag)) return false;
     if (!keyword) return true;
     return matchesKeyword(item, keyword);
   });
 
-  list = applySort(list.map(clone), sortBy, keyword);
+  list = applySort(list.map((item) => ({
+    ...clone(item),
+    searchScore: calcRelevance(item, keyword),
+    excerpt: buildExcerpt(item, keyword)
+  })), sortBy, keyword);
+
+  const total = list.length;
+  const totalPages = Math.max(Math.ceil(total / pageSize), 1);
+  const start = (page - 1) * pageSize;
+  const items = list.slice(start, start + pageSize);
 
   return {
-    items: list,
-    total: list.length,
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages,
     summary: {
-      published: list.filter((item) => item.status === 'published').length,
-      draft: list.filter((item) => item.status === 'draft').length,
-      deleted: list.filter((item) => item.status === 'deleted').length
+      published: sampleQuestions.filter((item) => item.status === 'published').length,
+      draft: sampleQuestions.filter((item) => item.status === 'draft').length,
+      review: sampleQuestions.filter((item) => item.status === 'review' || item.lifecycleState === 'review').length,
+      deleted: sampleQuestions.filter((item) => item.status === 'deleted').length
     },
     facets: {
       subject: countBy(list, 'subject'),
       category: countBy(list, 'category'),
       difficulty: countBy(list, 'difficulty'),
-      type: countBy(list, 'type')
+      type: countBy(list, 'type'),
+      lifecycleState: countBy(list, 'lifecycleState'),
+      reviewStatus: countBy(list, 'reviewStatus'),
+      tags: countTags(list)
     },
-    suggestions: buildSuggestions(keyword, list.length ? list : sampleQuestions)
+    suggestions: buildSuggestions(keyword, list.length ? list : sampleQuestions),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      hasPrev: page > 1,
+      hasMore: page < totalPages,
+      nextPage: page < totalPages ? page + 1 : null,
+      prevPage: page > 1 ? page - 1 : null
+    },
+    request: {
+      keyword,
+      page,
+      pageSize,
+      sortBy,
+      filters: {
+        status,
+        subject: options.subject || '',
+        category: options.category || '',
+        difficulty: options.difficulty || '',
+        type: options.type || '',
+        reviewStatus: options.reviewStatus || '',
+        lifecycleState: options.lifecycleState || '',
+        tag: options.tag || ''
+      }
+    }
   };
 }
 

@@ -16,8 +16,30 @@
     "year": 2025,
     "score": 2,
     "status": "published",
+    "reviewStatus": "approved",
+    "lifecycleState": "published",
+    "version": 2,
     "imageText": "图中问 HTTP 状态码 资源不存在",
-    "relatedIds": ["q5", "q9"]
+    "relatedIds": ["q5", "q9"],
+    "isDeleted": false,
+    "createdAt": 1710000000000,
+    "updatedAt": 1710000000000,
+    "createdBy": "openid",
+    "updatedBy": "openid",
+    "deletedAt": null,
+    "deletedBy": "",
+    "deletedReason": "",
+    "statusHistory": [
+      {
+        "at": 1710000000000,
+        "by": "openid",
+        "action": "import",
+        "toStatus": "published",
+        "toReviewStatus": "approved",
+        "toLifecycleState": "published",
+        "reason": "initial import"
+      }
+    ]
   },
   {
     "title": "JavaScript 中声明常量通常使用哪个关键字？",
@@ -36,6 +58,9 @@
     "year": 2024,
     "score": 2,
     "status": "published",
+    "reviewStatus": "approved",
+    "lifecycleState": "published",
+    "version": 1,
     "imageText": "图片里问 ES6 不可重新赋值变量",
     "relatedIds": ["q3"]
   },
@@ -56,6 +81,9 @@
     "year": 2025,
     "score": 3,
     "status": "published",
+    "reviewStatus": "approved",
+    "lifecycleState": "published",
+    "version": 3,
     "relatedIds": ["q7"]
   },
   {
@@ -75,6 +103,9 @@
     "year": 2025,
     "score": 5,
     "status": "published",
+    "reviewStatus": "approved",
+    "lifecycleState": "published",
+    "version": 4,
     "imageText": "图片题干里有 Redis 热点数据缓存",
     "relatedIds": ["q4"]
   },
@@ -94,7 +125,10 @@
     "source": "面试高频题",
     "year": 2025,
     "score": 3,
-    "status": "draft",
+    "status": "review",
+    "reviewStatus": "pending",
+    "lifecycleState": "review",
+    "version": 2,
     "relatedIds": ["q1", "q9"]
   }
 ]

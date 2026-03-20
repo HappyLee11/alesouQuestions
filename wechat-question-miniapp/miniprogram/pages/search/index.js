@@ -64,7 +64,11 @@ Page({
     resultMeta: {
       total: 0,
       from: 'mock',
-      suggestions: []
+      suggestions: [],
+      page: 1,
+      totalPages: 1,
+      hasMore: false,
+      hasPrev: false
     },
     expandMap: {}
   },
@@ -74,14 +78,14 @@ Page({
     if (keyword) {
       this.setData({ keyword });
     }
-    this.handleSearch();
+    this.handleSearch({ resetPage: true });
   },
   onKeywordInput(e) {
     this.setData({ keyword: e.detail.value, searchMode: 'keyword' });
   },
   onChangeSort(e) {
     this.setData({ sortIndex: Number(e.detail.value) || 0 });
-    this.handleSearch();
+    this.handleSearch({ resetPage: true });
   },
   onChangeGroup(e) {
     this.setData({ groupIndex: Number(e.detail.value) || 0 });
@@ -121,7 +125,8 @@ Page({
       groupedList: groupItems(filtered, groupOptions[groupIndex].value)
     });
   },
-  async handleSearch() {
+  async handleSearch(options = {}) {
+    const targetPage = options.page || (options.resetPage ? 1 : this.data.resultMeta.page || 1);
     this.setData({ loading: true });
     const keyword = this.data.keyword.trim();
     try {
@@ -129,26 +134,28 @@ Page({
       const result = await api.searchQuestions({
         keyword,
         sortBy: currentSort,
-        page: 1,
-        pageSize: 30,
+        page: targetPage,
+        pageSize: 4,
         status: 'all',
         searchMode: this.data.searchMode
       });
       const list = (result.items || []).filter((item) => item.status !== 'deleted');
+      const pagination = result.pagination || {};
       this.setData({
         list,
         resultMeta: {
           total: result.total || list.length,
           from: result.from || 'cloud',
-          suggestions: result.suggestions || []
+          suggestions: result.suggestions || [],
+          page: pagination.page || targetPage,
+          totalPages: pagination.totalPages || result.totalPages || 1,
+          hasMore: !!pagination.hasMore,
+          hasPrev: !!pagination.hasPrev
         },
         filterOptions: {
           subject: facetToChips(result.facets && result.facets.subject, '全部学科'),
           difficulty: facetToChips(result.facets && result.facets.difficulty, '全部难度'),
-          type: facetToChips((result.facets && result.facets.type || []).map((item) => ({
-            value: item.value,
-            count: item.count
-          })).map((item) => ({ ...item, value: item.value })), '全部题型')
+          type: facetToChips(result.facets && result.facets.type, '全部题型')
         },
         currentFilters: { subject: '', difficulty: '', type: '' },
         expandMap: {}
@@ -160,6 +167,14 @@ Page({
     } finally {
       this.setData({ loading: false });
     }
+  },
+  goPrevPage() {
+    if (!this.data.resultMeta.hasPrev) return;
+    this.handleSearch({ page: Math.max((this.data.resultMeta.page || 1) - 1, 1) });
+  },
+  goNextPage() {
+    if (!this.data.resultMeta.hasMore) return;
+    this.handleSearch({ page: (this.data.resultMeta.page || 1) + 1 });
   },
   loadHistory() {
     const history = wx.getStorageSync(HISTORY_KEY) || [];
@@ -177,14 +192,14 @@ Page({
   onTapTerm(e) {
     const keyword = e.currentTarget.dataset.term;
     this.setData({ keyword, searchMode: 'keyword' });
-    this.handleSearch();
+    this.handleSearch({ resetPage: true });
   },
   onUseImageDemo() {
     this.setData({
       keyword: '图中题干 HTTP 状态码 资源不存在',
       searchMode: 'image'
     });
-    this.handleSearch();
+    this.handleSearch({ resetPage: true });
   },
   toggleAnswer(e) {
     const { id } = e.currentTarget.dataset;

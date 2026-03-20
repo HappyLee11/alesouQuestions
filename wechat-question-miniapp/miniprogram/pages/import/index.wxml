@@ -1,9 +1,33 @@
 <view class="container">
   <view class="card">
     <view class="title">批量导入题目</view>
-    <view class="subtitle">支持多文档模板合并后的 JSON 数组演示，重点展示字段别名识别、导入前预检、去重与批量错误反馈。</view>
+    <view class="subtitle">这版导入不再只是“粘 JSON 写库”，而是模拟真实的文件导入暂存流：先选择模板类型，再把 JSON / JSONL / CSV 文本贴到暂存区，做本地解析、云端预检，最后再正式入库。</view>
+
+    <view class="field-label field-gap">导入模板 / 文件类型</view>
+    <picker mode="selector" range="{{presetOptions}}" range-key="label" value="{{presetIndex}}" bindchange="onPresetChange">
+      <view class="picker-chip picker-block">{{presetOptions[presetIndex].label}}</view>
+    </picker>
+
+    <view class="grid-2">
+      <view>
+        <view class="field-label field-gap">去重策略</view>
+        <picker mode="selector" range="{{dedupeOptions}}" range-key="label" value="{{dedupeIndex}}" bindchange="onDedupeChange">
+          <view class="picker-chip picker-block">{{dedupeOptions[dedupeIndex].label}}</view>
+        </picker>
+      </view>
+      <view>
+        <view class="field-label field-gap">导入批次 ID</view>
+        <input class="input" value="{{importBatchId}}" bindinput="onBatchIdInput" placeholder="例如：school-a-20260320-01" />
+      </view>
+    </view>
+
+    <view class="field-label field-gap">暂存区原始内容</view>
     <view wx:if="{{parseError}}" class="error-text">{{parseError}}</view>
     <textarea class="textarea textarea-xl" value="{{text}}" bindinput="onInput"></textarea>
+
+    <view class="field-label field-gap">字段映射补充（可选 JSON）</view>
+    <textarea class="textarea" value="{{fieldMappingsText}}" bindinput="onFieldMappingsInput"></textarea>
+
     <view class="btn-row">
       <button class="secondary-btn" loading="{{loading}}" bindtap="previewOnCloud">先做预检</button>
       <button class="primary-btn" loading="{{loading}}" bindtap="handleImport">执行导入</button>
@@ -11,8 +35,8 @@
   </view>
 
   <view class="card" wx:if="{{preview}}">
-    <view class="section-title">本地预览</view>
-    <view class="feature-desc">条数：{{preview.total}}</view>
+    <view class="section-title">本地暂存预览</view>
+    <view class="feature-desc">已解析记录：{{preview.total}}</view>
     <view class="feature-desc">检测到的列：{{preview.columns.join('、')}}</view>
     <view class="field-block">
       <view class="field-label">样例记录</view>
@@ -21,14 +45,11 @@
   </view>
 
   <view class="card">
-    <view class="section-title">当前支持的字段映射示例</view>
-    <view class="feature-desc">title ← title / 题目 / questionTitle</view>
-    <view class="feature-desc">content ← content / 题干 / description</view>
-    <view class="feature-desc">answer ← answer / 答案 / result</view>
-    <view class="feature-desc">analysis ← analysis / 解析 / explanation</view>
-    <view class="feature-desc">tags ← tags / 标签 / tagList</view>
-    <view class="feature-desc">type ← type / 题型 / questionType</view>
-    <view class="feature-desc">titleVariants ← titleVariants / 标题变体 / 别名 / aliases</view>
+    <view class="section-title">生产环境字段标准</view>
+    <view class="feature-desc">必填：title / content / answer</view>
+    <view class="feature-desc">搜索增强：answerSummary / titleVariants / imageText / relatedIds</view>
+    <view class="feature-desc">治理字段：status / reviewStatus / lifecycleState / source / externalId / importBatchId</view>
+    <view class="feature-desc">支持别名：title ← title / 题目 / questionTitle；content ← content / 题干 / description；answer ← answer / 答案 / result</view>
   </view>
 
   <view class="card" wx:if="{{importResult}}">
@@ -36,10 +57,18 @@
     <view class="feature-desc">状态：{{importResult.success ? '成功' : '失败'}}</view>
     <view class="feature-desc" wx:if="{{importResult.data}}">有效：{{importResult.data.valid !== undefined ? importResult.data.valid : '-'}} ｜ 无效：{{importResult.data.invalid !== undefined ? importResult.data.invalid : importResult.data.failed || 0}}</view>
     <view class="feature-desc" wx:if="{{importResult.data}}">新增：{{importResult.data.inserted || 0}} ｜ 更新：{{importResult.data.updated || 0}} ｜ 去重命中：{{importResult.data.deduplicated || 0}}</view>
+    <view class="feature-desc" wx:if="{{importResult.data}}">来源类型：{{importResult.data.sourceType || '--'}} ｜ 模板类型：{{importResult.data.templateType || '--'}} ｜ 策略：{{importResult.data.dedupeStrategy || dedupeStrategy}}</view>
+
     <view class="field-block" wx:if="{{importResult.data && importResult.data.preview && importResult.data.preview.length}}">
       <view class="field-label">预检样例</view>
-      <view class="feature-desc" wx:for="{{importResult.data.preview}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}} ｜ {{item.subject || '未分类'}} ｜ {{item.type}} ｜ {{item.difficulty}} {{item.errors.length ? '｜错误：' + item.errors.join(', ') : ''}}</view>
+      <view class="feature-desc" wx:for="{{importResult.data.preview}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}} ｜ {{item.subject || '未分类'}} ｜ {{item.type}} ｜ {{item.difficulty}} ｜ {{item.lifecycleState}} {{item.errors.length ? '｜错误：' + item.errors.join(', ') : ''}}</view>
     </view>
+
+    <view class="field-block" wx:if="{{importResult.data && importResult.data.warnings && importResult.data.warnings.length}}">
+      <view class="field-label">预警列表</view>
+      <view class="toolbar-note" wx:for="{{importResult.data.warnings}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}}：{{item.warnings.join(', ')}}</view>
+    </view>
+
     <view class="field-block" wx:if="{{importResult.data && importResult.data.errors && importResult.data.errors.length}}">
       <view class="field-label">错误列表</view>
       <view class="error-text" wx:for="{{importResult.data.errors}}" wx:key="index">#{{item.index + 1}} {{item.title || '未命名'}}：{{item.errors.join(', ')}}</view>

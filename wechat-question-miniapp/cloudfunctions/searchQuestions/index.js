@@ -30,13 +30,35 @@ function keywordTokens(keyword = '') {
     .filter((item) => item.length >= 2);
 }
 
+function calcMatchFields(item = {}, query = '') {
+  const lower = String(query || '').toLowerCase();
+  if (!lower) return [];
+  const fields = [];
+  [
+    ['title', item.title],
+    ['content', item.content],
+    ['answer', item.answer],
+    ['answerSummary', item.answerSummary],
+    ['analysis', item.analysis],
+    ['imageText', item.imageText],
+    ['tags', (item.tags || []).join(' ')],
+    ['titleVariants', (item.titleVariants || []).join(' ')]
+  ].forEach(([name, value]) => {
+    if (String(value || '').toLowerCase().includes(lower)) fields.push(name);
+  });
+  return fields;
+}
+
 function calcRelevance(item, keyword) {
   if (!keyword) return 0;
   const query = keyword.toLowerCase();
   const text = searchableText(item);
   const matched = text.match(new RegExp(escapeRegExp(query), 'g'));
-  if (matched && matched.length) return matched.length * 3;
-  return keywordTokens(query).reduce((sum, token) => sum + (text.includes(token) ? 1 : 0), 0);
+  let score = matched && matched.length ? matched.length * 3 : 0;
+  score += keywordTokens(query).reduce((sum, token) => sum + (text.includes(token) ? 1 : 0), 0);
+  if (String(item.title || '').toLowerCase().includes(query)) score += 5;
+  if (String(item.answerSummary || '').toLowerCase().includes(query)) score += 2;
+  return score;
 }
 
 function matchesKeyword(item, keyword) {
@@ -75,6 +97,16 @@ function countBy(list, key) {
   return Object.keys(map).map((value) => ({ value, count: map[value] })).sort((a, b) => b.count - a.count);
 }
 
+function countTags(list = []) {
+  const map = {};
+  list.forEach((item) => {
+    (item.tags || []).forEach((tag) => {
+      map[tag] = (map[tag] || 0) + 1;
+    });
+  });
+  return Object.keys(map).map((value) => ({ value, count: map[value] })).sort((a, b) => b.count - a.count).slice(0, 12);
+}
+
 function buildSuggestions(keyword = '', list = []) {
   const bag = new Set();
   list.forEach((item) => {
@@ -84,6 +116,27 @@ function buildSuggestions(keyword = '', list = []) {
   });
   if (keyword && keyword.toLowerCase().includes('图')) bag.add('HTTP');
   return Array.from(bag).slice(0, 8);
+}
+
+function buildExcerpt(item = {}, keyword = '') {
+  const source = String(item.content || item.answerSummary || item.answer || '').trim();
+  if (!source) return '';
+  if (!keyword) return source.slice(0, 88);
+  const index = source.toLowerCase().indexOf(keyword.toLowerCase());
+  if (index < 0) return source.slice(0, 88);
+  const start = Math.max(index - 18, 0);
+  const end = Math.min(index + 56, source.length);
+  return `${start > 0 ? '…' : ''}${source.slice(start, end)}${end < source.length ? '…' : ''}`;
+}
+
+function shapeItem(item = {}, keyword = '') {
+  return {
+    ...item,
+    searchScore: calcRelevance(item, keyword),
+    matchedFields: calcMatchFields(item, keyword),
+    excerpt: buildExcerpt(item, keyword),
+    badges: [item.subject, item.category, item.difficulty, item.type].filter(Boolean)
+  };
 }
 
 exports.main = async (event = {}) => {
@@ -98,10 +151,13 @@ exports.main = async (event = {}) => {
   const category = String(event.category || '').trim();
   const difficulty = String(event.difficulty || '').trim();
   const type = String(event.type || '').trim();
+  const reviewStatus = String(event.reviewStatus || '').trim();
+  const lifecycleState = String(event.lifecycleState || '').trim();
+  const tag = String(event.tag || '').trim();
   const searchMode = event.searchMode || 'keyword';
 
   try {
-    const res = await db.collection('questions').limit(200).get();
+    const res = await db.collection('questions').limit(500).get();
     const allItems = Array.isArray(res.data) ? res.data : [];
     const filtered = allItems.filter((item) => {
       if (!includeDeleted && (item.isDeleted || item.status === 'deleted')) return false;
@@ -110,35 +166,66 @@ exports.main = async (event = {}) => {
       if (category && item.category !== category) return false;
       if (difficulty && item.difficulty !== difficulty) return false;
       if (type && item.type !== type) return false;
+      if (reviewStatus && (item.reviewStatus || '') !== reviewStatus) return false;
+      if (lifecycleState && (item.lifecycleState || '') !== lifecycleState) return false;
+      if (tag && !(item.tags || []).includes(tag)) return false;
       if (!keyword) return true;
       return matchesKeyword(item, keyword);
     });
-    const sorted = sortItems(filtered, sortBy, keyword);
+
+    const sorted = sortItems(filtered, sortBy, keyword).map((item) => shapeItem(item, keyword));
     const start = (page - 1) * pageSize;
     const items = sorted.slice(start, start + pageSize);
+    const total = sorted.length;
+    const totalPages = Math.max(Math.ceil(total / pageSize), 1);
+    const summary = {
+      published: allItems.filter((item) => item.status === 'published').length,
+      draft: allItems.filter((item) => item.status === 'draft').length,
+      review: allItems.filter((item) => item.status === 'review' || item.lifecycleState === 'review').length,
+      deleted: allItems.filter((item) => item.status === 'deleted' || item.isDeleted).length
+    };
+
     return {
       success: true,
       code: 0,
       message: 'ok',
       data: {
         items,
-        total: sorted.length,
+        total,
         page,
         pageSize,
+        totalPages,
         keyword,
         sortBy,
         searchMode,
-        suggestions: buildSuggestions(keyword, sorted.length ? sorted : allItems),
-        summary: {
-          published: allItems.filter((item) => item.status === 'published').length,
-          draft: allItems.filter((item) => item.status === 'draft').length,
-          deleted: allItems.filter((item) => item.status === 'deleted' || item.isDeleted).length
+        request: {
+          keyword,
+          page,
+          pageSize,
+          sortBy,
+          searchMode,
+          filters: { subject, category, difficulty, type, reviewStatus, lifecycleState, tag, status }
         },
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages,
+          hasPrev: page > 1,
+          hasMore: page < totalPages,
+          nextPage: page < totalPages ? page + 1 : null,
+          prevPage: page > 1 ? page - 1 : null
+        },
+        suggestions: buildSuggestions(keyword, sorted.length ? sorted : allItems),
+        summary,
         facets: {
           subject: countBy(filtered, 'subject'),
           category: countBy(filtered, 'category'),
           difficulty: countBy(filtered, 'difficulty'),
-          type: countBy(filtered, 'type')
+          type: countBy(filtered, 'type'),
+          lifecycleState: countBy(filtered, 'lifecycleState'),
+          reviewStatus: countBy(filtered, 'reviewStatus'),
+          tags: countTags(filtered)
         }
       }
     };

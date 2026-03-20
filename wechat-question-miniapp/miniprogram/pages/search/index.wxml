@@ -11,13 +11,13 @@
       <picker mode="selector" range="{{groupOptions}}" range-key="label" value="{{groupIndex}}" bindchange="onChangeGroup">
         <view class="picker-chip">{{groupOptions[groupIndex].label}}</view>
       </picker>
-      <view class="toolbar-note">结果源：{{resultMeta.from === 'cloud' ? '云端' : '本地 mock'}} · 共 {{resultMeta.total}} 条</view>
+      <view class="toolbar-note">结果源：{{resultMeta.from === 'cloud' ? '云端' : '本地 mock'}} · 共 {{resultMeta.total}} 条 · 第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
     </view>
     <view class="btn-row btn-row-tight">
       <button class="secondary-btn" size="mini" bindtap="onUseImageDemo">演示图片搜题入口</button>
       <button class="secondary-btn" size="mini" bindtap="toggleGroupView">{{useGroupView ? '切换列表视图' : '切换分组视图'}}</button>
     </view>
-    <view class="subtitle small-gap">面向真实场景：支持关键词检索、图片识别文本回填、结果过多后的分组/筛选、以及无结果时的兜底建议。</view>
+    <view class="subtitle small-gap">面向真实场景：支持关键词检索、图片识别文本回填、结果过多后的分组/筛选、分页浏览，以及无结果时的兜底建议。</view>
   </view>
 
   <view class="card" wx:if="{{history.length}}">
@@ -51,7 +51,7 @@
     <view class="tag-row small-gap">
       <text class="filter-chip {{currentFilters.type === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.type}}" wx:key="label" data-field="type" data-value="{{item.value}}" bindtap="onTapFilter">{{item.value ? (item.value === 'single' ? '单选题' : item.value === 'multiple' ? '多选题' : '问答题') : item.label}}</text>
     </view>
-    <view class="toolbar-note small-gap" wx:if="{{resultMeta.total > 8}}">结果较多，建议先按学科/难度缩小范围，再进入详情查看完整答案与解析。</view>
+    <view class="toolbar-note small-gap" wx:if="{{resultMeta.total > 8}}">结果较多，建议先按学科/难度缩小范围，再分页浏览并进入详情查看完整答案与解析。</view>
   </view>
 
   <view wx:if="{{displayList.length && useGroupView}}">
@@ -81,10 +81,10 @@
     <view class="result-card" wx:for="{{displayList}}" wx:key="_id">
       <view data-id="{{item._id}}" bindtap="goDetail">
         <view class="result-title">
-          <text wx:for="{{item.titleSegments}}" wx:key="index" class="{{item.match ? 'highlight-text' : ''}}">{{item.text}}</text>
+          <text wx:for="{{item.titleSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
         </view>
         <view class="result-desc clamp-2">
-          <text wx:for="{{item.contentSegments}}" wx:key="index" class="{{item.match ? 'highlight-text' : ''}}">{{item.text}}</text>
+          <text wx:for="{{item.contentSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
         </view>
       </view>
       <view class="meta-row wrap-row">
@@ -93,6 +93,7 @@
         <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
         <text class="meta-pill meta-pill-light">{{item.typeText}}</text>
       </view>
+      <view class="toolbar-note small-gap" wx:if="{{item.excerpt}}">命中摘要：{{item.excerpt}}</view>
       <view class="answer-preview">答案摘要：{{expandMap[item._id] ? item.analysisPreview : item.answerPreview}}</view>
       <text class="link-text small-gap inline-link" data-id="{{item._id}}" bindtap="toggleAnswer">{{expandMap[item._id] ? '收起解析' : '展开更多'}}</text>
       <view class="result-footer">
@@ -101,6 +102,17 @@
         </view>
         <text class="footer-note">更新于 {{item.updatedAtText}}</text>
       </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{displayList.length}}">
+    <view class="section-header">
+      <view class="section-title">分页浏览</view>
+      <text class="toolbar-note">第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</text>
+    </view>
+    <view class="btn-row">
+      <button size="mini" bindtap="goPrevPage" disabled="{{!resultMeta.hasPrev}}">上一页</button>
+      <button class="secondary-btn" size="mini" bindtap="goNextPage" disabled="{{!resultMeta.hasMore}}">下一页</button>
     </view>
   </view>
 

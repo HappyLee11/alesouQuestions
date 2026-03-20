@@ -10,7 +10,11 @@ Page({
       total: 0,
       published: 0,
       draft: 0,
-      deleted: 0
+      review: 0,
+      deleted: 0,
+      approved: 0,
+      pending: 0,
+      rejected: 0
     }
   },
   async onShow() {
@@ -49,9 +53,13 @@ Page({
     this.setData({
       stats: {
         total: items.length,
-        published: items.filter((item) => item.status === 'published').length,
-        draft: items.filter((item) => item.status === 'draft').length,
-        deleted: items.filter((item) => item.status === 'deleted').length
+        published: items.filter((item) => item.lifecycleState === 'published').length,
+        draft: items.filter((item) => item.lifecycleState === 'draft').length,
+        review: items.filter((item) => item.lifecycleState === 'review').length,
+        deleted: items.filter((item) => item.lifecycleState === 'archived' || item.status === 'deleted').length,
+        approved: items.filter((item) => item.reviewStatus === 'approved').length,
+        pending: items.filter((item) => item.reviewStatus === 'pending').length,
+        rejected: items.filter((item) => item.reviewStatus === 'rejected').length
       }
     });
   },

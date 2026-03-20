@@ -1,15 +1,14 @@
 # WeChat Question Search Mini Program
 
-一个更接近预商用 v3 的微信小程序题库 Demo：既展示用户侧搜索体验，也展示管理员侧题目录入、归档恢复和批量导入治理。
+一个更接近预商用 v4 的微信小程序题库 Demo：既展示用户侧搜索体验，也展示管理员侧题目录入、审核 / 生命周期治理、归档恢复和批量导入治理。
 
-## 这次 v3 强化的亮点
+## 这次 v4 强化的亮点
 
-- 搜索不再只是关键词列表：补齐图片搜题入口占位、分组 / 筛选 / 排序、无结果兜底、答案摘要展开
-- 详情页更像真实产品：支持标题变体展示、完整答案折叠、相关题推荐
-- 示例题库更真实：增加 `titleVariants`、`answerSummary`、`imageText`、`relatedIds` 等搜索增强字段
-- 导入流程更完整：支持异构字段别名、导入前预检、标题归一化去重、批量错误报告
-- 云函数返回结构更像正式接口：`success/code/message/data`
-- 搜索/详情仍保留 mock fallback，未完全部署云环境时仍可继续演示
+- **导入更像真实系统**：支持 JSON / JSONL / CSV 文本暂存，先本地解析，再云端预检，再正式导入
+- **数据归一化更完整**：支持内置别名 + 自定义 `fieldMappings`，补齐 `reviewStatus`、`lifecycleState`、`version`、`importMeta`
+- **搜索接口更正式**：增加 `pagination` / `request` / `excerpt` / `matchedFields` / `searchScore`
+- **前端搜索体验更完整**：补齐分页浏览、结果摘要与正式接口风格返回
+- **后台治理更严谨**：编辑页支持摘要、标题变体、OCR 文本、关联题、审核状态；归档恢复保留原状态
 
 ## 功能概览
 
@@ -19,17 +18,19 @@
 - 题目关键词搜索 / 图片搜题入口占位
 - 搜索历史与热门搜索
 - 搜索结果高亮、排序、分组与筛选
+- 正式化分页返回与翻页演示
 - 无结果兜底建议
 - 题目详情页（含元数据、标题变体、相关题）
 
 ### 管理侧
 
 - 管理员权限校验
-- 后台数据统计卡片
+- 后台数据统计卡片（发布 / 草稿 / 待审核 / 回收站 / 审核态）
 - 题目列表搜索与状态筛选
 - 新增 / 编辑题目
+- 生命周期与审核状态管理
 - 题目归档与恢复（代替直接硬删除）
-- 批量导入题目（字段别名映射、预检、去重、错误反馈）
+- 批量导入题目（本地暂存、多模板解析、字段别名映射、预检、去重、错误反馈）
 
 ## 目录结构
 
@@ -104,7 +105,7 @@ wechat-question-miniapp/
 ### 6. 初始化数据
 
 - 先导入 `data/sample-questions.json`
-- 或者登录管理员后，直接在导入页粘贴 JSON 数组导入
+- 或者登录管理员后，在导入页粘贴 JSON / JSONL / CSV 文本
 
 ## 当前推荐的数据模型
 
@@ -126,8 +127,11 @@ wechat-question-miniapp/
   "year": 2025,
   "score": 5,
   "status": "published",
+  "reviewStatus": "approved",
+  "lifecycleState": "published",
   "imageText": "图片题干里有 Redis 热点数据缓存",
   "relatedIds": ["q4"],
+  "version": 4,
   "isDeleted": false,
   "createdAt": 1710000000000,
   "updatedAt": 1710000000000,
@@ -135,31 +139,38 @@ wechat-question-miniapp/
   "updatedBy": "openid",
   "deletedAt": null,
   "deletedBy": "",
-  "deletedReason": ""
+  "deletedReason": "",
+  "importMeta": {
+    "mode": "staging",
+    "sourceType": "json-array",
+    "templateType": "legacy-json",
+    "batchId": "demo-batch-001"
+  }
 }
 ```
 
 ## Demo 建议流程
 
-1. **首页**：介绍这是一个题库检索 + 维护的小程序 Demo
-2. **搜索页**：演示热门词、历史记录、图片搜题入口、分组/筛选/排序、空结果建议
+1. **首页**：介绍这是一个题库检索 + 治理后台的小程序 Demo
+2. **搜索页**：演示热门词、历史记录、图片搜题入口、分组/筛选/分页、空结果建议
 3. **详情页**：展示更完整的题目元信息、答案展开、相关题
-4. **后台首页**：展示管理员校验与统计卡片
-5. **题目列表**：演示筛选、编辑、归档 / 恢复
-6. **导入页**：粘贴异构 JSON，先做预检，再执行导入
+4. **后台首页**：展示管理员校验与生命周期 / 审核态统计
+5. **题目列表**：演示筛选、编辑、版本/审核态、归档 / 恢复
+6. **导入页**：切换 JSON / JSONL / CSV 模板，先做暂存预览，再云端预检，再执行导入
 
 ## 已知限制
 
-- 搜索云函数当前仍是 `limit(200)` 后过滤，超大题库需要改为索引/分页方案
+- 搜索云函数当前仍是 `limit(500)` 后过滤，超大题库需要改为索引/分页方案
 - 图片搜题目前是演示入口，占位了 OCR → 关键词召回链路，尚未接真实识图能力
-- CSV / Excel 目前只提供模板思路，尚未实现真实文件上传解析
+- CSV / Excel 这里实现的是文本暂存解析，尚未实现真正文件上传解析
 - 搜索与详情保留 mock fallback，但管理动作仍要求真实管理员权限和云函数部署
-- 导入映射目前以内置别名为主，真正商用还需要可视化映射 UI 与导入任务中心
+- 导入映射目前支持别名与 JSON 形式 `fieldMappings`，真正商用还需要可视化映射 UI 与导入任务中心
 
 ## 文档
 
 - `docs/setup.md`
 - `docs/architecture.md`
+- `docs/import-normalization.md`
 - `docs/scenario-solution-v3.md`
 - `data/sample-questions.json`
 - `data/import-template.csv`
