@@ -56,6 +56,21 @@
     </view>
   </view>
 
+  <view class="glass-card" wx:if="{{isAdmin && recentImportTasks.length}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">最近导入任务</view>
+        <view class="section-caption">从导入页回执缓存里读取最近任务，后台页也能顺手讲任务中心。</view>
+      </view>
+      <text class="toolbar-note">Demo 级本地缓存</text>
+    </view>
+    <view class="feature-item" wx:for="{{recentImportTasks}}" wx:key="createdAt">
+      <view class="feature-title">{{item.statusLabel}} ｜ {{item.taskName || item.batchId}}</view>
+      <view class="feature-desc">批次：{{item.batchId}} ｜ {{item.sourceType}} / {{item.templateType}} ｜ {{item.timeText}}</view>
+      <view class="feature-desc">总 {{item.total}} ｜ 有效 {{item.valid}} ｜ 无效 {{item.invalid}} ｜ 预警 {{item.warnings}} ｜ 新增 {{item.inserted}} ｜ 更新 {{item.updated}}</view>
+    </view>
+  </view>
+
   <view class="glass-card" wx:if="{{isAdmin}}">
     <view class="section-header">
       <view>
@@ -69,11 +84,11 @@
     </view>
     <view class="feature-item">
       <view class="feature-title">2. 再进入后台题目列表 / 编辑页</view>
-      <view class="feature-desc">演示状态、审核、版本化内容字段，以及归档与恢复操作。</view>
+      <view class="feature-desc">演示状态、审核、版本化内容字段，以及归档、快捷审核与恢复操作。</view>
     </view>
     <view class="feature-item">
       <view class="feature-title">3. 最后展示导入页</view>
-      <view class="feature-desc">演示多模板暂存、字段映射补充、预检、去重和导入结果反馈。</view>
+      <view class="feature-desc">演示多模板暂存、字段映射补充、预检、去重、治理默认值和任务回执。</view>
     </view>
   </view>
 

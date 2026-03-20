@@ -1,5 +1,7 @@
 const api = require('../../utils/question');
-const { safeJsonParse } = require('../../utils');
+const { safeJsonParse, formatTime } = require('../../utils');
+
+const IMPORT_TASKS_KEY = 'question-import-task-receipts';
 
 const TEMPLATE_PRESETS = {
   json: {
@@ -133,6 +135,24 @@ const DEDUPE_OPTIONS = [
   { label: '重复时更新', value: 'update' }
 ];
 
+const STATUS_OPTIONS = [
+  { label: '待审核', value: 'review' },
+  { label: '草稿', value: 'draft' },
+  { label: '直接发布', value: 'published' }
+];
+
+const REVIEW_OPTIONS = [
+  { label: '待审核', value: 'pending' },
+  { label: '审核通过', value: 'approved' },
+  { label: '已驳回', value: 'rejected' }
+];
+
+const APPROVAL_OPTIONS = [
+  { label: '人工审核', value: 'manual-review' },
+  { label: '双人复核', value: 'two-step-review' },
+  { label: '自动通过（演示）', value: 'auto-approve' }
+];
+
 const PRESET_KEYS = Object.keys(TEMPLATE_PRESETS);
 
 function splitCsvLine(line = '') {
@@ -221,6 +241,17 @@ function flattenManifestRows(manifest = {}) {
   return rows;
 }
 
+function summarizeResult(result = {}) {
+  const data = result.data || {};
+  return {
+    total: data.total || 0,
+    valid: data.valid !== undefined ? data.valid : Math.max((data.inserted || 0) + (data.updated || 0), 0),
+    invalid: data.invalid !== undefined ? data.invalid : (data.failed || 0),
+    warnings: Array.isArray(data.warnings) ? data.warnings.length : 0,
+    deduplicated: data.deduplicated || 0
+  };
+}
+
 Page({
   data: {
     presetOptions: PRESET_KEYS.map((key) => ({ key, label: TEMPLATE_PRESETS[key].label })),
@@ -237,9 +268,22 @@ Page({
     stagingItems: [],
     importManifest: null,
     fieldMappingsText: '{\n  "title": ["题目", "questionTitle"],\n  "content": ["题干", "description"],\n  "answer": ["答案", "result"],\n  "owner": ["负责人"],\n  "ownerTeam": ["归属团队"]\n}',
-    importBatchId: 'demo-batch-20260320'
+    importBatchId: 'demo-batch-20260320',
+    statusOptions: STATUS_OPTIONS,
+    statusIndex: 0,
+    reviewOptions: REVIEW_OPTIONS,
+    reviewIndex: 0,
+    approvalOptions: APPROVAL_OPTIONS,
+    approvalIndex: 0,
+    defaultOwnerTeam: '内容运营',
+    defaultOwner: '',
+    defaultReviewer: '',
+    importReason: '批量导入新题',
+    recentTasks: [],
+    resultSummary: null
   },
   onLoad() {
+    this.loadRecentTasks();
     this.updatePreview(this.data.text, this.data.presetKey);
   },
   onPresetChange(e) {
@@ -250,13 +294,14 @@ Page({
       presetIndex: index,
       presetKey,
       text: preset.example,
-      importResult: null
+      importResult: null,
+      resultSummary: null
     });
     this.updatePreview(preset.example, presetKey);
   },
   onInput(e) {
     const text = e.detail.value;
-    this.setData({ text, importResult: null });
+    this.setData({ text, importResult: null, resultSummary: null });
     this.updatePreview(text, this.data.presetKey);
   },
   onFieldMappingsInput(e) {
@@ -271,6 +316,40 @@ Page({
       dedupeIndex: index,
       dedupeStrategy: DEDUPE_OPTIONS[index].value
     });
+  },
+  onStatusChange(e) {
+    this.setData({ statusIndex: Number(e.detail.value) || 0 });
+  },
+  onReviewChange(e) {
+    this.setData({ reviewIndex: Number(e.detail.value) || 0 });
+  },
+  onApprovalChange(e) {
+    this.setData({ approvalIndex: Number(e.detail.value) || 0 });
+  },
+  onDefaultOwnerInput(e) {
+    this.setData({ defaultOwner: e.detail.value });
+  },
+  onDefaultOwnerTeamInput(e) {
+    this.setData({ defaultOwnerTeam: e.detail.value });
+  },
+  onDefaultReviewerInput(e) {
+    this.setData({ defaultReviewer: e.detail.value });
+  },
+  onImportReasonInput(e) {
+    this.setData({ importReason: e.detail.value });
+  },
+  loadRecentTasks() {
+    const recentTasks = (wx.getStorageSync(IMPORT_TASKS_KEY) || []).map((item) => ({
+      ...item,
+      timeText: item.createdAt ? formatTime(item.createdAt) : '--'
+    }));
+    this.setData({ recentTasks });
+  },
+  saveRecentTask(payload = {}) {
+    const current = wx.getStorageSync(IMPORT_TASKS_KEY) || [];
+    const next = [payload].concat(current).slice(0, 8);
+    wx.setStorageSync(IMPORT_TASKS_KEY, next);
+    this.loadRecentTasks();
   },
   updatePreview(text, presetKey) {
     try {
@@ -351,7 +430,14 @@ Page({
       templateType: preset.templateType,
       importMode: 'staging',
       importBatchId: this.data.importBatchId,
-      fieldMappings: this.getFieldMappings()
+      fieldMappings: this.getFieldMappings(),
+      defaultStatus: this.data.statusOptions[this.data.statusIndex].value,
+      defaultReviewStatus: this.data.reviewOptions[this.data.reviewIndex].value,
+      defaultOwnerTeam: this.data.defaultOwnerTeam.trim(),
+      defaultOwner: this.data.defaultOwner.trim(),
+      defaultReviewer: this.data.defaultReviewer.trim(),
+      approvalPolicy: this.data.approvalOptions[this.data.approvalIndex].value,
+      importReason: this.data.importReason.trim()
     };
     if (this.data.importManifest) {
       return {
@@ -362,6 +448,20 @@ Page({
           fieldMappings: {
             ...((this.data.importManifest && this.data.importManifest.fieldMappings) || {}),
             ...this.getFieldMappings()
+          },
+          defaults: {
+            ...((this.data.importManifest && this.data.importManifest.defaults) || {}),
+            status: base.defaultStatus,
+            reviewStatus: base.defaultReviewStatus,
+            owner: base.defaultOwner,
+            ownerTeam: base.defaultOwnerTeam,
+            reviewer: base.defaultReviewer,
+            approvalPolicy: base.approvalPolicy
+          },
+          task: {
+            ...((this.data.importManifest && this.data.importManifest.task) || {}),
+            approvalPolicy: base.approvalPolicy,
+            reason: base.importReason
           }
         }
       };
@@ -369,6 +469,32 @@ Page({
     return {
       ...base,
       items: this.data.stagingItems || []
+    };
+  },
+  buildReceipt(mode = 'preview', result = {}) {
+    const data = result.data || {};
+    const task = data.task || (this.data.importManifest && this.data.importManifest.task) || {};
+    const preset = TEMPLATE_PRESETS[this.data.presetKey] || TEMPLATE_PRESETS.json;
+    return {
+      mode,
+      createdAt: Date.now(),
+      batchId: this.data.importBatchId,
+      taskId: task.taskId || '',
+      taskName: task.taskName || task.fileName || `${this.data.importBatchId}-${mode}`,
+      fileName: task.fileName || (this.data.preview && this.data.preview.fileName) || '--',
+      sourceType: data.sourceType || preset.sourceType,
+      templateType: data.templateType || preset.templateType,
+      dedupeStrategy: data.dedupeStrategy || this.data.dedupeStrategy,
+      approvalPolicy: this.data.approvalOptions[this.data.approvalIndex].value,
+      total: data.total || this.data.preview && this.data.preview.total || 0,
+      valid: data.valid !== undefined ? data.valid : ((data.inserted || 0) + (data.updated || 0)),
+      invalid: data.invalid !== undefined ? data.invalid : (data.failed || 0),
+      warnings: Array.isArray(data.warnings) ? data.warnings.length : 0,
+      inserted: data.inserted || 0,
+      updated: data.updated || 0,
+      deduplicated: data.deduplicated || 0,
+      ownerTeam: this.data.defaultOwnerTeam || '--',
+      statusLabel: mode === 'preview' ? '已预检' : '已导入'
     };
   },
   async previewOnCloud() {
@@ -382,7 +508,8 @@ Page({
         ...this.buildImportPayload(),
         previewOnly: true
       });
-      this.setData({ importResult: result });
+      this.setData({ importResult: result, resultSummary: summarizeResult(result) });
+      this.saveRecentTask(this.buildReceipt('preview', result));
       wx.showToast({ title: '预检完成', icon: 'success' });
     } catch (error) {
       wx.showToast({ title: '预检失败，请检查映射配置', icon: 'none' });
@@ -398,7 +525,8 @@ Page({
       }
       this.setData({ loading: true });
       const result = await api.importQuestions(undefined, this.buildImportPayload());
-      this.setData({ importResult: result });
+      this.setData({ importResult: result, resultSummary: summarizeResult(result) });
+      this.saveRecentTask(this.buildReceipt('import', result));
       wx.showToast({ title: '导入已完成', icon: 'success' });
     } catch (error) {
       wx.showToast({ title: '导入失败，请先修正预检错误', icon: 'none' });

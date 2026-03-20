@@ -67,7 +67,11 @@ Page({
         ownerTeamText: item.governance && item.governance.ownerTeam ? item.governance.ownerTeam : '未分配团队',
         ownerText: item.governance && item.governance.owner ? item.governance.owner : '未分配负责人',
         importBatchText: item.importMeta && item.importMeta.batchId ? item.importMeta.batchId : '--',
-        importPositionText: item.importMeta ? `${item.importMeta.sheetName || '--'} / row ${item.importMeta.rowNumber || '--'}` : '--'
+        importPositionText: item.importMeta ? `${item.importMeta.sheetName || '--'} / row ${item.importMeta.rowNumber || '--'}` : '--',
+        canApprove: item.status !== 'deleted' && item.reviewStatus !== 'approved',
+        canReject: item.status !== 'deleted' && item.reviewStatus !== 'rejected',
+        canPublish: item.status !== 'deleted' && item.reviewStatus === 'approved' && item.status !== 'published',
+        canSendToReview: item.status !== 'deleted' && (item.status === 'draft' || item.reviewStatus === 'rejected')
       }));
       this.setData({ list });
       this.updateSummary(list);
@@ -92,6 +96,72 @@ Page({
   goEdit(e) {
     const { id } = e.currentTarget.dataset;
     wx.navigateTo({ url: `/pages/edit/index?id=${id}` });
+  },
+  async applyReviewAction(id, transform, successTitle) {
+    try {
+      this.setData({ loading: true });
+      const detail = await api.getQuestionDetail(id, { includeDeleted: true });
+      if (!detail) {
+        wx.showToast({ title: '题目不存在', icon: 'none' });
+        return;
+      }
+      const next = transform(detail);
+      await api.saveQuestion(next);
+      wx.showToast({ title: successTitle, icon: 'success' });
+      await this.loadData();
+    } catch (error) {
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    } finally {
+      this.setData({ loading: false });
+    }
+  },
+  handleApprove(e) {
+    const { id } = e.currentTarget.dataset;
+    this.applyReviewAction(id, (detail) => ({
+      ...detail,
+      id,
+      status: detail.status === 'draft' ? 'review' : detail.status,
+      reviewStatus: 'approved',
+      reviewer: (detail.governance && detail.governance.reviewer) || '后台快捷审核',
+      reviewComment: '后台列表快捷审核通过',
+      changeReason: 'quick approve from list'
+    }), '已审核通过');
+  },
+  handleReject(e) {
+    const { id } = e.currentTarget.dataset;
+    this.applyReviewAction(id, (detail) => ({
+      ...detail,
+      id,
+      status: detail.status === 'published' ? 'review' : detail.status,
+      reviewStatus: 'rejected',
+      reviewer: (detail.governance && detail.governance.reviewer) || '后台快捷审核',
+      reviewComment: '后台列表快捷驳回，待继续修订',
+      changeReason: 'quick reject from list'
+    }), '已驳回');
+  },
+  handleSendToReview(e) {
+    const { id } = e.currentTarget.dataset;
+    this.applyReviewAction(id, (detail) => ({
+      ...detail,
+      id,
+      status: 'review',
+      reviewStatus: 'pending',
+      reviewer: (detail.governance && detail.governance.reviewer) || '',
+      reviewComment: '后台列表重新提交审核',
+      changeReason: 'send to review from list'
+    }), '已提交审核');
+  },
+  handlePublish(e) {
+    const { id } = e.currentTarget.dataset;
+    this.applyReviewAction(id, (detail) => ({
+      ...detail,
+      id,
+      status: 'published',
+      reviewStatus: 'approved',
+      reviewer: (detail.governance && detail.governance.reviewer) || '后台快捷发布',
+      reviewComment: '后台列表快捷发布',
+      changeReason: 'quick publish from list'
+    }), '已发布');
   },
   async handleDelete(e) {
     const { id } = e.currentTarget.dataset;

@@ -1,4 +1,7 @@
 const api = require('../../utils/question');
+const { formatTime } = require('../../utils');
+
+const IMPORT_TASKS_KEY = 'question-import-task-receipts';
 
 Page({
   data: {
@@ -26,11 +29,21 @@ Page({
       '生命周期 / 审核态统计',
       '题目归档与恢复',
       '版本快照与变更原因',
-      '导入任务批次与来源信息'
-    ]
+      '导入任务批次与来源信息',
+      '列表快捷审核 / 发布动作'
+    ],
+    recentImportTasks: []
   },
   async onShow() {
+    this.loadRecentImportTasks();
     await this.checkAccess();
+  },
+  loadRecentImportTasks() {
+    const recentImportTasks = (wx.getStorageSync(IMPORT_TASKS_KEY) || []).slice(0, 3).map((item) => ({
+      ...item,
+      timeText: item.createdAt ? formatTime(item.createdAt) : '--'
+    }));
+    this.setData({ recentImportTasks });
   },
   async checkAccess() {
     this.setData({ checking: true });

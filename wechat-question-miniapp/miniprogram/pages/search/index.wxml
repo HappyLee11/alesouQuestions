@@ -24,7 +24,7 @@
       </picker>
       <view class="toolbar-note">结果源：{{resultMeta.from === 'cloud' ? '云端' : '本地 mock'}} · 共 {{resultMeta.total}} 条 · 第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
     </view>
-    <view class="subtitle small-gap">面向真实场景：先用热词或 OCR 文本发起检索，再通过学科 / 难度 / 题型逐步缩小范围，最后进入详情页查看完整答案与解析。</view>
+    <view class="subtitle small-gap">面向真实场景：先用热词或 OCR 文本发起检索，再通过学科 / 难度 / 题型 / 标签逐步缩小范围，最后进入详情页查看完整答案与解析。</view>
   </view>
 
   <view class="panel-grid">
@@ -38,11 +38,15 @@
   <view class="glass-card">
     <view class="section-header">
       <view>
-        <view class="section-title">当前筛选状态</view>
+        <view class="section-title">检索摘要</view>
         <view class="section-caption">{{activeFilterText}}</view>
       </view>
       <text class="toolbar-note">{{displayList.length}} 条正在展示</text>
     </view>
+    <view class="tag-row small-gap" wx:if="{{queryDigest.length}}">
+      <text class="tag" wx:for="{{queryDigest}}" wx:key="*this">{{item}}</text>
+    </view>
+    <view class="toolbar-note small-gap">{{resultSummaryText}}</view>
   </view>
 
   <view class="card" wx:if="{{history.length}}">
@@ -59,6 +63,19 @@
     <view class="section-title">热门关键词</view>
     <view class="tag-row">
       <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{topSuggestions.length}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">相关推荐词</view>
+        <view class="section-caption">把结果里最常见的主题与标签收敛成推荐词，方便继续 refine 搜索。</view>
+      </view>
+      <text class="toolbar-note">正式产品可接搜索日志与点击率</text>
+    </view>
+    <view class="tag-row small-gap">
+      <text class="tag tag-clickable" wx:for="{{topSuggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 
@@ -82,7 +99,11 @@
     <view class="tag-row small-gap">
       <text class="filter-chip {{currentFilters.type === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.type}}" wx:key="label" data-field="type" data-value="{{item.value}}" bindtap="onTapFilter">{{item.value ? (item.value === 'single' ? '单选题' : item.value === 'multiple' ? '多选题' : '问答题') : item.label}}</text>
     </view>
-    <view class="toolbar-note small-gap" wx:if="{{resultMeta.total > 8}}">结果较多，建议先按学科/难度缩小范围，再分页浏览并进入详情查看完整答案与解析。</view>
+    <view class="filter-label">标签</view>
+    <view class="tag-row small-gap">
+      <text class="filter-chip {{currentFilters.tag === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.tag}}" wx:key="label" data-field="tag" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
+    </view>
+    <view class="toolbar-note small-gap" wx:if="{{resultMeta.total > 8}}">结果较多，建议先按学科/难度/标签缩小范围，再分页浏览并进入详情查看完整答案与解析。</view>
   </view>
 
   <view wx:if="{{displayList.length && useGroupView}}">
@@ -98,6 +119,7 @@
         <view class="result-desc clamp-2">
           <text wx:for="{{question.contentSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
         </view>
+        <view class="toolbar-note small-gap">命中字段：{{question.matchedFieldText}}</view>
         <view class="meta-row wrap-row">
           <text class="meta-pill">{{question.subject || '未分类'}}</text>
           <text class="meta-pill meta-pill-light">{{question.category || '通用'}}</text>
@@ -124,6 +146,7 @@
         <text class="meta-pill meta-pill-light">{{item.difficultyText}}</text>
         <text class="meta-pill meta-pill-light">{{item.typeText}}</text>
       </view>
+      <view class="toolbar-note small-gap">命中字段：{{item.matchedFieldText}}</view>
       <view class="toolbar-note small-gap" wx:if="{{item.excerpt}}">命中摘要：{{item.excerpt}}</view>
       <view class="answer-preview">答案摘要：{{expandMap[item._id] ? item.analysisPreview : item.answerPreview}}</view>
       <text class="link-text small-gap inline-link" data-id="{{item._id}}" bindtap="toggleAnswer">{{expandMap[item._id] ? '收起解析' : '展开更多'}}</text>

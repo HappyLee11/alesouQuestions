@@ -23,7 +23,7 @@
         <view class="filter-chip {{currentFilter === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filters}}" wx:key="value" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</view>
       </view>
     </scroll-view>
-    <view class="toolbar-note small-gap">支持在管理视角下查看已归档题目，并保留恢复入口。</view>
+    <view class="toolbar-note small-gap">支持在管理视角下查看已归档题目，并保留恢复入口；也支持在列表中直接做快捷审核 / 发布。</view>
   </view>
 
   <view wx:if="{{list.length}}">
@@ -49,6 +49,10 @@
       </view>
       <view class="btn-row">
         <button size="mini" data-id="{{item._id}}" bindtap="goEdit">编辑</button>
+        <button wx:if="{{item.canSendToReview}}" size="mini" data-id="{{item._id}}" bindtap="handleSendToReview">提审</button>
+        <button wx:if="{{item.canApprove}}" size="mini" class="secondary-btn" data-id="{{item._id}}" bindtap="handleApprove">通过</button>
+        <button wx:if="{{item.canReject}}" size="mini" class="danger-btn" data-id="{{item._id}}" bindtap="handleReject">驳回</button>
+        <button wx:if="{{item.canPublish}}" size="mini" class="primary-btn" data-id="{{item._id}}" bindtap="handlePublish">发布</button>
         <button wx:if="{{item.status !== 'deleted'}}" size="mini" class="danger-btn" data-id="{{item._id}}" bindtap="handleDelete">归档</button>
         <button wx:else size="mini" class="secondary-btn" data-id="{{item._id}}" bindtap="handleRestore">恢复</button>
       </view>

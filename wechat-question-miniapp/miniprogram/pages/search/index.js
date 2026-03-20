@@ -54,12 +54,14 @@ Page({
     currentFilters: {
       subject: '',
       difficulty: '',
-      type: ''
+      type: '',
+      tag: ''
     },
     filterOptions: {
       subject: [{ value: '', label: '全部学科' }],
       difficulty: [{ value: '', label: '全部难度' }],
-      type: [{ value: '', label: '全部题型' }]
+      type: [{ value: '', label: '全部题型' }],
+      tag: [{ value: '', label: '全部标签' }]
     },
     resultMeta: {
       total: 0,
@@ -68,7 +70,8 @@ Page({
       page: 1,
       totalPages: 1,
       hasMore: false,
-      hasPrev: false
+      hasPrev: false,
+      request: {}
     },
     resultInsights: [
       { label: '结果总数', value: '0', desc: '当前命中题目' },
@@ -77,7 +80,9 @@ Page({
       { label: '展示视图', value: '分组视图', desc: '支持切换列表' }
     ],
     activeFilterText: '未启用筛选',
-    expandMap: {}
+    expandMap: {},
+    queryDigest: [],
+    topSuggestions: []
   },
   onLoad(options = {}) {
     this.loadHistory();
@@ -108,6 +113,7 @@ Page({
     this.applyLocalFilters();
   },
   buildDisplayItem(item, keyword) {
+    const matchedFields = Array.isArray(item.matchedFields) ? item.matchedFields : [];
     return {
       ...item,
       titleSegments: highlightText(item.title, keyword),
@@ -116,7 +122,8 @@ Page({
       analysisPreview: item.analysis || '暂无解析',
       updatedAtText: formatTime(item.updatedAt),
       difficultyText: DIFFICULTY_LABELS[item.difficulty] || '未设置',
-      typeText: TYPE_LABELS[item.type] || '未知题型'
+      typeText: TYPE_LABELS[item.type] || '未知题型',
+      matchedFieldText: matchedFields.length ? matchedFields.join(' / ') : '标题 / 题干'
     };
   },
   getActiveFilterText() {
@@ -125,11 +132,24 @@ Page({
     if (currentFilters.subject) parts.push(`学科：${currentFilters.subject}`);
     if (currentFilters.difficulty) parts.push(`难度：${DIFFICULTY_LABELS[currentFilters.difficulty] || currentFilters.difficulty}`);
     if (currentFilters.type) parts.push(`题型：${TYPE_LABELS[currentFilters.type] || currentFilters.type}`);
+    if (currentFilters.tag) parts.push(`标签：${currentFilters.tag}`);
     return parts.length ? parts.join(' · ') : '未启用筛选';
   },
+  buildQueryDigest(keyword = '', request = {}) {
+    const filters = request.filters || {};
+    const parts = [];
+    if (keyword) parts.push(`关键词：${keyword}`);
+    parts.push(`排序：${this.data.sortOptions[this.data.sortIndex].label}`);
+    if (filters.subject) parts.push(`学科限定：${filters.subject}`);
+    if (filters.category) parts.push(`分类限定：${filters.category}`);
+    if (filters.difficulty) parts.push(`难度限定：${DIFFICULTY_LABELS[filters.difficulty] || filters.difficulty}`);
+    if (filters.type) parts.push(`题型限定：${TYPE_LABELS[filters.type] || filters.type}`);
+    return parts;
+  },
   updateInsights() {
-    const { resultMeta, displayList, searchMode, useGroupView, currentFilters } = this.data;
-    const activeCount = ['subject', 'difficulty', 'type'].filter((key) => !!currentFilters[key]).length;
+    const { resultMeta, displayList, searchMode, useGroupView, currentFilters, filterOptions } = this.data;
+    const activeCount = ['subject', 'difficulty', 'type', 'tag'].filter((key) => !!currentFilters[key]).length;
+    const request = resultMeta.request || {};
     this.setData({
       resultInsights: [
         { label: '结果总数', value: String(resultMeta.total || displayList.length || 0), desc: '当前命中题目' },
@@ -137,7 +157,10 @@ Page({
         { label: '检索模式', value: searchMode === 'image' ? '图片示例' : '关键词', desc: activeCount ? `${activeCount} 个筛选生效` : '可继续缩小范围' },
         { label: '展示视图', value: useGroupView ? '分组视图' : '列表视图', desc: useGroupView ? '更适合现场讲解' : '更适合快速浏览' }
       ],
-      activeFilterText: this.getActiveFilterText()
+      activeFilterText: this.getActiveFilterText(),
+      queryDigest: this.buildQueryDigest(this.data.keyword.trim(), request),
+      topSuggestions: (resultMeta.suggestions || []).slice(0, 6),
+      resultSummaryText: `学科 ${Math.max((filterOptions.subject || []).length - 1, 0)} 项 · 标签 ${Math.max((filterOptions.tag || []).length - 1, 0)} 项`
     });
   },
   applyLocalFilters() {
@@ -146,6 +169,7 @@ Page({
       if (currentFilters.subject && item.subject !== currentFilters.subject) return false;
       if (currentFilters.difficulty && item.difficulty !== currentFilters.difficulty) return false;
       if (currentFilters.type && item.type !== currentFilters.type) return false;
+      if (currentFilters.tag && !(item.tags || []).includes(currentFilters.tag)) return false;
       return true;
     }).map((item) => this.buildDisplayItem(item, keyword));
 
@@ -180,14 +204,16 @@ Page({
           page: pagination.page || targetPage,
           totalPages: pagination.totalPages || result.totalPages || 1,
           hasMore: !!pagination.hasMore,
-          hasPrev: !!pagination.hasPrev
+          hasPrev: !!pagination.hasPrev,
+          request: result.request || {}
         },
         filterOptions: {
           subject: facetToChips(result.facets && result.facets.subject, '全部学科'),
           difficulty: facetToChips(result.facets && result.facets.difficulty, '全部难度'),
-          type: facetToChips(result.facets && result.facets.type, '全部题型')
+          type: facetToChips(result.facets && result.facets.type, '全部题型'),
+          tag: facetToChips(result.facets && result.facets.tags, '全部标签')
         },
-        currentFilters: { subject: '', difficulty: '', type: '' },
+        currentFilters: { subject: '', difficulty: '', type: '', tag: '' },
         expandMap: {}
       });
       this.applyLocalFilters();
