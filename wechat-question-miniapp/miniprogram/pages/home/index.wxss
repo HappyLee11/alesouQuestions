@@ -47,6 +47,27 @@
   font-size: 22rpx;
 }
 
+.admin-shortcut-card {
+  overflow: hidden;
+}
+
+.admin-shortcut-header {
+  align-items: flex-start;
+}
+
+.admin-summary-text {
+  margin-top: 18rpx;
+}
+
+.admin-task-highlight {
+  margin-top: 22rpx;
+  margin-bottom: 0;
+}
+
+.admin-action-row button {
+  min-width: 200rpx;
+}
+
 .sample-list {
   display: flex;
   flex-direction: column;
