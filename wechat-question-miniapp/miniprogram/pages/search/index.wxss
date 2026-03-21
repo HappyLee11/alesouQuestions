@@ -9,14 +9,13 @@
 }
 
 .search-hero {
-  padding-bottom: 32rpx;
+  padding-bottom: 34rpx;
 }
 
 .search-hero-bar {
-  margin-top: 28rpx;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 18rpx;
+  margin-top: 30rpx;
+  align-items: stretch;
+  gap: 16rpx;
 }
 
 .search-hero-input {
@@ -27,8 +26,8 @@
 }
 
 .search-btn {
-  min-width: 168rpx;
-  height: 84rpx;
+  min-width: 0;
+  height: 86rpx;
   font-size: 30rpx;
 }
 
@@ -44,12 +43,21 @@
 }
 
 .search-summary-card,
-.search-section-card {
+.search-discovery-card,
+.search-filter-card,
+.search-pager-card {
   margin-bottom: 22rpx;
 }
 
 .search-section-header {
   align-items: flex-start;
+}
+
+.search-discovery-block + .search-discovery-block,
+.filter-group + .filter-group {
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #edf2f7;
 }
 
 .filter-label {
@@ -59,20 +67,39 @@
   margin-bottom: 10rpx;
 }
 
+.search-block-title {
+  margin-top: 0;
+  margin-bottom: 14rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #475569;
+}
+
 .result-meta-row {
   margin-top: 18rpx;
 }
 
+.search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
 .search-result-card {
-  padding: 24rpx;
-  border-radius: 24rpx;
+  padding: 26rpx 24rpx;
+  border-radius: 26rpx;
+  margin-bottom: 0;
 }
 
 .answer-preview {
-  margin-top: 14rpx;
+  margin-top: 16rpx;
+  padding: 18rpx 18rpx;
   font-size: 26rpx;
-  line-height: 1.7;
+  line-height: 1.72;
   color: #374151;
+  background: #f8fbff;
+  border-radius: 18rpx;
+  border: 1rpx solid #dbe7fb;
 }
 
 .source-meta-row {
@@ -80,7 +107,7 @@
 }
 
 .result-footer {
-  margin-top: 16rpx;
+  margin-top: 18rpx;
   align-items: flex-start;
   flex-wrap: wrap;
 }
@@ -109,9 +136,9 @@
 }
 
 .pager-btn {
-  flex: 1;
+  width: 100%;
   min-width: 0;
-  height: 76rpx;
+  height: 80rpx;
 }
 
 .empty-card-strong {

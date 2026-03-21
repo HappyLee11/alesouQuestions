@@ -1,33 +1,40 @@
 /* page styles inherit app.wxss */
 
+.page-home {
+  padding-bottom: 40rpx;
+}
+
 .home-hero {
-  padding-bottom: 32rpx;
+  padding-bottom: 36rpx;
 }
 
 .home-search-box {
   display: flex;
+  flex-direction: column;
   gap: 16rpx;
-  margin-top: 28rpx;
-  align-items: center;
+  margin-top: 30rpx;
   position: relative;
   z-index: 1;
 }
 
 .home-search-input {
-  flex: 1;
+  width: 100%;
   background: rgba(255, 255, 255, 0.96);
   color: #111827;
 }
 
 .home-search-btn {
-  min-width: 168rpx;
+  width: 100%;
+  min-width: 0;
+  height: 86rpx;
+  font-size: 30rpx;
 }
 
 .quick-hint-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 14rpx;
-  margin-top: 20rpx;
+  gap: 12rpx;
+  margin-top: 22rpx;
   position: relative;
   z-index: 1;
 }
@@ -43,19 +50,20 @@
 .sample-list {
   display: flex;
   flex-direction: column;
-  gap: 18rpx;
+  gap: 16rpx;
+  margin-top: 10rpx;
 }
 
 .sample-item {
-  padding: 22rpx;
-  border-radius: 22rpx;
-  background: #f8fbff;
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
   border: 1rpx solid #dbe7fb;
 }
 
 .sample-title {
   font-size: 30rpx;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.58;
   color: #0f172a;
 }

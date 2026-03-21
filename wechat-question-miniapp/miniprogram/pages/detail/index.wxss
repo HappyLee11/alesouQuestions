@@ -8,24 +8,49 @@
 }
 
 .detail-hero {
-  padding-bottom: 32rpx;
+  padding-bottom: 34rpx;
 }
 
-.detail-hero-actions {
+.detail-hero-meta {
   margin-top: 22rpx;
 }
 
+.detail-hero-actions {
+  margin-top: 24rpx;
+}
+
 .detail-stats .metric-card {
-  width: calc(25% - 14rpx);
+  width: calc(50% - 9rpx);
   min-width: 0;
 }
 
 .detail-panels {
-  margin-top: 6rpx;
+  margin-top: 2rpx;
 }
 
 .detail-answer-summary {
   color: #1e3a8a;
+}
+
+.detail-content-card,
+.detail-answer-card,
+.detail-analysis-card,
+.detail-meta-card {
+  margin-bottom: 22rpx;
+}
+
+.detail-section-block + .detail-section-block {
+  margin-top: 28rpx;
+  padding-top: 28rpx;
+  border-top: 1rpx solid #edf2f7;
+}
+
+.detail-content-box,
+.detail-analysis-box {
+  padding: 22rpx 22rpx;
+  border-radius: 20rpx;
+  background: #f8fbff;
+  border: 1rpx solid #dbe7fb;
 }
 
 .option-list {
@@ -41,12 +66,16 @@
   border: 1rpx solid #dbe7fb;
 }
 
+.answer-box {
+  margin-top: 8rpx;
+}
+
 .inline-link {
   display: inline-block;
 }
 
 .detail-info-grid {
-  margin-top: 10rpx;
+  margin-top: 18rpx;
 }
 
 .compact-result {
@@ -57,8 +86,8 @@
 }
 
 .compact-result + .compact-result {
-  margin-top: 16rpx;
-  padding-top: 16rpx;
+  margin-top: 18rpx;
+  padding-top: 18rpx;
   border-top: 1rpx solid #edf2f7;
 }
 

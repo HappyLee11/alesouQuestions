@@ -514,3 +514,143 @@ button::after {
   background: #edf2f7;
   margin: 22rpx 0;
 }
+
+/* mobile polish overrides */
+.container {
+  padding: 24rpx 24rpx 40rpx;
+}
+
+.page-shell {
+  padding-bottom: 24rpx;
+}
+
+.card,
+.result-card,
+.hero-card,
+.metric-card,
+.glass-card {
+  border-radius: 30rpx;
+  padding: 30rpx 26rpx;
+  margin-bottom: 22rpx;
+}
+
+.hero-title,
+.title {
+  line-height: 1.38;
+}
+
+.hero-subtitle,
+.subtitle,
+.feature-desc,
+.content-text,
+.body-text,
+.result-desc,
+.clamp-2,
+.option-item,
+.info-value {
+  line-height: 1.75;
+}
+
+.section-header,
+.search-toolbar,
+.result-footer,
+.list-title-row,
+.meta-row,
+.search-bar,
+.inline-between {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.section-header {
+  margin-bottom: 6rpx;
+}
+
+.btn-row {
+  gap: 14rpx;
+}
+
+.btn-row button {
+  min-height: 84rpx;
+}
+
+.search-bar {
+  gap: 14rpx;
+}
+
+.search-input,
+.search-btn {
+  width: 100%;
+}
+
+.search-btn {
+  min-width: 0;
+}
+
+.tag-row,
+.filter-row,
+.badge-row,
+.pill-row {
+  gap: 12rpx;
+}
+
+.tag,
+.meta-pill,
+.filter-chip,
+.picker-chip,
+.soft-badge {
+  padding: 12rpx 20rpx;
+}
+
+.panel-card,
+.timeline-card,
+.kpi-card,
+.info-card {
+  border-radius: 22rpx;
+  padding: 26rpx 22rpx;
+}
+
+.info-grid > view,
+.grid-2 > view,
+.panel-grid > view,
+.feature-grid > view,
+.timeline-grid > view,
+.kpi-grid .kpi-card {
+  width: 100%;
+}
+
+.stats-grid > view {
+  width: calc(50% - 9rpx);
+}
+
+.result-card {
+  padding: 26rpx 24rpx;
+}
+
+.result-title {
+  line-height: 1.55;
+}
+
+.result-footer {
+  gap: 12rpx;
+}
+
+.inline-tags {
+  flex: 1 1 100%;
+}
+
+.footer-note {
+  width: 100%;
+}
+
+.quick-nav {
+  gap: 12rpx;
+}
+
+.quick-nav-item {
+  padding: 12rpx 18rpx;
+}
+
+.empty {
+  padding: 64rpx 28rpx;
+}

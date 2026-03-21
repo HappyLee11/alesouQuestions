@@ -1,1 +1,17 @@
 /* list page */
+
+.panel-grid {
+  margin-bottom: 22rpx;
+}
+
+.list-title-row {
+  gap: 12rpx;
+}
+
+.list-title-row .title {
+  flex: 1 1 100%;
+}
+
+.btn-row button {
+  flex: 1 1 100%;
+}

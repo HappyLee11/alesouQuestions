@@ -2,7 +2,7 @@
   <view class="hero-card search-hero">
     <view class="eyebrow">搜索题目</view>
     <view class="hero-title">找答案，直接搜</view>
-    <view class="hero-subtitle">输入关键词后，可按学科、难度、题型和标签继续缩小范围。</view>
+    <view class="hero-subtitle">先输入关键词，再按学科、难度、题型和标签逐步缩小范围，整个流程更适合手机单手浏览。</view>
 
     <view class="search-bar search-hero-bar">
       <input class="input search-input search-hero-input" placeholder="输入题目关键词或题干片段" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="handleSearch" />
@@ -14,11 +14,11 @@
     </view>
   </view>
 
-  <view class="glass-card">
-    <view class="section-header">
+  <view class="glass-card search-summary-card">
+    <view class="section-header search-section-header">
       <view>
-        <view class="section-title">搜索结果</view>
-        <view class="section-caption">共 {{resultMeta.total}} 条结果</view>
+        <view class="section-title">搜索概览</view>
+        <view class="section-caption">共 {{resultMeta.total}} 条结果 · 第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
       </view>
       <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onChangeSort">
         <view class="picker-chip">{{sortOptions[sortIndex].label}}</view>
@@ -27,59 +27,77 @@
 
     <view class="meta-row wrap-row small-gap source-meta-row">
       <text class="meta-pill meta-pill-light">数据来源：{{resultMeta.sourceLabel}}</text>
-      <text class="meta-pill meta-pill-light">第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</text>
+      <text class="meta-pill meta-pill-light" wx:if="{{activeFilterText !== '未启用筛选'}}">当前筛选：{{activeFilterText}}</text>
     </view>
     <view class="toolbar-note small-gap toolbar-note-warn" wx:if="{{sourceNotice}}">{{sourceNotice}}</view>
-    <view class="toolbar-note small-gap" wx:if="{{activeFilterText !== '未启用筛选'}}">当前筛选：{{activeFilterText}}</view>
     <view class="tag-row small-gap" wx:if="{{topSuggestions.length}}">
       <text class="tag tag-clickable" wx:for="{{topSuggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 
-  <view class="card" wx:if="{{history.length}}">
-    <view class="section-header">
-      <view class="section-title">最近搜索</view>
-      <text class="link-text" bindtap="clearHistory">清空</text>
-    </view>
-    <view class="tag-row">
-      <text class="tag tag-clickable" wx:for="{{history}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
-    </view>
-  </view>
-
-  <view class="card">
-    <view class="section-title">热门关键词</view>
-    <view class="tag-row small-gap">
-      <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
-    </view>
-  </view>
-
-  <view class="card" wx:if="{{displayList.length}}">
-    <view class="section-header">
+  <view class="card search-discovery-card" wx:if="{{history.length || hotTerms.length}}">
+    <view class="section-header search-section-header">
       <view>
-        <view class="section-title">筛选结果</view>
-        <view class="section-caption">按条件继续缩小范围</view>
+        <view class="section-title">继续搜索</view>
+        <view class="section-caption">用最近记录和热门词快速回到结果页。</view>
+      </view>
+      <text class="link-text" wx:if="{{history.length}}" bindtap="clearHistory">清空历史</text>
+    </view>
+
+    <view class="search-discovery-block" wx:if="{{history.length}}">
+      <view class="filter-label search-block-title">最近搜索</view>
+      <view class="tag-row small-gap">
+        <text class="tag tag-clickable" wx:for="{{history}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
       </view>
     </view>
-    <view class="filter-label">学科</view>
-    <view class="tag-row small-gap">
-      <text class="filter-chip {{currentFilters.subject === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.subject}}" wx:key="label" data-field="subject" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
-    </view>
-    <view class="filter-label">难度</view>
-    <view class="tag-row small-gap">
-      <text class="filter-chip {{currentFilters.difficulty === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.difficulty}}" wx:key="label" data-field="difficulty" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
-    </view>
-    <view class="filter-label">题型</view>
-    <view class="tag-row small-gap">
-      <text class="filter-chip {{currentFilters.type === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.type}}" wx:key="label" data-field="type" data-value="{{item.value}}" bindtap="onTapFilter">{{item.value ? (item.value === 'single' ? '单选题' : item.value === 'multiple' ? '多选题' : '问答题') : item.label}}</text>
-    </view>
-    <view class="filter-label">标签</view>
-    <view class="tag-row small-gap">
-      <text class="filter-chip {{currentFilters.tag === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.tag}}" wx:key="label" data-field="tag" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
+
+    <view class="search-discovery-block" wx:if="{{hotTerms.length}}">
+      <view class="filter-label search-block-title">热门关键词</view>
+      <view class="tag-row small-gap">
+        <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
+      </view>
     </view>
   </view>
 
-  <view wx:if="{{displayList.length}}">
-    <view class="result-card" wx:for="{{displayList}}" wx:key="_id">
+  <view class="card search-filter-card" wx:if="{{displayList.length}}">
+    <view class="section-header search-section-header">
+      <view>
+        <view class="section-title">筛选结果</view>
+        <view class="section-caption">把条件拆成分组，避免一整页标签挤在一起。</view>
+      </view>
+    </view>
+
+    <view class="filter-group">
+      <view class="filter-label search-block-title">学科</view>
+      <view class="tag-row small-gap">
+        <text class="filter-chip {{currentFilters.subject === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.subject}}" wx:key="label" data-field="subject" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
+      </view>
+    </view>
+
+    <view class="filter-group">
+      <view class="filter-label search-block-title">难度</view>
+      <view class="tag-row small-gap">
+        <text class="filter-chip {{currentFilters.difficulty === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.difficulty}}" wx:key="label" data-field="difficulty" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
+      </view>
+    </view>
+
+    <view class="filter-group">
+      <view class="filter-label search-block-title">题型</view>
+      <view class="tag-row small-gap">
+        <text class="filter-chip {{currentFilters.type === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.type}}" wx:key="label" data-field="type" data-value="{{item.value}}" bindtap="onTapFilter">{{item.value ? (item.value === 'single' ? '单选题' : item.value === 'multiple' ? '多选题' : '问答题') : item.label}}</text>
+      </view>
+    </view>
+
+    <view class="filter-group">
+      <view class="filter-label search-block-title">标签</view>
+      <view class="tag-row small-gap">
+        <text class="filter-chip {{currentFilters.tag === item.value ? 'filter-chip-active' : ''}}" wx:for="{{filterOptions.tag}}" wx:key="label" data-field="tag" data-value="{{item.value}}" bindtap="onTapFilter">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{displayList.length}}" class="search-results-list">
+    <view class="result-card search-result-card" wx:for="{{displayList}}" wx:key="_id">
       <view data-id="{{item._id}}" bindtap="goDetail">
         <view class="result-title">
           <text wx:for="{{item.titleSegments}}" wx:for-item="segment" wx:key="index" class="{{segment.match ? 'highlight-text' : ''}}">{{segment.text}}</text>
@@ -105,22 +123,23 @@
     </view>
   </view>
 
-  <view class="card" wx:if="{{displayList.length && resultMeta.totalPages > 1}}">
-    <view class="section-header">
+  <view class="card search-pager-card" wx:if="{{displayList.length && resultMeta.totalPages > 1}}">
+    <view class="section-header search-section-header">
       <view>
         <view class="section-title">分页浏览</view>
-        <view class="section-caption">第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
+        <view class="section-caption">当前第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</view>
       </view>
     </view>
-    <view class="btn-row">
-      <button size="mini" bindtap="goPrevPage" disabled="{{!resultMeta.hasPrev}}">上一页</button>
-      <button class="secondary-btn" size="mini" bindtap="goNextPage" disabled="{{!resultMeta.hasMore}}">下一页</button>
+    <view class="btn-row pager-btn-row">
+      <button class="pager-btn" bindtap="goPrevPage" disabled="{{!resultMeta.hasPrev}}">上一页</button>
+      <button class="secondary-btn pager-btn" bindtap="goNextPage" disabled="{{!resultMeta.hasMore}}">下一页</button>
     </view>
   </view>
 
-  <view wx:if="{{!displayList.length}}" class="card empty empty-card-strong">
-    <view class="title-small">{{emptyState.title}}</view>
-    <view class="subtitle small-gap">{{emptyState.description}}</view>
+  <view wx:if="{{!displayList.length}}" class="card empty empty-card-strong search-empty-card">
+    <view class="empty-badge">暂无匹配结果</view>
+    <view class="title-small empty-title">{{emptyState.title}}</view>
+    <view class="subtitle small-gap empty-desc">{{emptyState.description}}</view>
     <view class="empty-tip-list" wx:if="{{emptyState.tips && emptyState.tips.length}}">
       <view class="empty-tip-item" wx:for="{{emptyState.tips}}" wx:key="index">• {{item}}</view>
     </view>

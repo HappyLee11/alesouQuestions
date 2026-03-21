@@ -2,3 +2,17 @@
 .textarea-xl {
   min-height: 560rpx;
 }
+
+.timeline-grid,
+.panel-grid,
+.grid-2 {
+  gap: 18rpx;
+}
+
+.btn-row button {
+  flex: 1 1 100%;
+}
+
+.feature-desc + .feature-desc {
+  margin-top: 8rpx;
+}

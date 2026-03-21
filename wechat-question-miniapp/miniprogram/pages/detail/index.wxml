@@ -2,8 +2,8 @@
   <view wx:if="{{detail}}" class="hero-card detail-hero">
     <view class="eyebrow">题目详情</view>
     <view class="hero-title">{{detail.title}}</view>
-    <view class="hero-subtitle">答案、解析、来源信息和关联题目都集中在这一页，查到后可直接继续复习。</view>
-    <view class="meta-row large-gap wrap-row">
+    <view class="hero-subtitle">题干、答案、解析和关联题目拆分成独立模块，阅读路径更清楚，也更适合手机连续复习。</view>
+    <view class="meta-row large-gap wrap-row detail-hero-meta">
       <text class="meta-pill">{{detail.subject || '未分类'}}</text>
       <text class="meta-pill meta-pill-light">{{detail.category || '通用'}}</text>
       <text class="meta-pill meta-pill-light">{{detail.typeText}}</text>
@@ -12,7 +12,7 @@
     </view>
     <view class="btn-row detail-hero-actions">
       <button class="ghost-btn" bindtap="goSearch">继续搜相关题</button>
-      <button bindtap="copyAnswer">复制答案</button>
+      <button class="secondary-btn" bindtap="copyAnswer">复制答案</button>
     </view>
   </view>
 
@@ -34,59 +34,71 @@
     </view>
   </view>
 
-  <view wx:if="{{detail}}" class="card">
+  <view wx:if="{{detail}}" class="card detail-content-card">
     <view class="field-block" wx:if="{{detail.titleVariants && detail.titleVariants.length}}">
       <view class="field-label">别名 / 常见问法</view>
-      <view class="tag-row">
+      <view class="tag-row small-gap">
         <text class="tag tag-clickable" wx:for="{{detail.titleVariants}}" wx:key="*this" data-tag="{{item}}" bindtap="searchByTag">{{item}}</text>
       </view>
     </view>
 
-    <view class="field-block">
+    <view class="field-block detail-section-block">
       <view class="field-label">题干</view>
-      <view class="content-text">{{detail.content}}</view>
+      <view class="content-text detail-content-box">{{detail.content}}</view>
     </view>
 
-    <view class="field-block" wx:if="{{detail.options && detail.options.length}}">
+    <view class="field-block detail-section-block" wx:if="{{detail.options && detail.options.length}}">
       <view class="field-label">选项</view>
       <view class="option-list">
         <view class="option-item option-card" wx:for="{{detail.options}}" wx:key="index">{{index + 1}}. {{item}}</view>
       </view>
     </view>
+  </view>
 
-    <view class="field-block">
-      <view class="field-label">答案</view>
-      <view class="answer-box">{{showFullAnswer ? detail.answer : detail.answerShort}}</view>
-      <text class="link-text small-gap inline-link" bindtap="toggleAnswer">{{showFullAnswer ? '收起完整答案' : '查看完整答案'}}</text>
+  <view wx:if="{{detail}}" class="glass-card detail-answer-card">
+    <view class="section-header detail-section-header">
+      <view>
+        <view class="section-title">答案</view>
+        <view class="section-caption">先看摘要，需要时再展开完整答案。</view>
+      </view>
     </view>
+    <view class="answer-box">{{showFullAnswer ? detail.answer : detail.answerShort}}</view>
+    <text class="link-text small-gap inline-link" bindtap="toggleAnswer">{{showFullAnswer ? '收起完整答案' : '查看完整答案'}}</text>
+  </view>
 
-    <view class="field-block">
-      <view class="field-label">解析</view>
-      <view class="content-text">{{showFullAnalysis ? detail.analysis : detail.analysisShort}}</view>
-      <text class="link-text small-gap inline-link" bindtap="toggleAnalysis">{{showFullAnalysis ? '收起解析' : '展开完整解析'}}</text>
+  <view wx:if="{{detail}}" class="card detail-analysis-card">
+    <view class="section-header detail-section-header">
+      <view>
+        <view class="section-title">解析</view>
+        <view class="section-caption">分块展示，避免题干和解析混在一张卡里。</view>
+      </view>
     </view>
+    <view class="content-text detail-analysis-box">{{showFullAnalysis ? detail.analysis : detail.analysisShort}}</view>
+    <text class="link-text small-gap inline-link" bindtap="toggleAnalysis">{{showFullAnalysis ? '收起解析' : '展开完整解析'}}</text>
+  </view>
 
+  <view wx:if="{{detail}}" class="card detail-meta-card">
     <view class="field-block">
       <view class="field-label">知识标签</view>
-      <view class="tag-row">
+      <view class="tag-row small-gap">
         <text class="tag tag-clickable" wx:for="{{detail.tags}}" wx:key="*this" data-tag="{{item}}" bindtap="searchByTag">{{item}}</text>
       </view>
     </view>
 
     <view class="info-grid detail-info-grid">
-      <view class="info-item">
+      <view class="info-item info-card">
         <view class="info-label">来源</view>
         <view class="info-value">{{detail.source || '--'}}</view>
       </view>
-      <view class="info-item">
+      <view class="info-item info-card">
         <view class="info-label">年份</view>
         <view class="info-value">{{detail.year || '--'}}</view>
       </view>
-      <view class="info-item">
+      <view class="info-item info-card">
         <view class="info-label">创建时间</view>
         <view class="info-value">{{detail.createdAtText}}</view>
       </view>
-      <view class="info-item">
+      <view class="info-item info-card">
         <view class="info-label">更新时间</view>
         <view class="info-value">{{detail.updatedAtText}}</view>
       </view>
@@ -94,7 +106,7 @@
   </view>
 
   <view class="glass-card" wx:if="{{related.length}}">
-    <view class="section-header">
+    <view class="section-header detail-section-header">
       <view>
         <view class="section-title">相关题目</view>
         <view class="section-caption">继续刷同主题题目，不用回到首页重找。</view>
