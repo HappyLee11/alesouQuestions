@@ -53,6 +53,93 @@ const emptyForm = {
   changeReason: ''
 };
 
+function buildEditorInsights({ form = {}, importMeta = null } = {}) {
+  const blockers = [];
+  const cards = [];
+  const acceptanceItems = [];
+
+  const pushCard = (key, title, desc, selector, tone = 'neutral', cta = '去处理') => {
+    cards.push({ key, title, desc, selector, tone, cta });
+  };
+
+  if (!form.title) {
+    blockers.push('标题未填写');
+    pushCard('title', '补标题', '题目标题为空，会直接影响搜索可读性与列表展示。', '#field-title', 'danger');
+  }
+  if (!form.content) {
+    blockers.push('题干未填写');
+    pushCard('content', '补题干', '题干为空时无法形成有效题目，也无法进入正式审核。', '#field-content', 'danger');
+  }
+  if (!form.answer) {
+    blockers.push('答案未填写');
+    pushCard('answer', '补答案', '标准答案为空，搜索和详情页都无法闭环。', '#field-answer', 'danger');
+  }
+  if (!form.answerSummary) {
+    pushCard('answer-summary', '补答案摘要', '建议补一句适合列表 / 搜索结果展示的摘要。', '#field-answer-summary', 'warning');
+  }
+  if (!form.ownerTeam) {
+    pushCard('owner-team', '补归属团队', '当前还没指定归属团队，治理链路会显得松散。', '#field-owner-team', 'warning');
+  }
+  if (!form.owner) {
+    pushCard('owner', '补负责人', '建议明确负责人，方便导入和审核后的归口处理。', '#field-owner', 'neutral');
+  }
+  if ((form.reviewStatus === 'pending' || form.reviewStatus === 'approved' || form.reviewStatus === 'rejected') && !form.reviewer) {
+    pushCard('reviewer', '补审核人', '当前审核态已进入流程，建议补全审核人字段。', '#field-reviewer', 'warning');
+  }
+  if (form.reviewStatus === 'rejected' && !form.reviewComment) {
+    blockers.push('已驳回题目缺少审核备注');
+    pushCard('review-comment', '补驳回原因', '已驳回题目应写明审核意见，方便后续修订。', '#field-review-comment', 'danger');
+  }
+  if (form.reviewStatus === 'approved' && !form.changeReason) {
+    pushCard('change-reason', '补变更原因', '审核通过后建议记录变更原因，便于验收说明。', '#field-change-reason', 'warning');
+  }
+  if (importMeta && !form.sourceRef) {
+    pushCard('source-ref', '补来源引用', '当前题目来自导入链路，建议补来源引用方便追溯。', '#field-source-ref', 'warning');
+  }
+
+  acceptanceItems.push(
+    {
+      key: 'base',
+      title: '基础字段',
+      passed: !!(form.title && form.content && form.answer),
+      valueText: form.title && form.content && form.answer ? '完整' : '待补齐'
+    },
+    {
+      key: 'search',
+      title: '搜索呈现',
+      passed: !!form.answerSummary,
+      valueText: form.answerSummary ? '摘要就绪' : '缺摘要'
+    },
+    {
+      key: 'governance',
+      title: '治理归属',
+      passed: !!(form.ownerTeam && form.owner),
+      valueText: form.ownerTeam && form.owner ? '已指定' : '待补归属'
+    },
+    {
+      key: 'review',
+      title: '审核闭环',
+      passed: form.reviewStatus !== 'rejected' || !!form.reviewComment,
+      valueText: form.reviewStatus !== 'rejected' || form.reviewComment ? '可追溯' : '缺审核意见'
+    }
+  );
+
+  const blockerCount = blockers.length;
+  const warningCount = Math.max(cards.length - blockerCount, 0);
+  const summaryText = blockerCount
+    ? `当前有 ${blockerCount} 项关键阻塞，建议优先修掉再走审核 / 发布。`
+    : warningCount
+      ? `当前没有硬阻塞，仍有 ${warningCount} 项可优化内容，修完后更适合验收收口。`
+      : '当前题目已满足主要编辑闭环条件，可继续审核、发布或做最终验收。';
+
+  return {
+    blockers,
+    cards: cards.slice(0, 6),
+    acceptanceItems,
+    summaryText
+  };
+}
+
 Page({
   data: {
     form: { ...emptyForm },
@@ -77,12 +164,28 @@ Page({
     reviewIndex: 0,
     statusHistory: [],
     versionSnapshots: [],
-    importMeta: null
+    importMeta: null,
+    editorSummaryText: '正在生成可修复项提示。',
+    editorBlockers: [],
+    editorQuickCards: [],
+    acceptanceItems: []
   },
   async onLoad(options) {
     const id = options.id || '';
     this.setData({ 'form.id': id, isEdit: !!id });
     await this.bootstrap(id);
+  },
+  refreshEditorInsights() {
+    const insights = buildEditorInsights({
+      form: this.data.form,
+      importMeta: this.data.importMeta
+    });
+    this.setData({
+      editorSummaryText: insights.summaryText,
+      editorBlockers: insights.blockers,
+      editorQuickCards: insights.cards,
+      acceptanceItems: insights.acceptanceItems
+    });
   },
   async bootstrap(id = '') {
     this.setData({ checking: true });
@@ -100,6 +203,8 @@ Page({
       });
       if (info.isAdmin && id) {
         await this.loadDetail(id);
+      } else {
+        this.refreshEditorInsights();
       }
     } catch (error) {
       wx.showToast({ title: '权限校验失败', icon: 'none' });
@@ -160,30 +265,43 @@ Page({
           atText: formatTime(item.at)
         })),
         importMeta: detail.importMeta || null
-      });
+      }, () => this.refreshEditorInsights());
     } catch (error) {
       wx.showToast({ title: '详情加载失败', icon: 'none' });
     }
   },
   onFieldInput(e) {
     const { field } = e.currentTarget.dataset;
-    this.setData({ [`form.${field}`]: e.detail.value });
+    this.setData({ [`form.${field}`]: e.detail.value }, () => this.refreshEditorInsights());
   },
   onTypeChange(e) {
     const index = Number(e.detail.value) || 0;
-    this.setData({ typeIndex: index, 'form.type': TYPE_OPTIONS[index].value });
+    this.setData({ typeIndex: index, 'form.type': TYPE_OPTIONS[index].value }, () => this.refreshEditorInsights());
   },
   onDifficultyChange(e) {
     const index = Number(e.detail.value) || 0;
-    this.setData({ difficultyIndex: index, 'form.difficulty': DIFFICULTY_OPTIONS[index].value });
+    this.setData({ difficultyIndex: index, 'form.difficulty': DIFFICULTY_OPTIONS[index].value }, () => this.refreshEditorInsights());
   },
   onStatusChange(e) {
     const index = Number(e.detail.value) || 0;
-    this.setData({ statusIndex: index, 'form.status': STATUS_OPTIONS[index].value });
+    this.setData({ statusIndex: index, 'form.status': STATUS_OPTIONS[index].value }, () => this.refreshEditorInsights());
   },
   onReviewChange(e) {
     const index = Number(e.detail.value) || 0;
-    this.setData({ reviewIndex: index, 'form.reviewStatus': REVIEW_OPTIONS[index].value });
+    this.setData({ reviewIndex: index, 'form.reviewStatus': REVIEW_OPTIONS[index].value }, () => this.refreshEditorInsights());
+  },
+  scrollToField(e) {
+    const { selector } = e.currentTarget.dataset;
+    if (!selector) return;
+    wx.pageScrollTo({ selector, duration: 280 });
+  },
+  goTaskCenter() {
+    wx.navigateTo({ url: '/pages/task-center/index' });
+  },
+  goImport() {
+    const importMeta = this.data.importMeta || {};
+    const url = importMeta.taskId ? `/pages/import/index?taskId=${encodeURIComponent(importMeta.taskId)}` : '/pages/import/index';
+    wx.navigateTo({ url });
   },
   async handleSave() {
     const { form } = this.data;

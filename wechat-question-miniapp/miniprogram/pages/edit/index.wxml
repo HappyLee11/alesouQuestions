@@ -1,4 +1,4 @@
-<view class="container page-shell">
+<view class="container page-shell page-edit">
   <view class="hero-card">
     <view class="eyebrow">Editor</view>
     <view class="hero-title">{{isEdit ? '编辑题目' : '新增题目'}}</view>
@@ -33,6 +33,42 @@
       </view>
     </view>
 
+    <view class="glass-card editor-insight-card">
+      <view class="section-header">
+        <view>
+          <view class="section-title">风险下钻 / 立即修复</view>
+          <view class="section-caption">把风险项压到编辑页内解决：看见问题、点一下、直接跳到对应字段修。</view>
+        </view>
+        <text class="toolbar-note">{{editorSummaryText}}</text>
+      </view>
+
+      <view class="field-block" wx:if="{{editorBlockers.length}}">
+        <view class="field-label">当前关键阻塞</view>
+        <view class="error-text" wx:for="{{editorBlockers}}" wx:key="*this">- {{item}}</view>
+      </view>
+
+      <view class="panel-grid large-gap" wx:if="{{acceptanceItems.length}}">
+        <view class="panel-card" wx:for="{{acceptanceItems}}" wx:key="key">
+          <view class="panel-title">{{item.title}}</view>
+          <view class="kpi-value">{{item.valueText}}</view>
+          <view class="panel-desc">{{item.passed ? '当前已满足要求' : '建议优先补齐这一项'}}</view>
+        </view>
+      </view>
+
+      <view class="quick-fix-list" wx:if="{{editorQuickCards.length}}">
+        <view class="quick-fix-card tone-{{item.tone}}" wx:for="{{editorQuickCards}}" wx:key="key">
+          <view class="quick-fix-title">{{item.title}}</view>
+          <view class="quick-fix-desc">{{item.desc}}</view>
+          <button size="mini" class="secondary-btn" data-selector="{{item.selector}}" bindtap="scrollToField">{{item.cta}}</button>
+        </view>
+      </view>
+
+      <view class="btn-row btn-row-tight">
+        <button class="secondary-btn" bindtap="goTaskCenter">回任务中心</button>
+        <button wx:if="{{importMeta}}" bindtap="goImport">回导入页</button>
+      </view>
+    </view>
+
     <view class="glass-card" wx:if="{{admin}}">
       <view class="section-header">
         <view>
@@ -57,13 +93,13 @@
         <text class="meta-pill meta-pill-light">位置：{{importMeta.sheetName || '--'}} / row {{importMeta.rowNumber || '--'}}</text>
       </view>
 
-      <view class="field-label field-gap">标题</view>
+      <view id="field-title" class="field-label field-gap">标题</view>
       <input class="input" data-field="title" value="{{form.title}}" bindinput="onFieldInput" placeholder="例如：HTTP 404 表示什么？" />
 
       <view class="field-label field-gap">标题变体（逗号分隔）</view>
       <input class="input" data-field="titleVariantsText" value="{{form.titleVariantsText}}" bindinput="onFieldInput" placeholder="HTTP 404 表示什么, 资源不存在状态码" />
 
-      <view class="field-label field-gap">题干</view>
+      <view id="field-content" class="field-label field-gap">题干</view>
       <textarea class="textarea" data-field="content" value="{{form.content}}" bindinput="onFieldInput" placeholder="请输入完整题干"></textarea>
 
       <view class="field-label field-gap">题型</view>
@@ -74,10 +110,10 @@
       <view class="field-label field-gap">选项（每行一个，问答题可留空）</view>
       <textarea class="textarea" data-field="optionsText" value="{{form.optionsText}}" bindinput="onFieldInput" placeholder="A. ...&#10;B. ..."></textarea>
 
-      <view class="field-label field-gap">答案</view>
+      <view id="field-answer" class="field-label field-gap">答案</view>
       <input class="input" data-field="answer" value="{{form.answer}}" bindinput="onFieldInput" placeholder="请输入标准答案" />
 
-      <view class="field-label field-gap">答案摘要（列表/搜索结果优先展示）</view>
+      <view id="field-answer-summary" class="field-label field-gap">答案摘要（列表/搜索结果优先展示）</view>
       <input class="input" data-field="answerSummary" value="{{form.answerSummary}}" bindinput="onFieldInput" placeholder="例如：核心原因是内存存储、低延迟、高吞吐。" />
 
       <view class="field-label field-gap">解析</view>
@@ -150,34 +186,34 @@
           <input class="input" data-field="externalId" value="{{form.externalId}}" bindinput="onFieldInput" placeholder="例如：bank-a-0001" />
         </view>
         <view>
-          <view class="field-label field-gap">来源引用</view>
+          <view id="field-source-ref" class="field-label field-gap">来源引用</view>
           <input class="input" data-field="sourceRef" value="{{form.sourceRef}}" bindinput="onFieldInput" placeholder="例如：sheet://2026-q1/单选题/2" />
         </view>
       </view>
 
       <view class="grid-2">
         <view>
-          <view class="field-label field-gap">负责人</view>
+          <view id="field-owner" class="field-label field-gap">负责人</view>
           <input class="input" data-field="owner" value="{{form.owner}}" bindinput="onFieldInput" placeholder="内容运营 A" />
         </view>
         <view>
-          <view class="field-label field-gap">归属团队</view>
+          <view id="field-owner-team" class="field-label field-gap">归属团队</view>
           <input class="input" data-field="ownerTeam" value="{{form.ownerTeam}}" bindinput="onFieldInput" placeholder="教研组 / 内容运营" />
         </view>
       </view>
 
       <view class="grid-2">
         <view>
-          <view class="field-label field-gap">审核人</view>
+          <view id="field-reviewer" class="field-label field-gap">审核人</view>
           <input class="input" data-field="reviewer" value="{{form.reviewer}}" bindinput="onFieldInput" placeholder="审核员姓名" />
         </view>
         <view>
-          <view class="field-label field-gap">变更原因</view>
+          <view id="field-change-reason" class="field-label field-gap">变更原因</view>
           <input class="input" data-field="changeReason" value="{{form.changeReason}}" bindinput="onFieldInput" placeholder="例如：修正答案摘要 / 审核通过" />
         </view>
       </view>
 
-      <view class="field-label field-gap">审核备注</view>
+      <view id="field-review-comment" class="field-label field-gap">审核备注</view>
       <textarea class="textarea" data-field="reviewComment" value="{{form.reviewComment}}" bindinput="onFieldInput" placeholder="记录审核意见、驳回原因或上线说明"></textarea>
 
       <view class="field-label field-gap">关联题 ID（逗号分隔）</view>

@@ -1,1 +1,51 @@
 /* edit page */
+
+.page-edit {
+  padding-bottom: 40rpx;
+}
+
+.editor-insight-card {
+  margin-top: 22rpx;
+}
+
+.quick-fix-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.quick-fix-card {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #dbe7fb;
+}
+
+.quick-fix-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.quick-fix-desc {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  line-height: 1.66;
+  color: #475569;
+}
+
+.quick-fix-card button {
+  margin-top: 18rpx;
+}
+
+.tone-danger {
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.tone-warning {
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.tone-neutral {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+}
