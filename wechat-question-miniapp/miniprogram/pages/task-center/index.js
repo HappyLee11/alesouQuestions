@@ -54,6 +54,12 @@ Page({
     taskSourceLabel: '加载中',
     auditSourceLabel: '加载中'
   },
+  onLoad(options = {}) {
+    this.entryFilters = {
+      queueFilter: options.queueFilter || '',
+      importTaskFilter: options.importTaskFilter || ''
+    };
+  },
   async onShow() {
     this.loadCachedTasks();
     await this.bootstrap();
@@ -119,6 +125,7 @@ Page({
         this.loadOverview(),
         this.loadReviewQueue()
       ]);
+      this.applyEntryFilters();
     } catch (error) {
       wx.showToast({ title: '任务中心加载失败', icon: 'none' });
     } finally {
@@ -294,6 +301,17 @@ Page({
       importTaskSummaryText: this.buildImportTaskSummary(activeImportTaskFilter, displayImportTasks.length)
     });
     if (shouldUpdateFocusCards) this.updateFocusCards();
+  },
+  applyEntryFilters() {
+    const entryFilters = this.entryFilters || {};
+    const nextQueueFilter = entryFilters.queueFilter || this.data.activeQueueFilter || 'all';
+    const nextImportTaskFilter = entryFilters.importTaskFilter || this.data.activeImportTaskFilter || 'all';
+    this.setData({
+      activeQueueFilter: nextQueueFilter,
+      activeImportTaskFilter: nextImportTaskFilter
+    });
+    this.applyQueueFilter();
+    this.updateImportTaskState(this.data.recentImportTasks);
   },
   onTapQueueFilter(e) {
     this.setData({ activeQueueFilter: e.currentTarget.dataset.value || 'all' });

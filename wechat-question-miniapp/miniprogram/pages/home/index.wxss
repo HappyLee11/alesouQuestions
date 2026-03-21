@@ -64,6 +64,60 @@
   margin-bottom: 0;
 }
 
+.admin-task-badges {
+  margin-top: 16rpx;
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.todo-card {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #dbe7fb;
+}
+
+.todo-card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.todo-card-desc {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  line-height: 1.66;
+  color: #475569;
+}
+
+.todo-card button {
+  margin-top: 18rpx;
+}
+
+.tone-primary {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.tone-warning {
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.tone-success {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.tone-danger {
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.tone-neutral {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+}
+
 .admin-action-row button {
   min-width: 200rpx;
 }

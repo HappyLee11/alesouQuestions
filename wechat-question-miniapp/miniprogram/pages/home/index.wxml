@@ -40,7 +40,23 @@
       <view class="panel-card panel-accent admin-task-highlight" wx:if="{{recentImportTask}}">
         <view class="panel-title">最近导入任务</view>
         <view class="panel-desc">{{recentImportTask.taskName || recentImportTask.batchId || '未命名任务'}}</view>
-        <view class="panel-desc">批次：{{recentImportTask.batchId || '--'}} ｜ 状态：{{recentImportTask.taskStatus || '--'}}</view>
+        <view class="panel-desc">批次：{{recentImportTask.batchId || '--'}} ｜ 状态：{{recentImportTask.taskStatusText || '--'}}</view>
+        <view class="meta-row wrap-row small-gap admin-task-badges">
+          <text class="soft-badge">{{recentImportTask.riskText}}</text>
+          <text class="soft-badge" wx:if="{{recentImportTask.resumable}}">可恢复继续处理</text>
+        </view>
+        <view class="btn-row btn-row-tight">
+          <button size="mini" class="secondary-btn" bindtap="continueRecentImportTask">继续这批任务</button>
+          <button size="mini" bindtap="goImportWarnings" wx:if="{{recentImportTask.invalid || recentImportTask.warnings}}">查看风险</button>
+        </view>
+      </view>
+
+      <view class="todo-list" wx:if="{{todoCards.length}}">
+        <view class="todo-card tone-{{item.tone}}" wx:for="{{todoCards}}" wx:key="key">
+          <view class="todo-card-title">{{item.title}}</view>
+          <view class="todo-card-desc">{{item.desc}}</view>
+          <button size="mini" class="secondary-btn" data-action="{{item.action}}" bindtap="handleTodoAction">{{item.cta}}</button>
+        </view>
       </view>
 
       <view class="btn-row admin-action-row">
