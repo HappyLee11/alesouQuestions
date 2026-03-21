@@ -1,4 +1,35 @@
 /* admin page */
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 22rpx;
+}
+
+.alert-card {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
+  border: 1rpx solid #dbe7fb;
+}
+
+.alert-card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.alert-card-desc {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  line-height: 1.66;
+  color: #475569;
+}
+
+.alert-card button {
+  margin-top: 18rpx;
+}
+
 .permission-group {
   margin-top: 24rpx;
   padding-top: 24rpx;

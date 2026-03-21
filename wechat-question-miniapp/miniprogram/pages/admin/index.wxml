@@ -67,6 +67,32 @@
     <view class="metric-card"><view class="metric-value">{{stats.deleted}}</view><view class="metric-label">回收站</view></view>
   </view>
 
+  <view class="glass-card" wx:if="{{isAdmin && (riskAlerts.length || acceptanceItems.length)}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">后台值守提醒 / 收口快照</view>
+        <view class="section-caption">把最需要处理的风险和当前验收状态压成一屏，方便管理员先做关键动作。</view>
+      </view>
+      <text class="toolbar-note">{{acceptanceSummaryText}}</text>
+    </view>
+
+    <view class="alert-list" wx:if="{{riskAlerts.length}}">
+      <view class="alert-card" wx:for="{{riskAlerts}}" wx:key="key">
+        <view class="alert-card-title">{{item.title}}</view>
+        <view class="alert-card-desc">{{item.desc}}</view>
+        <button size="mini" class="secondary-btn" data-action="{{item.action}}" data-receipt-id="{{item.receiptId}}" bindtap="handleAlertAction">{{item.cta}}</button>
+      </view>
+    </view>
+
+    <view class="panel-grid large-gap" wx:if="{{acceptanceItems.length}}">
+      <view class="panel-card" wx:for="{{acceptanceItems}}" wx:key="key">
+        <view class="panel-title">{{item.title}}</view>
+        <view class="kpi-value">{{item.valueText}}</view>
+        <view class="panel-desc">{{item.passed ? '当前满足收口要求' : '建议优先处理这一项'}} </view>
+      </view>
+    </view>
+  </view>
+
   <view class="glass-card" wx:if="{{isAdmin && permissionGroups.length}}">
     <view class="section-header">
       <view>

@@ -37,6 +37,9 @@ Page({
       '审计日志与角色能力概览'
     ],
     recentImportTasks: [],
+    riskAlerts: [],
+    acceptanceItems: [],
+    acceptanceSummaryText: '正在生成后台收口提示。',
     taskSourceLabel: '本地缓存'
   },
   async onShow() {
@@ -68,6 +71,125 @@ Page({
       timeText: item.createdAt ? formatTime(item.createdAt) : '--'
     }));
     this.setData({ recentImportTasks, taskSourceLabel: recentImportTasks.length ? '本地缓存' : '暂无任务' });
+    this.updateAdminInsights();
+  },
+  getLatestImportTask(predicate) {
+    return (this.data.recentImportTasks || []).find((item) => predicate(item)) || null;
+  },
+  buildRiskAlerts() {
+    const { stats, recentImportTasks, recentAuditLogs } = this.data;
+    const alerts = [];
+    const latestInvalidTask = this.getLatestImportTask((item) => Number(item.invalid || 0) > 0);
+    const latestWarningTask = this.getLatestImportTask((item) => Number(item.invalid || 0) === 0 && Number(item.warnings || 0) > 0);
+    const latestResumableTask = this.getLatestImportTask((item) => !!item.resumable);
+
+    if (stats.pending) {
+      alerts.push({
+        key: 'pending',
+        title: '待审核题目仍有积压',
+        desc: `后台当前还有 ${stats.pending} 条待审核题目，建议先去任务中心处理。`,
+        cta: '去审核',
+        action: 'pending'
+      });
+    }
+    if (latestInvalidTask) {
+      alerts.push({
+        key: 'invalid-import',
+        title: '最近导入任务仍有错误',
+        desc: `${latestInvalidTask.taskName || latestInvalidTask.batchId || '最近任务'} 还剩 ${latestInvalidTask.invalid} 条错误记录。`,
+        cta: latestInvalidTask.resumable ? '继续修正' : '查看风险',
+        action: latestInvalidTask.resumable ? 'continueImport' : 'importWarning',
+        receiptId: latestInvalidTask.localReceiptId || ''
+      });
+    } else if (latestResumableTask) {
+      alerts.push({
+        key: 'resumable-import',
+        title: '最近导入任务可继续处理',
+        desc: `${latestResumableTask.taskName || latestResumableTask.batchId || '最近任务'} 可以直接恢复到当前暂存区。`,
+        cta: '继续处理',
+        action: 'continueImport',
+        receiptId: latestResumableTask.localReceiptId || ''
+      });
+    } else if (latestWarningTask) {
+      alerts.push({
+        key: 'warning-import',
+        title: '最近导入任务仍带预警',
+        desc: `${latestWarningTask.taskName || latestWarningTask.batchId || '最近任务'} 还有 ${latestWarningTask.warnings} 条预警。`,
+        cta: '查看预警',
+        action: 'importWarning'
+      });
+    }
+    if (!recentAuditLogs.length) {
+      alerts.push({
+        key: 'audit',
+        title: '最近缺少审计轨迹',
+        desc: '后台首页目前看不到最近操作日志，验收讲闭环时会偏弱。',
+        cta: '去任务中心',
+        action: 'taskCenter'
+      });
+    }
+    return alerts.slice(0, 3);
+  },
+  buildAcceptanceState() {
+    const { stats, recentImportTasks, recentAuditLogs } = this.data;
+    const invalidTaskCount = (recentImportTasks || []).filter((item) => Number(item.invalid || 0) > 0).length;
+    const warningTaskCount = (recentImportTasks || []).filter((item) => Number(item.invalid || 0) === 0 && Number(item.warnings || 0) > 0).length;
+    const acceptanceItems = [
+      {
+        key: 'pending',
+        title: '待审核队列',
+        passed: stats.pending === 0,
+        valueText: stats.pending === 0 ? '已清零' : `${stats.pending} 条待处理`
+      },
+      {
+        key: 'import-invalid',
+        title: '导入错误',
+        passed: invalidTaskCount === 0,
+        valueText: invalidTaskCount === 0 ? '无硬阻塞' : `${invalidTaskCount} 条任务有错误`
+      },
+      {
+        key: 'import-warning',
+        title: '导入预警',
+        passed: warningTaskCount === 0,
+        valueText: warningTaskCount === 0 ? '风险可控' : `${warningTaskCount} 条任务预警`
+      },
+      {
+        key: 'audit',
+        title: '审计轨迹',
+        passed: recentAuditLogs.length > 0,
+        valueText: recentAuditLogs.length ? `${recentAuditLogs.length} 条日志` : '暂无日志'
+      }
+    ];
+    const passedCount = acceptanceItems.filter((item) => item.passed).length;
+    return {
+      acceptanceItems,
+      acceptanceSummaryText: passedCount === acceptanceItems.length
+        ? '后台首页当前已满足主要收口条件，可继续做最终演示。'
+        : `后台首页收口项已完成 ${passedCount}/${acceptanceItems.length}，建议优先处理未通过项。`
+    };
+  },
+  updateAdminInsights() {
+    const acceptanceState = this.buildAcceptanceState();
+    this.setData({
+      riskAlerts: this.buildRiskAlerts(),
+      acceptanceItems: acceptanceState.acceptanceItems,
+      acceptanceSummaryText: acceptanceState.acceptanceSummaryText
+    });
+  },
+  navigateTaskCenter(params = {}) {
+    const query = Object.keys(params)
+      .filter((key) => params[key])
+      .map((key) => `${key}=${encodeURIComponent(params[key])}`)
+      .join('&');
+    wx.navigateTo({ url: `/pages/task-center/index${query ? `?${query}` : ''}` });
+  },
+  handleAlertAction(e) {
+    const { action, receiptId } = e.currentTarget.dataset;
+    if (action === 'pending') return this.navigateTaskCenter({ queueFilter: 'pending' });
+    if (action === 'importWarning') return this.navigateTaskCenter({ importTaskFilter: 'warning' });
+    if (action === 'continueImport') return this.continueImportTask({ currentTarget: { dataset: { receiptId } } });
+    if (action === 'taskCenter') return this.goTaskCenter();
+    return null;
   },
   async checkAccess() {
     this.setData({ checking: true });
@@ -112,11 +234,13 @@ Page({
         recentAuditLogs,
         taskSourceLabel: recentImportTasks.length ? '云端 import_tasks' : this.data.taskSourceLabel
       });
+      this.updateAdminInsights();
     } catch (error) {
       this.setData({
         permissionGroups: this.groupPermissions(((baseInfo.admin || this.data.admin) && (baseInfo.admin || this.data.admin).permissions) || []),
         taskSourceLabel: this.data.recentImportTasks.length ? '本地缓存（云端概览不可用）' : '云端概览不可用'
       });
+      this.updateAdminInsights();
     }
   },
   async loadStats() {
@@ -142,6 +266,7 @@ Page({
         rejected: items.filter((item) => item.reviewStatus === 'rejected').length
       }
     });
+    this.updateAdminInsights();
   },
   onTapModule(e) {
     const { action } = e.currentTarget.dataset;
