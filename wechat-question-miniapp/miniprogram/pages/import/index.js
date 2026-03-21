@@ -382,7 +382,11 @@ Page({
       success: false,
       resultSummary: null,
       updatedAtText: '--'
-    }
+    },
+    lastRunMode: '',
+    closureChecklist: [],
+    closureSummaryText: '请先完成预检，形成当前批次的收口建议。',
+    closureActions: []
   },
   onLoad(options = {}) {
     this.loadRecentTasks();
@@ -430,6 +434,7 @@ Page({
       text: preset.example,
       importResult: null,
       resultSummary: null,
+      lastRunMode: '',
       restoredReceiptLabel: '',
       previewState: {
         statusText: '尚未预检',
@@ -466,6 +471,7 @@ Page({
       importReason: '上传后首日初始化演示题库',
       importResult: null,
       resultSummary: null,
+      lastRunMode: '',
       restoredReceiptLabel: '',
       previewState: {
         statusText: '已填入演示样例，建议先预检',
@@ -489,6 +495,21 @@ Page({
   },
   copyAdminSeed() {
     wx.setClipboardData({ data: buildAdminSeedText(this.data.openid) });
+  },
+  navigateTaskCenter(params = {}) {
+    const query = Object.keys(params)
+      .filter((key) => params[key])
+      .map((key) => `${key}=${encodeURIComponent(params[key])}`)
+      .join('&');
+    wx.navigateTo({ url: `/pages/task-center/index${query ? `?${query}` : ''}` });
+  },
+  handleClosureAction(e) {
+    const action = e.currentTarget.dataset.action;
+    if (action === 'pending-queue') return this.navigateTaskCenter({ queueFilter: 'pending' });
+    if (action === 'import-warning') return this.navigateTaskCenter({ importTaskFilter: 'warning' });
+    if (action === 'task-center') return this.navigateTaskCenter();
+    if (action === 'admin') return this.goAdmin();
+    return null;
   },
   goAdmin() {
     wx.navigateTo({ url: '/pages/admin/index' });
@@ -566,6 +587,9 @@ Page({
   },
   resetPreviewState() {
     this.setData({
+      importResult: null,
+      resultSummary: null,
+      lastRunMode: '',
       previewState: {
         statusText: '暂存内容已变化，需重新预检',
         batchMatched: false,
@@ -583,6 +607,7 @@ Page({
       timeText: item.createdAt ? formatTime(item.createdAt) : '--'
     }));
     this.setData({ recentTasks });
+    this.updateClosureState(this.data.readiness, this.data.previewState);
   },
   restoreRecentTask(receiptId, showToast = true) {
     const receipt = getReceiptById(receiptId);
@@ -678,6 +703,120 @@ Page({
       resultSummary: previewState && previewState.resultSummary
     });
     this.setData({ readiness });
+    this.updateClosureState(readiness, previewState);
+  },
+  buildClosureState(readiness = this.data.readiness, previewState = this.data.previewState) {
+    const resultSummary = this.data.resultSummary || {};
+    const lastRunMode = this.data.lastRunMode || '';
+    const importFinished = lastRunMode === 'import' && this.data.importResult && this.data.importResult.success;
+    const hasReceipt = Array.isArray(this.data.recentTasks) && this.data.recentTasks.length > 0;
+    const needsReviewFollowUp = importFinished && (
+      this.data.reviewOptions[this.data.reviewIndex].value === 'pending'
+      || this.data.statusOptions[this.data.statusIndex].value === 'review'
+    );
+    const checklist = [
+      {
+        key: 'preview',
+        title: '当前暂存版本已完成预检',
+        passed: !!(previewState && previewState.success && previewState.batchMatched),
+        valueText: previewState && previewState.success && previewState.batchMatched ? '已通过' : (previewState && previewState.updatedAtText ? `上次预检 ${previewState.updatedAtText}` : '尚未预检'),
+        desc: previewState && previewState.success && previewState.batchMatched
+          ? '当前暂存版本与最近一次预检签名一致，可继续执行导入。'
+          : '只要暂存内容、批次或治理默认值变化，就需要重新预检。',
+        action: 'import'
+      },
+      {
+        key: 'blockers',
+        title: '当前批次没有阻塞错误',
+        passed: !!(readiness && !readiness.blockers.length),
+        valueText: readiness && readiness.blockers.length ? `${readiness.blockers.length} 个阻塞项` : '可导入',
+        desc: readiness && readiness.blockers.length
+          ? '请先清掉必填字段、重复标题或云端预检错误，再继续收口。'
+          : '当前批次的硬阻塞已清空。',
+        action: 'import-warning'
+      },
+      {
+        key: 'receipt',
+        title: '最近操作已形成任务回执',
+        passed: hasReceipt,
+        valueText: hasReceipt ? `${this.data.recentTasks.length} 条本地回执` : '暂无回执',
+        desc: hasReceipt
+          ? '可从本地回执恢复到当前暂存区，方便继续演示导入闭环。'
+          : '建议至少完成一次预检，形成可恢复的任务回执。',
+        action: 'task-center'
+      },
+      {
+        key: 'import',
+        title: '正式导入已执行',
+        passed: !!importFinished,
+        valueText: importFinished
+          ? `新增 ${this.data.importResult.data && this.data.importResult.data.inserted ? this.data.importResult.data.inserted : 0} / 更新 ${this.data.importResult.data && this.data.importResult.data.updated ? this.data.importResult.data.updated : 0}`
+          : '当前仍停留在预检阶段',
+        desc: importFinished
+          ? '这批数据已经真正写入题库，下一步建议回到工作台做收口验证。'
+          : '预检通过后别停在这里，还要完成一次正式导入才算闭环。',
+        action: importFinished && needsReviewFollowUp ? 'pending-queue' : 'task-center'
+      }
+    ];
+
+    let summaryText = '请先完成预检，形成当前批次的收口建议。';
+    if (readiness && readiness.blockers.length) {
+      summaryText = `当前批次还有 ${readiness.blockers.length} 个阻塞项，建议先修正再继续。`;
+    } else if (previewState && previewState.success && previewState.batchMatched && !importFinished) {
+      summaryText = '当前暂存版本预检已通过，下一步就是正式导入并回到任务中心验收。';
+    } else if (importFinished && Number(resultSummary.invalid || 0) === 0 && Number(resultSummary.warnings || 0) === 0) {
+      summaryText = needsReviewFollowUp
+        ? '导入已完成且当前批次健康，建议马上去任务中心处理后续审核队列。'
+        : '导入已完成且当前批次健康，可回后台总览做最终验收。';
+    } else if (importFinished) {
+      summaryText = '导入已完成，但仍建议回任务中心确认风险提示、审计轨迹和后续审核待办。';
+    }
+
+    const closureActions = [];
+    if (readiness && readiness.blockers.length) {
+      closureActions.push({
+        key: 'import-warning',
+        title: '去任务中心看风险任务',
+        desc: '直接查看带错误 / 预警的导入任务。',
+        action: 'import-warning'
+      });
+    }
+    if (importFinished && needsReviewFollowUp) {
+      closureActions.push({
+        key: 'pending-queue',
+        title: '去任务中心看待审核',
+        desc: '当前默认审核态仍需后续复核，适合继续收口。',
+        action: 'pending-queue'
+      });
+    }
+    if (importFinished) {
+      closureActions.push({
+        key: 'task-center',
+        title: '回任务中心验收',
+        desc: '检查导入任务、审计轨迹和待处理队列。',
+        action: 'task-center'
+      });
+    }
+    closureActions.push({
+      key: 'admin',
+      title: '回后台总览',
+      desc: '用后台首页串起角色、导入任务和日志闭环。',
+      action: 'admin'
+    });
+
+    return {
+      checklist,
+      summaryText,
+      actions: closureActions.slice(0, 3)
+    };
+  },
+  updateClosureState(readiness = this.data.readiness, previewState = this.data.previewState) {
+    const closureState = this.buildClosureState(readiness, previewState);
+    this.setData({
+      closureChecklist: closureState.checklist,
+      closureSummaryText: closureState.summaryText,
+      closureActions: closureState.actions
+    });
   },
   updatePreview(text, presetKey) {
     try {
@@ -896,6 +1035,7 @@ Page({
       this.setData({
         importResult: result,
         resultSummary,
+        lastRunMode: 'preview',
         previewState: {
           statusText: success ? (resultSummary.invalid ? '预检未通过' : '预检通过，可执行导入') : '预检失败',
           batchMatched: true,
@@ -930,7 +1070,8 @@ Page({
       }
       this.setData({ loading: true });
       const result = await api.importQuestions(undefined, this.buildImportPayload());
-      this.setData({ importResult: result, resultSummary: summarizeResult(result) });
+      this.setData({ importResult: result, resultSummary: summarizeResult(result), lastRunMode: 'import' });
+      this.updateClosureState(this.data.readiness, this.data.previewState);
       this.saveRecentTask(this.buildReceipt('import', result));
       wx.showToast({ title: '导入已完成', icon: 'success' });
     } catch (error) {

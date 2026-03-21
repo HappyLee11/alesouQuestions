@@ -9,6 +9,54 @@
   gap: 18rpx;
 }
 
+.acceptance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.acceptance-item {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #dbe7fb;
+}
+
+.acceptance-item-pass {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef7ff 100%);
+}
+
+.acceptance-item-pending {
+  background: linear-gradient(180deg, #fffaf2 0%, #fff2dd 100%);
+}
+
+.acceptance-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
+.acceptance-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+}
+
+.acceptance-item-title {
+  flex: 1;
+}
+
+.closure-action-card {
+  width: 100%;
+}
+
+.closure-action-btn {
+  margin-top: 18rpx;
+}
+
 .btn-row button {
   flex: 1 1 100%;
 }

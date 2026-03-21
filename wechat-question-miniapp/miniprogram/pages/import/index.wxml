@@ -290,6 +290,37 @@
       </view>
     </view>
 
+    <view class="glass-card" wx:if="{{closureChecklist.length}}">
+      <view class="section-header">
+        <view>
+          <view class="section-title">导入闭环 / 验收建议</view>
+          <view class="section-caption">把预检、正式导入、回执和后续审核动作串成一套可讲清楚的收口路径。</view>
+        </view>
+        <text class="toolbar-note">{{closureSummaryText}}</text>
+      </view>
+
+      <view class="acceptance-list">
+        <view class="acceptance-item {{item.passed ? 'acceptance-item-pass' : 'acceptance-item-pending'}}" wx:for="{{closureChecklist}}" wx:key="key">
+          <view class="acceptance-item-top">
+            <view class="acceptance-item-title-row">
+              <text class="status-dot {{item.passed ? '' : 'status-dot-warning'}}"></text>
+              <view class="feature-title acceptance-item-title">{{item.title}}</view>
+            </view>
+            <text class="meta-pill {{item.passed ? '' : 'meta-pill-light'}}">{{item.valueText}}</text>
+          </view>
+          <view class="feature-desc">{{item.desc}}</view>
+        </view>
+      </view>
+
+      <view class="panel-grid small-gap" wx:if="{{closureActions.length}}">
+        <view class="panel-card closure-action-card" wx:for="{{closureActions}}" wx:key="key">
+          <view class="panel-title">{{item.title}}</view>
+          <view class="panel-desc">{{item.desc}}</view>
+          <button size="mini" class="secondary-btn closure-action-btn" data-action="{{item.action}}" bindtap="handleClosureAction">立即前往</button>
+        </view>
+      </view>
+    </view>
+
     <view class="card" wx:if="{{recentTasks.length}}">
       <view class="section-header">
         <view>
