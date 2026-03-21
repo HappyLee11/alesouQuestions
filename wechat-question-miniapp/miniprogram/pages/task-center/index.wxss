@@ -1,1 +1,82 @@
 /* task center page */
+
+.page-task-center {
+  padding-bottom: 40rpx;
+}
+
+.task-center-hero {
+  padding-bottom: 34rpx;
+}
+
+.quick-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-top: 24rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.quick-nav-item {
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 22rpx;
+}
+
+.workbench-next-action {
+  margin-top: 18rpx;
+}
+
+.focus-grid {
+  margin-bottom: 24rpx;
+}
+
+.focus-card {
+  min-height: 196rpx;
+}
+
+.tone-primary {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.tone-warning {
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.tone-success {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.tone-danger {
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.tone-neutral {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+}
+
+.queue-card,
+.import-task-card,
+.audit-card {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
+  border: 1rpx solid #dbe7fb;
+}
+
+.import-stat-row,
+.import-risk-row {
+  margin-top: 18rpx;
+}
+
+.import-summary-note {
+  margin-top: 14rpx;
+}
+
+@media (min-width: 768px) {
+  .focus-card {
+    min-height: 180rpx;
+  }
+}
