@@ -29,12 +29,100 @@
   margin-top: 18rpx;
 }
 
+.insight-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.insight-card {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #dbe7fb;
+}
+
+.insight-btn,
+.acceptance-btn {
+  margin-top: 18rpx;
+}
+
+.task-center-todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.todo-card {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #dbe7fb;
+}
+
+.todo-card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.todo-card-desc {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  line-height: 1.66;
+  color: #475569;
+}
+
+.todo-card button {
+  margin-top: 18rpx;
+}
+
 .focus-grid {
   margin-bottom: 24rpx;
 }
 
 .focus-card {
   min-height: 196rpx;
+}
+
+.acceptance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.acceptance-item {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #dbe7fb;
+}
+
+.acceptance-item-pass {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef7ff 100%);
+}
+
+.acceptance-item-pending {
+  background: linear-gradient(180deg, #fffaf2 0%, #fff2dd 100%);
+}
+
+.acceptance-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
+.acceptance-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+}
+
+.acceptance-item-title {
+  flex: 1;
 }
 
 .tone-primary {

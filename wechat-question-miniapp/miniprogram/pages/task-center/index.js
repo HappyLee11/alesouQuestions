@@ -48,9 +48,14 @@ Page({
       total: 0,
       resumable: 0,
       warnings: 0,
+      invalid: 0,
       imported: 0
     },
     focusCards: [],
+    todoCards: [],
+    riskAlerts: [],
+    acceptanceChecklist: [],
+    acceptanceSummaryText: '正在生成验收收口建议。',
     taskSourceLabel: '加载中',
     auditSourceLabel: '加载中'
   },
@@ -153,12 +158,13 @@ Page({
         auditSourceLabel: recentAuditLogs.length ? '云端 audit_logs' : '暂无审计日志'
       });
       this.updateImportTaskState(mergedTasks, false);
+      this.updateWorkbenchInsights();
     } catch (error) {
       this.setData({
         taskSourceLabel: this.data.recentImportTasks.length ? '本地缓存（云端概览不可用）' : '云端概览不可用',
         auditSourceLabel: '云端概览不可用'
       });
-      this.updateFocusCards();
+      this.updateWorkbenchInsights();
     }
   },
   async loadReviewQueue() {
@@ -199,7 +205,7 @@ Page({
       }
     });
     this.applyQueueFilter();
-    this.updateFocusCards();
+    this.updateWorkbenchInsights();
   },
   getQueueBucket(item = {}) {
     if (item.reviewStatus === 'pending') return 'pending';
@@ -217,7 +223,7 @@ Page({
       reviewQueue: filtered,
       queueSummaryText: this.buildQueueSummary(activeQueueFilter, filtered.length)
     });
-    this.updateFocusCards();
+    this.updateWorkbenchInsights();
   },
   buildQueueSummary(filter = 'all', count = 0) {
     const base = {
@@ -242,43 +248,275 @@ Page({
     if (queueStats.pending) {
       return `当前最优先动作：先处理 ${queueStats.pending} 条待审核题目，再回头看导入任务。`;
     }
+    if (importTaskStats.invalid) {
+      return `当前最优先动作：最近有 ${importTaskStats.invalid} 条导入任务仍含错误记录，建议先回到导入页修正。`;
+    }
     if (importTaskStats.resumable) {
       return `当前最优先动作：有 ${importTaskStats.resumable} 条导入任务可继续处理，适合直接回到导入页完成闭环。`;
     }
     if (queueStats.rejected) {
       return `当前最优先动作：修订 ${queueStats.rejected} 条已驳回题目，推动它们重新进入审核流。`;
     }
+    if (importTaskStats.warnings) {
+      return `当前最优先动作：最近仍有 ${importTaskStats.warnings} 条导入任务带预警，建议补齐治理字段后再验收。`;
+    }
     return '当前没有明显阻塞项，可继续回顾最近导入任务和审计轨迹。';
   },
-  updateFocusCards() {
+  getLatestImportTask(predicate) {
+    return (this.data.recentImportTasks || []).find((item) => predicate(item)) || null;
+  },
+  buildTodoCards() {
+    const { queueStats, canEdit, canApprove, canReject, canPublish } = this.data;
+    const latestResumableTask = this.getLatestImportTask((item) => item.resumable);
+    const latestInvalidTask = this.getLatestImportTask((item) => item.invalid > 0);
+    const latestWarningTask = this.getLatestImportTask((item) => item.invalid === 0 && item.warnings > 0);
+    const canExecuteQueue = canEdit || canApprove || canReject || canPublish;
+    const cards = [];
+
+    if (queueStats.pending && canExecuteQueue) {
+      cards.push({
+        key: 'pending',
+        title: '先清待审核题目',
+        desc: `当前还有 ${queueStats.pending} 条待审核题目，适合作为今天的第一优先级。`,
+        cta: '去审核',
+        action: 'queue-pending',
+        tone: 'primary'
+      });
+    }
+
+    if (latestInvalidTask) {
+      cards.push({
+        key: 'import-invalid',
+        title: '修正导入硬阻塞',
+        desc: `${latestInvalidTask.taskName || latestInvalidTask.batchId || '最近任务'} 仍有 ${latestInvalidTask.invalid} 条错误记录。`,
+        cta: latestInvalidTask.resumable ? '回导入页修正' : '查看风险',
+        action: latestInvalidTask.resumable ? 'continue-import' : 'import-warning',
+        receiptId: latestInvalidTask.localReceiptId || '',
+        tone: 'danger'
+      });
+    } else if (latestResumableTask) {
+      cards.push({
+        key: 'resume-import',
+        title: '继续导入闭环',
+        desc: `${latestResumableTask.taskName || latestResumableTask.batchId || '最近任务'} 可直接恢复到暂存区继续处理。`,
+        cta: '继续处理',
+        action: 'continue-import',
+        receiptId: latestResumableTask.localReceiptId || '',
+        tone: 'success'
+      });
+    }
+
+    if (queueStats.rejected && canEdit) {
+      cards.push({
+        key: 'rejected',
+        title: '回看已驳回题目',
+        desc: `当前还有 ${queueStats.rejected} 条驳回项待修订，建议尽快回流。`,
+        cta: '去修订',
+        action: 'queue-rejected',
+        tone: 'warning'
+      });
+    }
+
+    if (!latestInvalidTask && latestWarningTask) {
+      cards.push({
+        key: 'import-warning',
+        title: '消化导入预警',
+        desc: `${latestWarningTask.taskName || latestWarningTask.batchId || '最近任务'} 仍带 ${latestWarningTask.warnings} 条预警。`,
+        cta: '查看预警',
+        action: 'import-warning',
+        tone: 'warning'
+      });
+    }
+
+    if (!cards.length) {
+      cards.push({
+        key: 'overview',
+        title: '进入日常巡检模式',
+        desc: '当前没有明显阻塞，可继续回顾最近导入任务、审计轨迹和已发布内容。',
+        cta: '看后台总览',
+        action: 'admin',
+        tone: 'neutral'
+      });
+    }
+
+    return cards.slice(0, 4);
+  },
+  buildRiskAlerts() {
+    const { queueStats, importTaskStats, recentAuditLogs, canApprove, canReject, canPublish, canEdit } = this.data;
+    const alerts = [];
+
+    if (queueStats.pending) {
+      alerts.push({
+        key: 'pending-backlog',
+        title: '审核队列仍有积压',
+        desc: `待审核 ${queueStats.pending} 条，若不先处理会直接影响验收节奏。`,
+        tone: 'danger',
+        cta: '去审核',
+        action: 'queue-pending'
+      });
+    }
+
+    if (importTaskStats.invalid) {
+      alerts.push({
+        key: 'import-invalid',
+        title: '导入链路存在硬阻塞',
+        desc: `最近 ${importTaskStats.invalid} 条导入任务含错误记录，当前不适合直接验收收口。`,
+        tone: 'danger',
+        cta: '看风险',
+        action: 'import-warning'
+      });
+    }
+
+    if (queueStats.rejected) {
+      alerts.push({
+        key: 'rejected-loop',
+        title: '驳回项尚未回流',
+        desc: `还有 ${queueStats.rejected} 条题目停留在驳回态，需继续修订后回到审核流。`,
+        tone: 'warning',
+        cta: '去修订',
+        action: 'queue-rejected'
+      });
+    }
+
+    if (!recentAuditLogs.length) {
+      alerts.push({
+        key: 'audit-missing',
+        title: '最近缺少审计轨迹',
+        desc: '当前看不到最近操作日志，讲治理闭环时可追溯性会偏弱。',
+        tone: 'warning',
+        cta: '看后台总览',
+        action: 'admin'
+      });
+    }
+
+    if (!canEdit && !canApprove && !canReject && !canPublish) {
+      alerts.push({
+        key: 'permission-limited',
+        title: '当前角色偏只读',
+        desc: '你能看到任务中心，但缺少题目维护或审核动作权限，现场处理会受限。',
+        tone: 'neutral',
+        cta: '看权限',
+        action: 'admin'
+      });
+    }
+
+    if (!alerts.length) {
+      alerts.push({
+        key: 'healthy',
+        title: '当前风险可控',
+        desc: '审核、导入与审计轨迹都没有明显阻塞，适合进入最终验收收口。',
+        tone: 'success',
+        cta: '继续巡检',
+        action: 'queue-all'
+      });
+    }
+
+    return alerts.slice(0, 4);
+  },
+  buildAcceptanceState() {
+    const { queueStats, importTaskStats, recentAuditLogs, canEdit, canApprove, canReject, canPublish } = this.data;
+    const hasExecutionPermission = canEdit || canApprove || canReject || canPublish;
+    const checklist = [
+      {
+        key: 'pending',
+        title: '待审核题目已清零',
+        passed: queueStats.pending === 0,
+        valueText: queueStats.pending === 0 ? '已清零' : `剩余 ${queueStats.pending} 条`,
+        desc: queueStats.pending === 0 ? '审核入口没有堆积，可继续下一步收口。' : '建议先处理待审核队列，再做最终验收。',
+        action: 'queue-pending'
+      },
+      {
+        key: 'rejected',
+        title: '驳回项已回流',
+        passed: queueStats.rejected === 0,
+        valueText: queueStats.rejected === 0 ? '无滞留项' : `剩余 ${queueStats.rejected} 条`,
+        desc: queueStats.rejected === 0 ? '没有停留在返工态的内容。' : '仍有驳回项待修订，验收口径会被拉长。',
+        action: 'queue-rejected'
+      },
+      {
+        key: 'import-invalid',
+        title: '导入任务无错误记录',
+        passed: importTaskStats.invalid === 0,
+        valueText: importTaskStats.invalid === 0 ? '已通过' : `${importTaskStats.invalid} 条任务有错误`,
+        desc: importTaskStats.invalid === 0 ? '最近导入任务没有硬阻塞，可继续闭环。' : '请先修正错误记录，避免把脏数据带进正式验收。',
+        action: 'import-warning'
+      },
+      {
+        key: 'import-warning',
+        title: '导入预警已收敛',
+        passed: importTaskStats.warnings === 0,
+        valueText: importTaskStats.warnings === 0 ? '预警可控' : `${importTaskStats.warnings} 条任务仍预警`,
+        desc: importTaskStats.warnings === 0 ? '治理字段与映射风险已经收敛。' : '建议继续补齐治理默认值和映射说明。',
+        action: 'import-warning'
+      },
+      {
+        key: 'audit',
+        title: '最近操作可追溯',
+        passed: recentAuditLogs.length > 0,
+        valueText: recentAuditLogs.length ? `${recentAuditLogs.length} 条日志` : '暂无日志',
+        desc: recentAuditLogs.length ? '当前可以用审计轨迹说明责任链和闭环。' : '建议补充可追溯的操作记录后再做正式演示。',
+        action: 'admin'
+      },
+      {
+        key: 'permission',
+        title: '当前角色具备执行权限',
+        passed: hasExecutionPermission,
+        valueText: hasExecutionPermission ? '可执行处理动作' : '仅查看',
+        desc: hasExecutionPermission ? '当前账号可以直接完成题目维护或审核动作。' : '建议切换具备题目维护 / 审核权限的账号。',
+        action: 'admin'
+      }
+    ];
+    const passedCount = checklist.filter((item) => item.passed).length;
+    const total = checklist.length;
+    const summaryText = passedCount === total
+      ? '当前工作台已满足主要验收条件，可直接进入最终演示或上线前收口。'
+      : `当前验收项已完成 ${passedCount}/${total}，建议按卡片提示优先处理未通过项。`;
+
+    return {
+      checklist,
+      summaryText
+    };
+  },
+  updateWorkbenchInsights() {
     const { queueStats, importTaskStats } = this.data;
+    const focusCards = [
+      {
+        title: '待审核题目',
+        value: queueStats.pending,
+        desc: queueStats.pending ? '建议优先进入审核队列' : '当前没有待审核堆积',
+        tone: queueStats.pending ? 'primary' : 'neutral'
+      },
+      {
+        title: '已驳回待修订',
+        value: queueStats.rejected,
+        desc: queueStats.rejected ? '适合继续回到编辑页修订' : '当前没有被驳回项',
+        tone: queueStats.rejected ? 'warning' : 'neutral'
+      },
+      {
+        title: '可继续导入任务',
+        value: importTaskStats.resumable,
+        desc: importTaskStats.resumable ? '可从任务中心直接续跑导入流程' : '当前没有可恢复回执',
+        tone: importTaskStats.resumable ? 'success' : 'neutral'
+      },
+      {
+        title: '导入风险任务',
+        value: importTaskStats.invalid || importTaskStats.warnings,
+        desc: importTaskStats.invalid
+          ? '存在含错误记录的导入任务'
+          : importTaskStats.warnings
+            ? '仍有仅预警任务待排查'
+            : '当前导入任务整体健康',
+        tone: importTaskStats.invalid ? 'danger' : importTaskStats.warnings ? 'warning' : 'neutral'
+      }
+    ];
+    const acceptanceState = this.buildAcceptanceState();
+
     this.setData({
-      focusCards: [
-        {
-          title: '待审核题目',
-          value: queueStats.pending,
-          desc: queueStats.pending ? '建议优先进入审核队列' : '当前没有待审核堆积',
-          tone: queueStats.pending ? 'primary' : 'neutral'
-        },
-        {
-          title: '已驳回待修订',
-          value: queueStats.rejected,
-          desc: queueStats.rejected ? '适合继续回到编辑页修订' : '当前没有被驳回项',
-          tone: queueStats.rejected ? 'warning' : 'neutral'
-        },
-        {
-          title: '可继续导入任务',
-          value: importTaskStats.resumable,
-          desc: importTaskStats.resumable ? '可从任务中心直接续跑导入流程' : '当前没有可恢复回执',
-          tone: importTaskStats.resumable ? 'success' : 'neutral'
-        },
-        {
-          title: '有预警的任务',
-          value: importTaskStats.warnings,
-          desc: importTaskStats.warnings ? '建议先修正文档或映射配置' : '当前任务整体健康',
-          tone: importTaskStats.warnings ? 'danger' : 'neutral'
-        }
-      ],
+      focusCards,
+      todoCards: this.buildTodoCards(),
+      riskAlerts: this.buildRiskAlerts(),
+      acceptanceChecklist: acceptanceState.checklist,
+      acceptanceSummaryText: acceptanceState.summaryText,
       nextActionText: this.buildNextActionText()
     });
   },
@@ -295,12 +533,13 @@ Page({
       importTaskStats: {
         total: list.length,
         resumable: list.filter((item) => item.resumable).length,
-        warnings: list.filter((item) => item.invalid > 0 || item.warnings > 0).length,
+        warnings: list.filter((item) => item.invalid === 0 && item.warnings > 0).length,
+        invalid: list.filter((item) => item.invalid > 0).length,
         imported: list.filter((item) => item.mode === 'import').length
       },
       importTaskSummaryText: this.buildImportTaskSummary(activeImportTaskFilter, displayImportTasks.length)
     });
-    if (shouldUpdateFocusCards) this.updateFocusCards();
+    if (shouldUpdateFocusCards) this.updateWorkbenchInsights();
   },
   applyEntryFilters() {
     const entryFilters = this.entryFilters || {};
@@ -381,6 +620,35 @@ Page({
       reviewComment: '任务中心快捷发布',
       changeReason: 'quick publish from task center'
     }), '已发布');
+  },
+  handleInsightAction(e) {
+    const { action, receiptId } = e.currentTarget.dataset;
+    if (action === 'queue-pending') {
+      this.setData({ activeQueueFilter: 'pending' });
+      return this.applyQueueFilter();
+    }
+    if (action === 'queue-rejected') {
+      this.setData({ activeQueueFilter: 'rejected' });
+      return this.applyQueueFilter();
+    }
+    if (action === 'queue-all') {
+      this.setData({ activeQueueFilter: 'all' });
+      return this.applyQueueFilter();
+    }
+    if (action === 'import-warning') {
+      this.setData({ activeImportTaskFilter: 'warning' });
+      return this.updateImportTaskState(this.data.recentImportTasks);
+    }
+    if (action === 'continue-import') {
+      if (receiptId) {
+        return this.continueImportTask({ currentTarget: { dataset: { receiptId } } });
+      }
+      return this.continueLatestImportTask();
+    }
+    if (action === 'admin') {
+      return wx.navigateTo({ url: '/pages/admin/index' });
+    }
+    return null;
   },
   goImport() {
     wx.navigateTo({ url: '/pages/import/index' });

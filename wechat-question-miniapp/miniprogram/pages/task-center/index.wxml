@@ -32,11 +32,60 @@
     <view wx:else class="subtitle">当前账号不是管理员，无法查看任务中心。</view>
   </view>
 
+  <view class="glass-card" wx:if="{{isAdmin && (riskAlerts.length || todoCards.length)}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">风险雷达 / 待办直达</view>
+        <view class="section-caption">先看最值得处理的阻塞项，再一键跳到对应队列或导入任务。</view>
+      </view>
+    </view>
+
+    <view class="insight-grid" wx:if="{{riskAlerts.length}}">
+      <view class="insight-card tone-{{item.tone}}" wx:for="{{riskAlerts}}" wx:key="key">
+        <view class="panel-title">{{item.title}}</view>
+        <view class="panel-desc">{{item.desc}}</view>
+        <button size="mini" class="secondary-btn insight-btn" data-action="{{item.action}}" data-receipt-id="{{item.receiptId}}" bindtap="handleInsightAction">{{item.cta}}</button>
+      </view>
+    </view>
+
+    <view class="todo-list task-center-todo-list" wx:if="{{todoCards.length}}">
+      <view class="todo-card tone-{{item.tone}}" wx:for="{{todoCards}}" wx:key="key">
+        <view class="todo-card-title">{{item.title}}</view>
+        <view class="todo-card-desc">{{item.desc}}</view>
+        <button size="mini" class="secondary-btn" data-action="{{item.action}}" data-receipt-id="{{item.receiptId}}" bindtap="handleInsightAction">{{item.cta}}</button>
+      </view>
+    </view>
+  </view>
+
   <view class="panel-grid focus-grid" wx:if="{{isAdmin && focusCards.length}}">
     <view class="panel-card focus-card tone-{{item.tone}}" wx:for="{{focusCards}}" wx:key="title">
       <view class="panel-title">{{item.title}}</view>
       <view class="kpi-value">{{item.value}}</view>
       <view class="panel-desc">{{item.desc}}</view>
+    </view>
+  </view>
+
+  <view class="glass-card" wx:if="{{isAdmin && acceptanceChecklist.length}}">
+    <view class="section-header">
+      <view>
+        <view class="section-title">验收收口清单</view>
+        <view class="section-caption">把审核、导入、权限和审计轨迹放到同一张清单里，方便说明“这版是否已经能收口”。</view>
+      </view>
+      <text class="toolbar-note">{{acceptanceSummaryText}}</text>
+    </view>
+
+    <view class="acceptance-list">
+      <view class="acceptance-item {{item.passed ? 'acceptance-item-pass' : 'acceptance-item-pending'}}" wx:for="{{acceptanceChecklist}}" wx:key="key">
+        <view class="acceptance-item-top">
+          <view class="acceptance-item-title-row">
+            <text class="status-dot {{item.passed ? '' : 'status-dot-warning'}}"></text>
+            <view class="feature-title acceptance-item-title">{{item.title}}</view>
+          </view>
+          <text class="meta-pill {{item.passed ? '' : 'meta-pill-light'}}">{{item.valueText}}</text>
+        </view>
+        <view class="feature-desc">{{item.desc}}</view>
+        <button wx:if="{{!item.passed}}" size="mini" class="secondary-btn acceptance-btn" data-action="{{item.action}}" bindtap="handleInsightAction">去处理</button>
+      </view>
     </view>
   </view>
 
@@ -86,7 +135,8 @@
     <view class="meta-row wrap-row large-gap import-stat-row">
       <text class="meta-pill meta-pill-light">总任务 {{importTaskStats.total}}</text>
       <text class="meta-pill meta-pill-light">可继续 {{importTaskStats.resumable}}</text>
-      <text class="meta-pill meta-pill-light">有预警 {{importTaskStats.warnings}}</text>
+      <text class="meta-pill meta-pill-light">有错误 {{importTaskStats.invalid}}</text>
+      <text class="meta-pill meta-pill-light">仅预警 {{importTaskStats.warnings}}</text>
       <text class="meta-pill meta-pill-light">已导入 {{importTaskStats.imported}}</text>
     </view>
     <view class="tag-row small-gap">
