@@ -124,6 +124,7 @@
     <view class="empty-tip-list" wx:if="{{emptyState.tips && emptyState.tips.length}}">
       <view class="empty-tip-item" wx:for="{{emptyState.tips}}" wx:key="index">• {{item}}</view>
     </view>
+    <view class="empty-suggestion-title" wx:if="{{emptyState.suggestions.length}}">你也可以试试这些词</view>
     <view class="tag-row small-gap" wx:if="{{emptyState.suggestions.length}}">
       <text class="tag tag-clickable" wx:for="{{emptyState.suggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>

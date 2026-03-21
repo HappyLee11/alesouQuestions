@@ -1,14 +1,35 @@
 /* page styles inherit app.wxss */
 
+.wrap-row {
+  flex-wrap: wrap;
+}
+
+.page-search {
+  padding-bottom: 40rpx;
+}
+
+.search-hero {
+  padding-bottom: 32rpx;
+}
+
 .search-hero-bar {
   margin-top: 28rpx;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 18rpx;
 }
 
 .search-hero-input {
   flex: 1;
+  min-width: 0;
   background: rgba(255, 255, 255, 0.96);
   color: #111827;
+}
+
+.search-btn {
+  min-width: 168rpx;
+  height: 84rpx;
+  font-size: 30rpx;
 }
 
 .hero-chip {
@@ -22,6 +43,15 @@
   font-size: 22rpx;
 }
 
+.search-summary-card,
+.search-section-card {
+  margin-bottom: 22rpx;
+}
+
+.search-section-header {
+  align-items: flex-start;
+}
+
 .filter-label {
   font-size: 24rpx;
   color: #6b7280;
@@ -31,6 +61,11 @@
 
 .result-meta-row {
   margin-top: 18rpx;
+}
+
+.search-result-card {
+  padding: 24rpx;
+  border-radius: 24rpx;
 }
 
 .answer-preview {
@@ -44,24 +79,88 @@
   margin-top: 16rpx;
 }
 
+.result-footer {
+  margin-top: 16rpx;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.inline-tags {
+  flex: 1 1 100%;
+}
+
+.footer-note {
+  display: block;
+}
+
 .inline-link {
   display: inline-block;
 }
 
 .toolbar-note-warn {
   color: #b45309;
+  padding: 14rpx 18rpx;
+  border-radius: 18rpx;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.pager-btn-row {
+  gap: 14rpx;
+}
+
+.pager-btn {
+  flex: 1;
+  min-width: 0;
+  height: 76rpx;
 }
 
 .empty-card-strong {
   text-align: left;
 }
 
+.search-empty-card {
+  padding: 34rpx 28rpx;
+}
+
+.empty-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.empty-title {
+  margin-top: 18rpx;
+}
+
+.empty-desc {
+  color: #4b5563;
+}
+
 .empty-tip-list {
   margin: 18rpx 0;
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
+  background: #f8fbff;
+  border: 1rpx solid #dbe7fb;
 }
 
 .empty-tip-item {
   font-size: 24rpx;
   line-height: 1.7;
   color: #6b7280;
+}
+
+.empty-tip-item + .empty-tip-item {
+  margin-top: 8rpx;
+}
+
+.empty-suggestion-title {
+  margin-top: 18rpx;
+  font-size: 24rpx;
+  color: #64748b;
 }
