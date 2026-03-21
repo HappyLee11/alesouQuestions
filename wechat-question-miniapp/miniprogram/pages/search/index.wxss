@@ -47,3 +47,21 @@
 .inline-link {
   display: inline-block;
 }
+
+.toolbar-note-warn {
+  color: #b45309;
+}
+
+.empty-card-strong {
+  text-align: left;
+}
+
+.empty-tip-list {
+  margin: 18rpx 0;
+}
+
+.empty-tip-item {
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #6b7280;
+}

@@ -29,6 +29,7 @@
       <text class="meta-pill meta-pill-light">数据来源：{{resultMeta.sourceLabel}}</text>
       <text class="meta-pill meta-pill-light">第 {{resultMeta.page}} / {{resultMeta.totalPages}} 页</text>
     </view>
+    <view class="toolbar-note small-gap toolbar-note-warn" wx:if="{{sourceNotice}}">{{sourceNotice}}</view>
     <view class="toolbar-note small-gap" wx:if="{{activeFilterText !== '未启用筛选'}}">当前筛选：{{activeFilterText}}</view>
     <view class="tag-row small-gap" wx:if="{{topSuggestions.length}}">
       <text class="tag tag-clickable" wx:for="{{topSuggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
@@ -117,11 +118,14 @@
     </view>
   </view>
 
-  <view wx:if="{{!displayList.length}}" class="card empty">
-    <view class="title-small">暂无匹配结果</view>
-    <view class="subtitle small-gap">试试更短的关键词，或者点这些相关词继续搜索。</view>
-    <view class="tag-row small-gap" wx:if="{{resultMeta.suggestions.length}}">
-      <text class="tag tag-clickable" wx:for="{{resultMeta.suggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
+  <view wx:if="{{!displayList.length}}" class="card empty empty-card-strong">
+    <view class="title-small">{{emptyState.title}}</view>
+    <view class="subtitle small-gap">{{emptyState.description}}</view>
+    <view class="empty-tip-list" wx:if="{{emptyState.tips && emptyState.tips.length}}">
+      <view class="empty-tip-item" wx:for="{{emptyState.tips}}" wx:key="index">• {{item}}</view>
+    </view>
+    <view class="tag-row small-gap" wx:if="{{emptyState.suggestions.length}}">
+      <text class="tag tag-clickable" wx:for="{{emptyState.suggestions}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
     </view>
   </view>
 </view>

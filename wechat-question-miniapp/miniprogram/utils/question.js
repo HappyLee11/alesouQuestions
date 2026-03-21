@@ -32,29 +32,7 @@ function normalizeSearchParams(input) {
   };
 }
 
-async function searchQuestions(params) {
-  const payload = normalizeSearchParams(params);
-  const result = await callFunction('searchQuestions', payload);
-  if (result && !result.__mockFallback && result.success) {
-    const data = result.data || {};
-    return {
-      items: data.items || [],
-      total: data.total || 0,
-      page: data.page || 1,
-      pageSize: data.pageSize || payload.pageSize,
-      totalPages: data.totalPages || 1,
-      sortBy: data.sortBy || payload.sortBy,
-      keyword: data.keyword || payload.keyword,
-      summary: data.summary || {},
-      facets: data.facets || {},
-      suggestions: data.suggestions || [],
-      pagination: data.pagination || {},
-      request: data.request || {},
-      searchMode: data.searchMode || payload.searchMode,
-      from: 'cloud'
-    };
-  }
-
+function buildMockSearchResult(payload, extra = {}) {
   const fallback = mock.search(payload);
   return {
     items: fallback.items || [],
@@ -70,14 +48,78 @@ async function searchQuestions(params) {
     pagination: fallback.pagination || {},
     request: fallback.request || {},
     searchMode: payload.searchMode,
-    from: 'builtin'
+    from: 'builtin',
+    fallbackReason: extra.fallbackReason || '',
+    cloudSummary: extra.cloudSummary || null,
+    cloudMeta: extra.cloudMeta || null
   };
+}
+
+function isCloudDatasetEmpty(data = {}) {
+  const summary = data.summary || {};
+  const totalInSummary = ['published', 'draft', 'review', 'deleted']
+    .reduce((sum, key) => sum + (Number(summary[key]) || 0), 0);
+  const itemCount = Number(data.total) || 0;
+  return itemCount === 0 && totalInSummary === 0;
+}
+
+async function searchQuestions(params) {
+  const payload = normalizeSearchParams(params);
+  const result = await callFunction('searchQuestions', payload);
+  if (result && !result.__mockFallback && result.success) {
+    const data = result.data || {};
+    if (isCloudDatasetEmpty(data)) {
+      return buildMockSearchResult(payload, {
+        fallbackReason: 'cloud-empty',
+        cloudSummary: data.summary || {},
+        cloudMeta: {
+          total: data.total || 0,
+          request: data.request || {},
+          suggestions: data.suggestions || []
+        }
+      });
+    }
+
+    return {
+      items: data.items || [],
+      total: data.total || 0,
+      page: data.page || 1,
+      pageSize: data.pageSize || payload.pageSize,
+      totalPages: data.totalPages || 1,
+      sortBy: data.sortBy || payload.sortBy,
+      keyword: data.keyword || payload.keyword,
+      summary: data.summary || {},
+      facets: data.facets || {},
+      suggestions: data.suggestions || [],
+      pagination: data.pagination || {},
+      request: data.request || {},
+      searchMode: data.searchMode || payload.searchMode,
+      from: 'cloud',
+      fallbackReason: ''
+    };
+  }
+
+  return buildMockSearchResult(payload, { fallbackReason: 'cloud-unavailable' });
 }
 
 async function getQuestionDetail(id, options = {}) {
   const result = await callFunction('getQuestionDetail', { id, includeDeleted: !!options.includeDeleted });
   if (result && !result.__mockFallback && result.success) {
-    return result.data || null;
+    if (result.data) {
+      return {
+        ...result.data,
+        from: 'cloud'
+      };
+    }
+    const fallbackDetail = mock.getById(id, options);
+    if (fallbackDetail) {
+      return {
+        ...fallbackDetail,
+        from: 'builtin',
+        fallbackReason: 'cloud-empty-or-miss'
+      };
+    }
+    return null;
   }
   return mock.getById(id, options);
 }

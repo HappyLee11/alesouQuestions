@@ -18,6 +18,49 @@ function facetToChips(list = [], allLabel = '全部') {
   })));
 }
 
+function buildEmptyState(result = {}, keyword = '') {
+  const suggestions = result.suggestions || [];
+  if (result.fallbackReason === 'cloud-empty') {
+    return {
+      title: keyword ? '云端题库还是空的，先用演示题库帮你搜' : '云端题库还是空的',
+      description: keyword
+        ? '当前云数据库还没有导入题目，所以这次结果来自内置演示题库。先验证搜索体验没问题，导入正式题库后会自动切回云端。'
+        : '当前云数据库还没有导入题目，页面已自动切到内置演示题库，避免看起来像坏掉了一样。导入正式题库后会自动使用云端结果。',
+      tips: [
+        '可先用下方热门词体验搜索流程',
+        '导入题目后，这里会自动切回云端题库',
+        '若你在做首轮验收，当前表现属于正常兜底'
+      ],
+      suggestions
+    };
+  }
+
+  if (result.from === 'builtin') {
+    return {
+      title: keyword ? '内置题库里也没搜到' : '先输入关键词开始搜索',
+      description: keyword
+        ? '当前使用的是内置题库。可以换个更短的关键词，或者点推荐词继续试。'
+        : '可以输入题目关键词、题干片段或知识点开始搜索。',
+      tips: [
+        '试试更短的关键词',
+        '可直接点下方推荐词继续搜索'
+      ],
+      suggestions
+    };
+  }
+
+  return {
+    title: keyword ? '暂无匹配结果' : '先输入关键词开始搜索',
+    description: keyword
+      ? '云端题库里暂时没找到匹配项。试试更短的关键词，或者点这些相关词继续搜索。'
+      : '可以输入题目关键词、题干片段或知识点开始搜索。',
+    tips: keyword
+      ? ['试试更短的关键词', '检查是否有错别字', '也可以点推荐词继续搜索']
+      : ['支持题干片段、知识点和标签词'],
+    suggestions
+  };
+}
+
 Page({
   data: {
     keyword: '',
@@ -50,11 +93,14 @@ Page({
       totalPages: 1,
       hasMore: false,
       hasPrev: false,
-      request: {}
+      request: {},
+      fallbackReason: ''
     },
     activeFilterText: '未启用筛选',
     expandMap: {},
-    topSuggestions: []
+    topSuggestions: [],
+    sourceNotice: '',
+    emptyState: buildEmptyState({}, '')
   },
   onLoad(options = {}) {
     this.loadHistory();
@@ -97,8 +143,17 @@ Page({
     if (currentFilters.tag) parts.push(`标签：${currentFilters.tag}`);
     return parts.length ? parts.join(' · ') : '未启用筛选';
   },
+  getSourceNotice(result = {}) {
+    if (result.fallbackReason === 'cloud-empty') {
+      return '云端题库暂无数据，当前已自动切换到内置演示题库。';
+    }
+    if (result.from === 'builtin') {
+      return '当前未连上云端，已使用内置题库兜底。';
+    }
+    return '';
+  },
   applyLocalFilters() {
-    const { list, currentFilters, keyword } = this.data;
+    const { list, currentFilters, keyword, resultMeta } = this.data;
     const filtered = (list || []).filter((item) => {
       if (currentFilters.subject && item.subject !== currentFilters.subject) return false;
       if (currentFilters.difficulty && item.difficulty !== currentFilters.difficulty) return false;
@@ -110,7 +165,8 @@ Page({
     this.setData({
       displayList: filtered,
       activeFilterText: this.getActiveFilterText(),
-      topSuggestions: (this.data.resultMeta.suggestions || []).slice(0, 6)
+      topSuggestions: (resultMeta.suggestions || []).slice(0, 6),
+      emptyState: buildEmptyState(resultMeta, keyword)
     });
   },
   async handleSearch(options = {}) {
@@ -129,19 +185,23 @@ Page({
       });
       const list = (result.items || []).filter((item) => item.status !== 'deleted');
       const pagination = result.pagination || {};
+      const resultMeta = {
+        total: result.total || list.length,
+        from: result.from || 'cloud',
+        sourceLabel: result.fallbackReason === 'cloud-empty'
+          ? '内置题库（云端为空）'
+          : (result.from || 'cloud') === 'cloud' ? '云端题库' : '内置题库',
+        suggestions: result.suggestions || [],
+        page: pagination.page || targetPage,
+        totalPages: pagination.totalPages || result.totalPages || 1,
+        hasMore: !!pagination.hasMore,
+        hasPrev: !!pagination.hasPrev,
+        request: result.request || {},
+        fallbackReason: result.fallbackReason || ''
+      };
       this.setData({
         list,
-        resultMeta: {
-          total: result.total || list.length,
-          from: result.from || 'cloud',
-          sourceLabel: (result.from || 'cloud') === 'cloud' ? '云端题库' : '内置题库',
-          suggestions: result.suggestions || [],
-          page: pagination.page || targetPage,
-          totalPages: pagination.totalPages || result.totalPages || 1,
-          hasMore: !!pagination.hasMore,
-          hasPrev: !!pagination.hasPrev,
-          request: result.request || {}
-        },
+        resultMeta,
         filterOptions: {
           subject: facetToChips(result.facets && result.facets.subject, '全部学科'),
           difficulty: facetToChips(result.facets && result.facets.difficulty, '全部难度'),
@@ -150,7 +210,9 @@ Page({
         },
         currentFilters: { subject: '', difficulty: '', type: '', tag: '' },
         expandMap: {},
-        topSuggestions: (result.suggestions || []).slice(0, 6)
+        topSuggestions: (result.suggestions || []).slice(0, 6),
+        sourceNotice: this.getSourceNotice(resultMeta),
+        emptyState: buildEmptyState(resultMeta, keyword)
       });
       this.applyLocalFilters();
       if (keyword) this.saveHistory(keyword);
