@@ -17,6 +17,13 @@ const IMPORT_TASK_FILTERS = [
   { label: '已导入', value: 'import' }
 ];
 
+const AUDIT_FILTERS = [
+  { label: '全部日志', value: 'all' },
+  { label: '导入相关', value: 'import' },
+  { label: '审核发布', value: 'review' },
+  { label: '题目变更', value: 'question' }
+];
+
 Page({
   data: {
     checking: true,
@@ -25,6 +32,7 @@ Page({
     recentImportTasks: [],
     displayImportTasks: [],
     recentAuditLogs: [],
+    displayAuditLogs: [],
     reviewQueue: [],
     allReviewQueue: [],
     queueFilters: QUEUE_FILTERS,
@@ -33,6 +41,9 @@ Page({
     importTaskFilters: IMPORT_TASK_FILTERS,
     activeImportTaskFilter: 'all',
     importTaskSummaryText: '最近导入任务会聚合本地缓存与云端任务概览。',
+    auditFilters: AUDIT_FILTERS,
+    activeAuditFilter: 'all',
+    auditSummaryText: '最近审计轨迹会串起导入任务、审核动作与题目维护。',
     nextActionText: '正在加载任务中心概览。',
     canEdit: false,
     canApprove: false,
@@ -100,6 +111,44 @@ Page({
     if (item.mode === 'import') return 'import';
     return 'all';
   },
+  getAuditBucket(item = {}) {
+    const action = String(item.action || '').toLowerCase();
+    const entityType = String(item.entityType || '').toLowerCase();
+    if (/import/.test(action) || /import/.test(entityType) || /task/.test(entityType)) return 'import';
+    if (/review|approve|reject|publish/.test(action)) return 'review';
+    return 'question';
+  },
+  findAuditTaskMatch(item = {}, tasks = this.data.recentImportTasks || []) {
+    const candidates = [
+      item.taskId,
+      item.batchId,
+      item.entityId,
+      item.entityTitle,
+      item.summary
+    ].filter(Boolean).map((value) => String(value));
+    return (tasks || []).find((task) => {
+      const taskValues = [task.taskId, task.batchId, task.taskName].filter(Boolean).map((value) => String(value));
+      return candidates.some((candidate) => taskValues.some((taskValue) => candidate.includes(taskValue) || taskValue.includes(candidate)));
+    }) || null;
+  },
+  normalizeAuditLog(item = {}, tasks = this.data.recentImportTasks || []) {
+    const matchedTask = this.findAuditTaskMatch(item, tasks);
+    const auditBucket = this.getAuditBucket(item);
+    const isQuestionEntity = /question/.test(String(item.entityType || '').toLowerCase());
+    return {
+      ...item,
+      timeText: item.timeText || (item.createdAt ? formatTime(item.createdAt) : '--'),
+      auditBucket,
+      matchedTaskLabel: matchedTask ? (matchedTask.taskName || matchedTask.batchId || matchedTask.taskId || '--') : '',
+      matchedTaskReceiptId: matchedTask ? (matchedTask.localReceiptId || '') : '',
+      actionLabel: matchedTask
+        ? (matchedTask.localReceiptId ? '继续导入' : '查看导入任务')
+        : (isQuestionEntity ? '去编辑页' : auditBucket === 'review' ? '看审核队列' : '回任务中心'),
+      actionTarget: matchedTask
+        ? (matchedTask.localReceiptId ? 'continue-import' : 'filter-import')
+        : (isQuestionEntity ? 'edit-question' : auditBucket === 'review' ? 'queue-pending' : 'queue-all')
+    };
+  },
   loadCachedTasks() {
     const recentImportTasks = loadLocalReceipts(8).map((item) => this.normalizeImportTask(item));
     this.setData({
@@ -145,11 +194,11 @@ Page({
         timeText: item.updatedAt ? formatTime(item.updatedAt) : '--',
         statusLabel: item.mode === 'preview' ? '已预检' : '已导入'
       })));
-      const recentAuditLogs = (overview.recentAuditLogs || []).map((item) => ({
+      const mergedTasks = recentImportTasks.length ? recentImportTasks : this.data.recentImportTasks;
+      const recentAuditLogs = (overview.recentAuditLogs || []).map((item) => this.normalizeAuditLog({
         ...item,
         timeText: item.createdAt ? formatTime(item.createdAt) : '--'
-      }));
-      const mergedTasks = recentImportTasks.length ? recentImportTasks : this.data.recentImportTasks;
+      }, mergedTasks));
       this.setData({
         admin: overview.admin || this.data.admin,
         recentImportTasks: mergedTasks,
@@ -158,12 +207,14 @@ Page({
         auditSourceLabel: recentAuditLogs.length ? '云端 audit_logs' : '暂无审计日志'
       });
       this.updateImportTaskState(mergedTasks, false);
+      this.updateAuditLogState(recentAuditLogs, false);
       this.updateWorkbenchInsights();
     } catch (error) {
       this.setData({
         taskSourceLabel: this.data.recentImportTasks.length ? '本地缓存（云端概览不可用）' : '云端概览不可用',
         auditSourceLabel: '云端概览不可用'
       });
+      this.updateAuditLogState(this.data.recentAuditLogs, false);
       this.updateWorkbenchInsights();
     }
   },
@@ -241,6 +292,15 @@ Page({
       warning: '集中查看仍有错误或预警的任务，方便继续修正字段映射与治理默认值。',
       import: '聚焦已经导入完成的任务，可快速回顾批次与产出。'
     }[filter] || '按筛选查看最近导入任务。';
+    return `${base} 当前展示 ${count} 条。`;
+  },
+  buildAuditSummary(filter = 'all', count = 0) {
+    const base = {
+      all: '把导入、审核、题目维护日志放在一起，适合讲完整责任链。',
+      import: '聚焦导入预检、导入执行和任务回执，可直接回到具体任务。',
+      review: '聚焦审核通过、驳回、发布动作，适合说明审核闭环。',
+      question: '聚焦题目编辑、维护与归档等内容变更日志。'
+    }[filter] || '按筛选查看最近审计轨迹。';
     return `${base} 当前展示 ${count} 条。`;
   },
   buildNextActionText() {
@@ -541,16 +601,33 @@ Page({
     });
     if (shouldUpdateFocusCards) this.updateWorkbenchInsights();
   },
+  updateAuditLogState(logs = this.data.recentAuditLogs, shouldUpdateInsights = true) {
+    const list = (logs || []).map((item) => this.normalizeAuditLog(item, this.data.recentImportTasks));
+    const activeAuditFilter = this.data.activeAuditFilter || 'all';
+    const displayAuditLogs = list.filter((item) => {
+      if (activeAuditFilter === 'all') return true;
+      return item.auditBucket === activeAuditFilter;
+    });
+    this.setData({
+      recentAuditLogs: list,
+      displayAuditLogs,
+      auditSummaryText: this.buildAuditSummary(activeAuditFilter, displayAuditLogs.length)
+    });
+    if (shouldUpdateInsights) this.updateWorkbenchInsights();
+  },
   applyEntryFilters() {
     const entryFilters = this.entryFilters || {};
     const nextQueueFilter = entryFilters.queueFilter || this.data.activeQueueFilter || 'all';
     const nextImportTaskFilter = entryFilters.importTaskFilter || this.data.activeImportTaskFilter || 'all';
+    const nextAuditFilter = entryFilters.auditFilter || this.data.activeAuditFilter || 'all';
     this.setData({
       activeQueueFilter: nextQueueFilter,
-      activeImportTaskFilter: nextImportTaskFilter
+      activeImportTaskFilter: nextImportTaskFilter,
+      activeAuditFilter: nextAuditFilter
     });
     this.applyQueueFilter();
     this.updateImportTaskState(this.data.recentImportTasks);
+    this.updateAuditLogState(this.data.recentAuditLogs);
   },
   onTapQueueFilter(e) {
     this.setData({ activeQueueFilter: e.currentTarget.dataset.value || 'all' });
@@ -559,6 +636,10 @@ Page({
   onTapImportTaskFilter(e) {
     this.setData({ activeImportTaskFilter: e.currentTarget.dataset.value || 'all' });
     this.updateImportTaskState(this.data.recentImportTasks);
+  },
+  onTapAuditFilter(e) {
+    this.setData({ activeAuditFilter: e.currentTarget.dataset.value || 'all' });
+    this.updateAuditLogState(this.data.recentAuditLogs);
   },
   formatReview(value) {
     return { approved: '审核通过', pending: '待审核', rejected: '已驳回' }[value] || '未设置';
@@ -639,11 +720,21 @@ Page({
       this.setData({ activeImportTaskFilter: 'warning' });
       return this.updateImportTaskState(this.data.recentImportTasks);
     }
+    if (action === 'filter-import') {
+      this.setData({ activeImportTaskFilter: 'all', activeAuditFilter: 'import' });
+      this.updateImportTaskState(this.data.recentImportTasks, false);
+      return this.updateAuditLogState(this.data.recentAuditLogs);
+    }
     if (action === 'continue-import') {
       if (receiptId) {
         return this.continueImportTask({ currentTarget: { dataset: { receiptId } } });
       }
       return this.continueLatestImportTask();
+    }
+    if (action === 'edit-question') {
+      const questionId = e.currentTarget.dataset.entityId;
+      if (questionId) return this.goEdit({ currentTarget: { dataset: { id: questionId } } });
+      return null;
     }
     if (action === 'admin') {
       return wx.navigateTo({ url: '/pages/admin/index' });

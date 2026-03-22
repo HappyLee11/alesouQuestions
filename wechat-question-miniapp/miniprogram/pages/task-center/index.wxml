@@ -170,12 +170,24 @@
       </view>
       <text class="toolbar-note">{{auditSourceLabel}}</text>
     </view>
-    <view class="feature-item audit-card" wx:for="{{recentAuditLogs}}" wx:key="_id">
+    <view class="tag-row small-gap">
+      <text class="filter-chip {{activeAuditFilter === item.value ? 'filter-chip-active' : ''}}" wx:for="{{auditFilters}}" wx:key="value" data-value="{{item.value}}" bindtap="onTapAuditFilter">{{item.label}}</text>
+    </view>
+    <view class="toolbar-note import-summary-note">{{auditSummaryText}}</view>
+    <view class="feature-item audit-card" wx:for="{{displayAuditLogs}}" wx:key="_id">
       <view class="feature-title">{{item.action}} ｜ {{item.entityTitle || item.entityId || '--'}}</view>
       <view class="feature-desc">{{item.summary || '--'}}</view>
       <view class="feature-desc">对象：{{item.entityType || '--'}} ｜ 结果：{{item.result || '--'}} ｜ 原因：{{item.reason || '--'}}</view>
       <view class="feature-desc">操作人：{{item.operatorName || item.operatorOpenid || '--'}} ｜ 角色：{{item.operatorRole || '--'}} ｜ 时间：{{item.timeText}}</view>
+      <view class="meta-row wrap-row small-gap import-risk-row" wx:if="{{item.matchedTaskLabel}}">
+        <text class="soft-badge">关联任务：{{item.matchedTaskLabel}}</text>
+        <text class="soft-badge" wx:if="{{item.matchedTaskReceiptId}}">可恢复本地回执</text>
+      </view>
+      <view class="btn-row">
+        <button size="mini" class="secondary-btn" bindtap="handleInsightAction" data-action="{{item.actionTarget}}" data-receipt-id="{{item.matchedTaskReceiptId}}" data-entity-id="{{item.entityId}}">{{item.actionLabel}}</button>
+      </view>
     </view>
+    <view wx:if="{{!displayAuditLogs.length}}" class="feature-desc">当前筛选下暂无审计日志。</view>
   </view>
 
   <view class="card" wx:if="{{isAdmin}}">
