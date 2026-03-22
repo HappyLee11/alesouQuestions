@@ -34,6 +34,44 @@
     </view>
   </view>
 
+  <view wx:if="{{detail && isAdmin}}" class="glass-card detail-governance-card">
+    <view class="section-header detail-section-header">
+      <view>
+        <view class="section-title">治理快照 / 快捷处理</view>
+        <view class="section-caption">把详情页也接入治理链路：能看当前状态，也能直接回编辑页或任务中心处理。</view>
+      </view>
+      <text class="toolbar-note">{{governanceSummaryText}}</text>
+    </view>
+
+    <view class="meta-row wrap-row large-gap">
+      <text class="meta-pill">生命周期：{{detail.lifecycleText}}</text>
+      <text class="meta-pill meta-pill-light">审核态：{{detail.reviewStatusText}}</text>
+      <text class="meta-pill meta-pill-light">团队：{{governanceMeta && governanceMeta.ownerTeam ? governanceMeta.ownerTeam : '未分配团队'}}</text>
+      <text class="meta-pill meta-pill-light">负责人：{{governanceMeta && governanceMeta.owner ? governanceMeta.owner : '未分配负责人'}}</text>
+    </view>
+
+    <view class="panel-grid large-gap" wx:if="{{acceptanceItems.length}}">
+      <view class="panel-card" wx:for="{{acceptanceItems}}" wx:key="key">
+        <view class="panel-title">{{item.title}}</view>
+        <view class="kpi-value">{{item.valueText}}</view>
+        <view class="panel-desc">{{item.passed ? '当前满足要求' : '建议继续补齐'}}</view>
+      </view>
+    </view>
+
+    <view class="detail-risk-list" wx:if="{{governanceRisks.length}}">
+      <view class="detail-risk-card tone-{{item.tone}}" wx:for="{{governanceRisks}}" wx:key="key">
+        <view class="detail-risk-title">{{item.title}}</view>
+        <view class="detail-risk-desc">{{item.desc}}</view>
+      </view>
+    </view>
+
+    <view class="btn-row detail-governance-actions">
+      <button class="primary-btn" wx:if="{{canEdit}}" bindtap="goEdit">去编辑页</button>
+      <button class="secondary-btn" bindtap="goTaskCenter">回任务中心</button>
+      <button wx:if="{{importMeta}}" bindtap="goImport">回导入页</button>
+    </view>
+  </view>
+
   <view wx:if="{{detail}}" class="card detail-content-card">
     <view class="field-block" wx:if="{{detail.titleVariants && detail.titleVariants.length}}">
       <view class="field-label">别名 / 常见问法</view>

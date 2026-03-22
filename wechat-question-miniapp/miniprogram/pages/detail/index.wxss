@@ -32,6 +32,7 @@
   color: #1e3a8a;
 }
 
+.detail-governance-card,
 .detail-content-card,
 .detail-answer-card,
 .detail-analysis-card,
@@ -76,6 +77,48 @@
 
 .detail-info-grid {
   margin-top: 18rpx;
+}
+
+.detail-risk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.detail-risk-card {
+  padding: 22rpx 20rpx;
+  border-radius: 22rpx;
+  border: 1rpx solid #dbe7fb;
+}
+
+.detail-risk-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.detail-risk-desc {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.66;
+  color: #475569;
+}
+
+.detail-governance-actions button {
+  min-width: 190rpx;
+}
+
+.tone-danger {
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.tone-warning {
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.tone-neutral {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
 }
 
 .compact-result {
