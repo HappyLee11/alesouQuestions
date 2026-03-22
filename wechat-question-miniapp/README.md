@@ -9,15 +9,43 @@
 
 ## 产品预览
 
+> 以下为当前版本整理后的最新效果图，已随仓库一起发布，便于在 README 中直接查看整体界面风格与页面链路。
+
+### 最新页面总览
+
+![阿乐题库页面总览](./assets/readme/all-pages-overview-latest.png)
+
 ### 首页 / 搜索入口
 
-![阿乐搜题首页预览](./assets/hero-overview.svg)
+![阿乐搜题首页最新版效果图](./assets/readme/home-preview-latest.png)
 
-### 搜索结果页
+### 任务中心 / 审核工作台
+
+![阿乐题库任务中心最新版效果图](./assets/readme/task-center-preview-latest.png)
+
+### 批量导入 / 闭环建议
+
+![阿乐题库导入页最新版效果图](./assets/readme/import-preview-latest.png)
+
+### 后台总览 / 值守提醒
+
+![阿乐题库后台总览最新版效果图](./assets/readme/admin-preview-latest.png)
+
+### 编辑页 / 风险下钻
+
+![阿乐题库编辑页最新版效果图](./assets/readme/edit-preview-latest.png)
+
+### 详情页 / 治理快照
+
+![阿乐题库详情页最新版效果图](./assets/readme/detail-preview-latest.png)
+
+### 旧版示意图（保留）
+
+#### 搜索结果页
 
 ![阿乐搜题搜索结果预览](./assets/search-page-preview.svg)
 
-### 后台 / 导入工作台
+#### 后台 / 导入工作台
 
 ![后台与导入预览](./assets/admin-import-preview.svg)
 
