@@ -4,22 +4,38 @@
   padding-bottom: 40rpx;
 }
 
-.home-hero {
-  padding-bottom: 36rpx;
+.home-search-card {
+  padding: 28rpx 24rpx;
+}
+
+.home-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.home-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.home-admin-btn {
+  min-width: 120rpx;
 }
 
 .home-search-box {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
-  margin-top: 30rpx;
-  position: relative;
-  z-index: 1;
+  margin-top: 24rpx;
 }
 
 .home-search-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.98);
   color: #111827;
 }
 
@@ -30,96 +46,8 @@
   font-size: 30rpx;
 }
 
-.quick-hint-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 22rpx;
-  position: relative;
-  z-index: 1;
-}
-
-.quick-hint {
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 22rpx;
-}
-
-.admin-shortcut-card {
-  overflow: hidden;
-}
-
-.admin-shortcut-header {
-  align-items: flex-start;
-}
-
-.admin-summary-text {
-  margin-top: 18rpx;
-}
-
-.admin-task-highlight {
-  margin-top: 22rpx;
-  margin-bottom: 0;
-}
-
-.admin-task-badges {
-  margin-top: 16rpx;
-}
-
-.todo-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  margin-top: 22rpx;
-}
-
-.todo-card {
-  padding: 24rpx 22rpx;
-  border-radius: 24rpx;
-  border: 1rpx solid #dbe7fb;
-}
-
-.todo-card-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.todo-card-desc {
-  margin-top: 10rpx;
-  font-size: 25rpx;
-  line-height: 1.66;
-  color: #475569;
-}
-
-.todo-card button {
-  margin-top: 18rpx;
-}
-
-.tone-primary {
-  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
-}
-
-.tone-warning {
-  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
-}
-
-.tone-success {
-  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
-}
-
-.tone-danger {
-  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
-}
-
-.tone-neutral {
-  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
-}
-
-.admin-action-row button {
-  min-width: 200rpx;
+.compact-section-header {
+  align-items: center;
 }
 
 .sample-list {
@@ -141,4 +69,20 @@
   font-weight: 600;
   line-height: 1.58;
   color: #0f172a;
+}
+
+.admin-entry-card {
+  margin-top: 6rpx;
+}
+
+.admin-meta-row {
+  margin-top: 10rpx;
+}
+
+.admin-entry-summary {
+  margin-top: 16rpx;
+}
+
+.admin-entry-actions button {
+  min-width: 190rpx;
 }

@@ -1,79 +1,19 @@
 <view class="container page-shell page-home">
-  <view class="hero-card home-hero">
-    <view class="eyebrow">阿乐搜题</view>
-    <view class="hero-title">打开就能搜题</view>
-    <view class="hero-subtitle">输入题目关键词、题干片段或知识点，马上开始查答案和解析。</view>
+  <view class="card home-search-card">
+    <view class="home-title-row">
+      <view class="home-title">阿乐搜题</view>
+      <button wx:if="{{isAdmin}}" size="mini" class="secondary-btn home-admin-btn" bindtap="goAdmin">管理</button>
+    </view>
 
     <view class="home-search-box">
-      <input class="input home-search-input" placeholder="例如：HTTP 状态码 404 是什么" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="submitSearch" />
+      <input class="input home-search-input" placeholder="输入题目关键词、题干片段或知识点" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="submitSearch" />
       <button class="primary-btn home-search-btn" bindtap="submitSearch">搜索</button>
     </view>
-
-    <view class="quick-hint-row">
-      <text class="quick-hint">支持题干片段</text>
-      <text class="quick-hint">支持知识点</text>
-      <text class="quick-hint">支持标签词</text>
-    </view>
   </view>
 
-  <view class="glass-card section-block admin-shortcut-card" wx:if="{{checkingAdmin || isAdmin}}">
-    <view class="section-header admin-shortcut-header">
-      <view>
-        <view class="section-title">管理员快捷工作台</view>
-        <view class="section-caption">把任务中心、批量导入和题目后台直接挂到首页，方便持续运营和现场演示。</view>
-      </view>
-      <text class="meta-pill meta-pill-light" wx:if="{{isAdmin}}">{{admin && (admin.roleLabel || admin.role) ? (admin.roleLabel || admin.role) : '管理员'}}</text>
-    </view>
-
-    <view wx:if="{{checkingAdmin}}" class="subtitle">正在校验管理员权限并同步工作台概览...</view>
-
-    <block wx:elif="{{isAdmin}}">
-      <view class="meta-row wrap-row large-gap">
-        <text class="meta-pill">团队：{{admin && admin.ownerTeam ? admin.ownerTeam : '未分配团队'}}</text>
-        <text class="meta-pill meta-pill-light">待审核 {{adminStats.pending}}</text>
-        <text class="meta-pill meta-pill-light">已驳回 {{adminStats.rejected}}</text>
-        <text class="meta-pill meta-pill-light">审核中 {{adminStats.review}}</text>
-      </view>
-
-      <view class="subtitle admin-summary-text">{{adminSummaryText}}</view>
-
-      <view class="panel-card panel-accent admin-task-highlight" wx:if="{{recentImportTask}}">
-        <view class="panel-title">最近导入任务</view>
-        <view class="panel-desc">{{recentImportTask.taskName || recentImportTask.batchId || '未命名任务'}}</view>
-        <view class="panel-desc">批次：{{recentImportTask.batchId || '--'}} ｜ 状态：{{recentImportTask.taskStatusText || '--'}}</view>
-        <view class="meta-row wrap-row small-gap admin-task-badges">
-          <text class="soft-badge">{{recentImportTask.riskText}}</text>
-          <text class="soft-badge" wx:if="{{recentImportTask.resumable}}">可恢复继续处理</text>
-        </view>
-        <view class="btn-row btn-row-tight">
-          <button size="mini" class="secondary-btn" bindtap="continueRecentImportTask">继续这批任务</button>
-          <button size="mini" bindtap="goImportWarnings" wx:if="{{recentImportTask.invalid || recentImportTask.warnings}}">查看风险</button>
-        </view>
-      </view>
-
-      <view class="todo-list" wx:if="{{todoCards.length}}">
-        <view class="todo-card tone-{{item.tone}}" wx:for="{{todoCards}}" wx:key="key">
-          <view class="todo-card-title">{{item.title}}</view>
-          <view class="todo-card-desc">{{item.desc}}</view>
-          <button size="mini" class="secondary-btn" data-action="{{item.action}}" bindtap="handleTodoAction">{{item.cta}}</button>
-        </view>
-      </view>
-
-      <view class="btn-row admin-action-row">
-        <button class="primary-btn" bindtap="goTaskCenter">任务中心</button>
-        <button class="secondary-btn" wx:if="{{canImport}}" bindtap="goImport">批量导入</button>
-        <button class="secondary-btn" wx:if="{{canManageQuestions}}" bindtap="goList">题目列表</button>
-        <button bindtap="goAdmin">后台总览</button>
-      </view>
-    </block>
-  </view>
-
-  <view class="glass-card section-block">
-    <view class="section-header">
-      <view>
-        <view class="section-title">热门搜索</view>
-        <view class="section-caption">点一下就能直接搜</view>
-      </view>
+  <view class="glass-card section-block" wx:if="{{hotTerms.length}}">
+    <view class="section-header compact-section-header">
+      <view class="section-title">热门搜索</view>
     </view>
     <view class="tag-row small-gap">
       <text class="tag tag-clickable" wx:for="{{hotTerms}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
@@ -81,11 +21,8 @@
   </view>
 
   <view class="card section-block" wx:if="{{history.length}}">
-    <view class="section-header">
-      <view>
-        <view class="section-title">最近搜索</view>
-        <view class="section-caption">继续上次的查找</view>
-      </view>
+    <view class="section-header compact-section-header">
+      <view class="section-title">最近搜索</view>
       <text class="link-text" bindtap="clearHistory">清空</text>
     </view>
     <view class="tag-row small-gap">
@@ -94,11 +31,8 @@
   </view>
 
   <view class="card section-block" wx:if="{{subjects.length}}">
-    <view class="section-header">
-      <view>
-        <view class="section-title">按学科找题</view>
-        <view class="section-caption">先选范围，再看结果更快</view>
-      </view>
+    <view class="section-header compact-section-header">
+      <view class="section-title">按学科找题</view>
     </view>
     <view class="tag-row small-gap">
       <text class="filter-chip tag-clickable" wx:for="{{subjects}}" wx:key="*this" data-term="{{item}}" bindtap="onTapTerm">{{item}}</text>
@@ -106,11 +40,8 @@
   </view>
 
   <view class="glass-card section-block" wx:if="{{sampleQuestions.length}}">
-    <view class="section-header">
-      <view>
-        <view class="section-title">高频题推荐</view>
-        <view class="section-caption">打开常搜题目，直接查看答案与解析</view>
-      </view>
+    <view class="section-header compact-section-header">
+      <view class="section-title">高频题</view>
     </view>
     <view class="sample-list">
       <view class="sample-item" wx:for="{{sampleQuestions}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
@@ -121,5 +52,28 @@
         </view>
       </view>
     </view>
+  </view>
+
+  <view class="card section-block admin-entry-card" wx:if="{{checkingAdmin || isAdmin}}">
+    <view class="section-header compact-section-header">
+      <view class="section-title">管理入口</view>
+      <text class="meta-pill meta-pill-light" wx:if="{{isAdmin}}">{{admin && (admin.roleLabel || admin.role) ? (admin.roleLabel || admin.role) : '管理员'}}</text>
+    </view>
+
+    <view wx:if="{{checkingAdmin}}" class="subtitle">正在校验管理员权限...</view>
+
+    <block wx:elif="{{isAdmin}}">
+      <view class="meta-row wrap-row large-gap admin-meta-row">
+        <text class="meta-pill">待审核 {{adminStats.pending}}</text>
+        <text class="meta-pill meta-pill-light">已驳回 {{adminStats.rejected}}</text>
+        <text class="meta-pill meta-pill-light">审核中 {{adminStats.review}}</text>
+      </view>
+      <view class="subtitle admin-entry-summary">{{adminSummaryText}}</view>
+      <view class="btn-row admin-entry-actions">
+        <button class="secondary-btn" bindtap="goTaskCenter">任务中心</button>
+        <button class="secondary-btn" wx:if="{{canImport}}" bindtap="goImport">批量导入</button>
+        <button class="secondary-btn" wx:if="{{canManageQuestions}}" bindtap="goList">题目列表</button>
+      </view>
+    </block>
   </view>
 </view>
