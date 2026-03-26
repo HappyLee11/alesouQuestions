@@ -23,10 +23,10 @@
         <text class="meta-pill meta-pill-light">审批：{{canApprove || canReject ? '可执行快捷审核' : '仅查看'}}</text>
       </view>
       <view class="feature-desc workbench-next-action">{{nextActionText}}</view>
-      <view class="btn-row">
-        <button class="secondary-btn" bindtap="goImport">去导入页</button>
-        <button class="primary-btn" bindtap="goList">去题目列表</button>
-        <button wx:if="{{recentImportTasks.length}}" bindtap="continueLatestImportTask">继续最近任务</button>
+      <view class="btn-row task-center-actions {{isCompactScreen ? 'task-center-actions-compact' : ''}}">
+        <button class="secondary-btn task-center-action-btn" bindtap="goImport">去导入页</button>
+        <button class="primary-btn task-center-action-btn" bindtap="goList">去题目列表</button>
+        <button wx:if="{{recentImportTasks.length}}" class="task-center-action-btn" bindtap="continueLatestImportTask">继续最近任务</button>
       </view>
     </block>
     <view wx:else class="subtitle">当前账号不是管理员，无法查看任务中心。</view>
@@ -40,15 +40,15 @@
       </view>
     </view>
 
-    <view class="insight-grid" wx:if="{{riskAlerts.length}}">
+    <view class="insight-grid {{isWideScreen ? 'insight-grid-wide' : ''}}" wx:if="{{riskAlerts.length}}">
       <view class="insight-card tone-{{item.tone}}" wx:for="{{riskAlerts}}" wx:key="key">
         <view class="panel-title">{{item.title}}</view>
         <view class="panel-desc">{{item.desc}}</view>
-        <button size="mini" class="secondary-btn insight-btn" data-action="{{item.action}}" data-receipt-id="{{item.receiptId}}" bindtap="handleInsightAction">{{item.cta}}</button>
+        <button size="mini" class="secondary-btn insight-btn task-center-inline-btn" data-action="{{item.action}}" data-receipt-id="{{item.receiptId}}" bindtap="handleInsightAction">{{item.cta}}</button>
       </view>
     </view>
 
-    <view class="todo-list task-center-todo-list" wx:if="{{todoCards.length}}">
+    <view class="todo-list task-center-todo-list {{isWideScreen ? 'task-center-todo-list-wide' : ''}}" wx:if="{{todoCards.length}}">
       <view class="todo-card tone-{{item.tone}}" wx:for="{{todoCards}}" wx:key="key">
         <view class="todo-card-title">{{item.title}}</view>
         <view class="todo-card-desc">{{item.desc}}</view>
@@ -57,7 +57,7 @@
     </view>
   </view>
 
-  <view class="panel-grid focus-grid" wx:if="{{isAdmin && focusCards.length}}">
+  <view class="panel-grid focus-grid {{isWideScreen ? 'focus-grid-wide' : ''}}" wx:if="{{isAdmin && focusCards.length}}">
     <view class="panel-card focus-card tone-{{item.tone}}" wx:for="{{focusCards}}" wx:key="title">
       <view class="panel-title">{{item.title}}</view>
       <view class="kpi-value">{{item.value}}</view>
@@ -84,7 +84,7 @@
           <text class="meta-pill {{item.passed ? '' : 'meta-pill-light'}}">{{item.valueText}}</text>
         </view>
         <view class="feature-desc">{{item.desc}}</view>
-        <button wx:if="{{!item.passed}}" size="mini" class="secondary-btn acceptance-btn" data-action="{{item.action}}" bindtap="handleInsightAction">去处理</button>
+        <button wx:if="{{!item.passed}}" size="mini" class="secondary-btn acceptance-btn task-center-inline-btn" data-action="{{item.action}}" bindtap="handleInsightAction">去处理</button>
       </view>
     </view>
   </view>
@@ -109,15 +109,15 @@
     </view>
     <view wx:if="{{reviewQueue.length}}">
       <view class="feature-item queue-card" wx:for="{{reviewQueue}}" wx:key="_id">
-        <view class="feature-title">{{item.title}} ｜ {{item.reviewStatusText}} / {{item.lifecycleText}}</view>
+        <view class="feature-title task-center-card-title">{{item.title}} ｜ {{item.reviewStatusText}} / {{item.lifecycleText}}</view>
         <view class="feature-desc">团队：{{item.ownerTeamText}} ｜ 负责人：{{item.ownerText}} ｜ 审核人：{{item.reviewerText}}</view>
         <view class="feature-desc">学科：{{item.subject || '未分类'}} ｜ 分类：{{item.category || '通用'}} ｜ 更新时间：{{item.updatedAtText}} ｜ {{item.versionText}}</view>
         <view class="feature-desc">审核备注：{{item.reviewCommentText}}</view>
-        <view class="btn-row">
-          <button wx:if="{{item.canEdit}}" size="mini" data-id="{{item._id}}" bindtap="goEdit">去处理</button>
-          <button wx:if="{{item.canApprove}}" size="mini" class="secondary-btn" data-id="{{item._id}}" bindtap="handleApprove">通过</button>
-          <button wx:if="{{item.canReject}}" size="mini" class="danger-btn" data-id="{{item._id}}" bindtap="handleReject">驳回</button>
-          <button wx:if="{{item.canPublish}}" size="mini" class="primary-btn" data-id="{{item._id}}" bindtap="handlePublish">发布</button>
+        <view class="btn-row task-center-actions {{isCompactScreen ? 'task-center-actions-compact' : ''}}">
+          <button wx:if="{{item.canEdit}}" size="mini" class="task-center-action-btn" data-id="{{item._id}}" bindtap="goEdit">去处理</button>
+          <button wx:if="{{item.canApprove}}" size="mini" class="secondary-btn task-center-action-btn" data-id="{{item._id}}" bindtap="handleApprove">通过</button>
+          <button wx:if="{{item.canReject}}" size="mini" class="danger-btn task-center-action-btn" data-id="{{item._id}}" bindtap="handleReject">驳回</button>
+          <button wx:if="{{item.canPublish}}" size="mini" class="primary-btn task-center-action-btn" data-id="{{item._id}}" bindtap="handlePublish">发布</button>
         </view>
       </view>
     </view>
@@ -146,7 +146,7 @@
 
     <view wx:if="{{displayImportTasks.length}}">
       <view class="feature-item import-task-card" wx:for="{{displayImportTasks}}" wx:key="taskId">
-        <view class="feature-title">{{item.statusLabel}} ｜ {{item.taskName || item.batchId}}</view>
+        <view class="feature-title task-center-card-title">{{item.statusLabel}} ｜ {{item.taskName || item.batchId}}</view>
         <view class="feature-desc">批次：{{item.batchId}} ｜ 状态：{{item.taskStatusText}} ｜ {{item.sourceLabel}}</view>
         <view class="feature-desc">总 {{item.total}} ｜ 有效 {{item.valid}} ｜ 无效 {{item.invalid}} ｜ 预警 {{item.warnings}} ｜ 新增 {{item.inserted}} ｜ 更新 {{item.updated}}</view>
         <view class="feature-desc">文件：{{item.fileLabel}} ｜ 时间：{{item.timeText}}</view>
@@ -154,8 +154,8 @@
           <text class="soft-badge">{{item.riskLabel}}</text>
           <text class="soft-badge" wx:if="{{item.resumable}}">可恢复到当前暂存区</text>
         </view>
-        <view class="btn-row">
-          <button size="mini" class="secondary-btn" bindtap="continueImportTask" data-receipt-id="{{item.localReceiptId}}">{{item.actionLabel}}</button>
+        <view class="btn-row task-center-actions {{isCompactScreen ? 'task-center-actions-compact' : ''}}">
+          <button size="mini" class="secondary-btn task-center-action-btn" bindtap="continueImportTask" data-receipt-id="{{item.localReceiptId}}">{{item.actionLabel}}</button>
         </view>
       </view>
     </view>
@@ -175,7 +175,7 @@
     </view>
     <view class="toolbar-note import-summary-note">{{auditSummaryText}}</view>
     <view class="feature-item audit-card" wx:for="{{displayAuditLogs}}" wx:key="_id">
-      <view class="feature-title">{{item.action}} ｜ {{item.entityTitle || item.entityId || '--'}}</view>
+      <view class="feature-title task-center-card-title">{{item.action}} ｜ {{item.entityTitle || item.entityId || '--'}}</view>
       <view class="feature-desc">{{item.summary || '--'}}</view>
       <view class="feature-desc">对象：{{item.entityType || '--'}} ｜ 结果：{{item.result || '--'}} ｜ 原因：{{item.reason || '--'}}</view>
       <view class="feature-desc">操作人：{{item.operatorName || item.operatorOpenid || '--'}} ｜ 角色：{{item.operatorRole || '--'}} ｜ 时间：{{item.timeText}}</view>
@@ -183,8 +183,8 @@
         <text class="soft-badge">关联任务：{{item.matchedTaskLabel}}</text>
         <text class="soft-badge" wx:if="{{item.matchedTaskReceiptId}}">可恢复本地回执</text>
       </view>
-      <view class="btn-row">
-        <button size="mini" class="secondary-btn" bindtap="handleInsightAction" data-action="{{item.actionTarget}}" data-receipt-id="{{item.matchedTaskReceiptId}}" data-entity-id="{{item.entityId}}">{{item.actionLabel}}</button>
+      <view class="btn-row task-center-actions {{isCompactScreen ? 'task-center-actions-compact' : ''}}">
+        <button size="mini" class="secondary-btn task-center-action-btn" bindtap="handleInsightAction" data-action="{{item.actionTarget}}" data-receipt-id="{{item.matchedTaskReceiptId}}" data-entity-id="{{item.entityId}}">{{item.actionLabel}}</button>
       </view>
     </view>
     <view wx:if="{{!displayAuditLogs.length}}" class="feature-desc">当前筛选下暂无审计日志。</view>

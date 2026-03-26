@@ -29,6 +29,27 @@
   margin-top: 18rpx;
 }
 
+.task-center-actions {
+  align-items: stretch;
+}
+
+.task-center-action-btn {
+  flex: 1 1 220rpx;
+  min-width: 0;
+}
+
+.task-center-actions-compact {
+  flex-direction: column;
+}
+
+.task-center-actions-compact .task-center-action-btn {
+  width: 100%;
+}
+
+.task-center-inline-btn {
+  min-width: 180rpx;
+}
+
 .insight-grid {
   display: flex;
   flex-direction: column;
@@ -36,10 +57,21 @@
   margin-top: 20rpx;
 }
 
+.insight-grid-wide {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
 .insight-card {
   padding: 24rpx 22rpx;
   border-radius: 24rpx;
   border: 1rpx solid #dbe7fb;
+  box-sizing: border-box;
+}
+
+.insight-grid-wide .insight-card {
+  width: calc(50% - 8rpx);
 }
 
 .insight-btn,
@@ -54,10 +86,21 @@
   margin-top: 22rpx;
 }
 
+.task-center-todo-list-wide {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
 .todo-card {
   padding: 24rpx 22rpx;
   border-radius: 24rpx;
   border: 1rpx solid #dbe7fb;
+  box-sizing: border-box;
+}
+
+.task-center-todo-list-wide .todo-card {
+  width: calc(50% - 8rpx);
 }
 
 .todo-card-title {
@@ -79,6 +122,10 @@
 
 .focus-grid {
   margin-bottom: 24rpx;
+}
+
+.focus-grid-wide .focus-card {
+  width: calc(50% - 9rpx);
 }
 
 .focus-card {
@@ -152,6 +199,14 @@
   border-radius: 24rpx;
   background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
   border: 1rpx solid #dbe7fb;
+}
+
+.task-center-card-title {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .import-stat-row,

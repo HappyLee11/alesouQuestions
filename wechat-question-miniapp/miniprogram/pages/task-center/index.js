@@ -29,6 +29,8 @@ Page({
     checking: true,
     isAdmin: false,
     admin: null,
+    isCompactScreen: false,
+    isWideScreen: false,
     recentImportTasks: [],
     displayImportTasks: [],
     recentAuditLogs: [],
@@ -71,14 +73,24 @@ Page({
     auditSourceLabel: '加载中'
   },
   onLoad(options = {}) {
+    this.syncViewport();
     this.entryFilters = {
       queueFilter: options.queueFilter || '',
       importTaskFilter: options.importTaskFilter || ''
     };
   },
   async onShow() {
+    this.syncViewport();
     this.loadCachedTasks();
     await this.bootstrap();
+  },
+  syncViewport() {
+    const windowInfo = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : wx.getSystemInfoSync();
+    const width = Number(windowInfo.windowWidth || windowInfo.screenWidth || 0);
+    this.setData({
+      isCompactScreen: width > 0 && width <= 360,
+      isWideScreen: width >= 430
+    });
   },
   normalizeImportTask(item = {}) {
     const warnings = Number(item.warnings || 0);
