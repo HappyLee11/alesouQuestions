@@ -1,11 +1,11 @@
 <view class="container page-shell page-home">
   <view class="card home-search-card">
-    <view class="home-title-row">
+    <view class="home-title-row {{isCompactScreen ? 'home-title-row-compact' : ''}}">
       <view class="home-title">阿乐搜题</view>
       <button wx:if="{{isAdmin}}" size="mini" class="secondary-btn home-admin-btn" bindtap="goAdmin">管理</button>
     </view>
 
-    <view class="home-search-box">
+    <view class="home-search-box {{isWideScreen ? 'home-search-box-wide' : ''}}">
       <input class="input home-search-input" placeholder="输入题目关键词、题干片段或知识点" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="submitSearch" />
       <button class="primary-btn home-search-btn" bindtap="submitSearch">搜索</button>
     </view>
@@ -69,10 +69,19 @@
         <text class="meta-pill meta-pill-light">审核中 {{adminStats.review}}</text>
       </view>
       <view class="subtitle admin-entry-summary">{{adminSummaryText}}</view>
-      <view class="btn-row admin-entry-actions">
-        <button class="secondary-btn" bindtap="goTaskCenter">任务中心</button>
-        <button class="secondary-btn" wx:if="{{canImport}}" bindtap="goImport">批量导入</button>
-        <button class="secondary-btn" wx:if="{{canManageQuestions}}" bindtap="goList">题目列表</button>
+
+      <view class="home-todo-list" wx:if="{{todoCards.length}}">
+        <view class="todo-card home-todo-card tone-{{item.tone}}" wx:for="{{todoCards}}" wx:key="key">
+          <view class="todo-card-title">{{item.title}}</view>
+          <view class="todo-card-desc">{{item.desc}}</view>
+          <button size="mini" class="secondary-btn home-todo-btn" data-action="{{item.action}}" bindtap="handleTodoAction">{{item.cta}}</button>
+        </view>
+      </view>
+
+      <view class="btn-row admin-entry-actions {{isCompactScreen ? 'admin-entry-actions-compact' : ''}}">
+        <button class="secondary-btn admin-action-btn" bindtap="goTaskCenter">任务中心</button>
+        <button class="secondary-btn admin-action-btn" wx:if="{{canImport}}" bindtap="goImport">批量导入</button>
+        <button class="secondary-btn admin-action-btn" wx:if="{{canManageQuestions}}" bindtap="goList">题目列表</button>
       </view>
     </block>
   </view>

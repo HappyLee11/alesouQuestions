@@ -12,10 +12,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16rpx;
 }
 
+.home-title-row-compact {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
 .home-title {
+  flex: 1;
+  min-width: 0;
   font-size: 40rpx;
   font-weight: 700;
   color: #0f172a;
@@ -24,6 +32,13 @@
 
 .home-admin-btn {
   min-width: 120rpx;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.home-title-row-compact .home-admin-btn {
+  width: 100%;
+  margin-left: 0;
 }
 
 .home-search-box {
@@ -33,8 +48,14 @@
   margin-top: 24rpx;
 }
 
+.home-search-box-wide {
+  flex-direction: row;
+  align-items: center;
+}
+
 .home-search-input {
   width: 100%;
+  min-width: 0;
   background: rgba(255, 255, 255, 0.98);
   color: #111827;
 }
@@ -44,6 +65,12 @@
   min-width: 0;
   height: 86rpx;
   font-size: 30rpx;
+}
+
+.home-search-box-wide .home-search-btn {
+  width: auto;
+  min-width: 188rpx;
+  flex-shrink: 0;
 }
 
 .compact-section-header {
@@ -69,6 +96,11 @@
   font-weight: 600;
   line-height: 1.58;
   color: #0f172a;
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .admin-entry-card {
@@ -83,6 +115,69 @@
   margin-top: 16rpx;
 }
 
-.admin-entry-actions button {
-  min-width: 190rpx;
+.home-todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.home-todo-card {
+  padding: 24rpx 22rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #dbe7fb;
+}
+
+.todo-card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.todo-card-desc {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  line-height: 1.66;
+  color: #475569;
+}
+
+.home-todo-btn {
+  margin-top: 18rpx;
+}
+
+.admin-entry-actions {
+  align-items: stretch;
+}
+
+.admin-action-btn {
+  flex: 1 1 200rpx;
+  min-width: 0;
+}
+
+.admin-entry-actions-compact {
+  flex-direction: column;
+}
+
+.admin-entry-actions-compact .admin-action-btn {
+  width: 100%;
+}
+
+.tone-primary {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.tone-warning {
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.tone-success {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.tone-danger {
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.tone-neutral {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
 }

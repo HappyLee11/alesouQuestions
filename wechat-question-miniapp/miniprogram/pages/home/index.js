@@ -38,6 +38,8 @@ Page({
     canImport: false,
     canManageQuestions: false,
     adminSummaryText: '',
+    isCompactScreen: false,
+    isWideScreen: false,
     adminStats: {
       pending: 0,
       rejected: 0,
@@ -48,6 +50,7 @@ Page({
     todoCards: []
   },
   onLoad() {
+    this.syncViewport();
     const list = Array.isArray(mock.sampleQuestions) ? mock.sampleQuestions : [];
     const hotTerms = uniqueList(
       list.flatMap((item) => {
@@ -69,8 +72,17 @@ Page({
     this.bootstrapAdmin();
   },
   onShow() {
+    this.syncViewport();
     this.loadHistory();
     this.bootstrapAdmin();
+  },
+  syncViewport() {
+    const windowInfo = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : wx.getSystemInfoSync();
+    const width = Number(windowInfo.windowWidth || windowInfo.screenWidth || 0);
+    this.setData({
+      isCompactScreen: width > 0 && width <= 360,
+      isWideScreen: width >= 430
+    });
   },
   onKeywordInput(e) {
     this.setData({ keyword: e.detail.value });
